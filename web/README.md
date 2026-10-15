@@ -13,5 +13,5 @@ npm run build    # static site in out/, serve with nginx
 
 | Variable | Purpose |
 |---|---|
-| `NEXT_PUBLIC_API_URL` | Laravel API base URL. The waitlist form posts to `$NEXT_PUBLIC_API_URL/v1/waitlist`. Unset = the form shows "not open yet" and saves nothing. |
+| `NEXT_PUBLIC_API_URL` | Laravel API base URL. The waitlist form posts to `$NEXT_PUBLIC_API_URL/v1/waitlist`. Unset = the form shows "not open yet" and saves nothing. The API only accepts requests from its `WEB_ORIGIN`, so set that to where this site is served (see `../api/README.md`). |
 | `NEXT_PUBLIC_SITE_URL` | Public site URL, used for social preview metadata. |
