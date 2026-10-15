@@ -3,18 +3,36 @@
 import { motion } from "motion/react";
 import { Check, ChevronRight, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
+import { type BillItem, money, type Owner, splitBill } from "@/lib/demo";
 import { h2, wrap } from "./Sections";
 
-const shares = [
-  { name: "You", note: "paid", amount: "$14", owes: false },
-  { name: "Aiman", note: "owes you", amount: "$14", owes: true },
-  { name: "Sarah", note: "owes you", amount: "$14", owes: true },
+const BILL: BillItem[] = [
+  { label: "Nasi lemak ayam", cents: 1200, owner: "You" },
+  { label: "Mee goreng", cents: 1000, owner: "Aiman" },
+  { label: "Roti canai x2", cents: 400, owner: "Sarah" },
+  { label: "Milo ais", cents: 450, owner: "Sarah" },
+  { label: "Teh tarik x3", cents: 900, owner: "Shared" },
+  { label: "Kuih platter", cents: 250, owner: "Shared" },
 ];
+const TOTAL = BILL.reduce((s, i) => s + i.cents, 0);
+const OWNERS: Owner[] = ["You", "Aiman", "Sarah", "Shared"];
 
-const REMINDER = "Hey Sarah! Friday dinner came to $14 each 😊";
+// Each person keeps one solid colour everywhere (solid so it reads on both light and dark pages).
+const OWNER_STYLE: Record<Owner, string> = {
+  You: "bg-[#eeff5a] text-[#4a5000]",
+  Aiman: "bg-[#c4efdd] text-[#155a44]",
+  Sarah: "bg-[#ffd6cf] text-[#9e2f22]",
+  Shared: "bg-[#e1e7fb] text-[#1f3fd8]",
+};
+
+const usd = (cents: number) => money(cents / 100);
 
 export function Split() {
+  const [mode, setMode] = useState<"even" | "items">("even");
+  const [bill, setBill] = useState(BILL);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
+  const shares = splitBill(bill, mode);
+  const reminder = `Hey Sarah! Friday dinner at the mamak: your share is ${usd(shares.Sarah)} 😊`;
 
   useEffect(() => {
     if (copyState === "idle") return;
@@ -25,11 +43,17 @@ export function Split() {
   async function copy() {
     try {
       // Clipboard is only available on https (or localhost); fail visibly anywhere else.
-      await navigator.clipboard.writeText(REMINDER);
+      await navigator.clipboard.writeText(reminder);
       setCopyState("copied");
     } catch {
       setCopyState("failed");
     }
+  }
+
+  // Tapping a line passes it to the next person: You -> Aiman -> Sarah -> Shared -> You.
+  function cycle(i: number) {
+    setMode("items");
+    setBill((prev) => prev.map((it, n) => (n === i ? { ...it, owner: OWNERS[(OWNERS.indexOf(it.owner) + 1) % OWNERS.length] } : it)));
   }
 
   return (
@@ -38,32 +62,83 @@ export function Split() {
         <div>
           <h2 className={h2}>Split the bill without the awkward group chat.</h2>
           <p className="mt-5 max-w-md text-lg text-ink-dim">
-            Snap the receipt and say who was there. Your share counts as your spending. What friends owe you is kept
-            as an IOU until they pay you back.
+            Snap the receipt and say who was there. Split it evenly, or tap each line to say who had what. Your share
+            counts as your spending; the rest is kept as IOUs until friends pay you back.
           </p>
           <p className="mt-4 max-w-md text-ink-dim">Friends are just names. Senbud never asks for their numbers or contacts.</p>
         </div>
 
-        <div>
-          <div className="flex gap-2 drop-shadow-[0_14px_18px_rgb(0_0_0/0.22)]">
-            {shares.map((s, i) => (
-              <div
-                key={s.name}
-                style={{ rotate: `${(i - 1) * 2.5}deg` }}
-                className="receipt flex-1 px-3 pb-6 pt-5 font-mono text-[13px] sm:px-4"
+        <div className="rounded-3xl bg-paper-2 p-4 ring-1 ring-line sm:p-6">
+          <fieldset className="flex rounded-full bg-paper p-1 ring-1 ring-line">
+            <legend className="sr-only">How to split</legend>
+            {(
+              [
+                ["even", "Split evenly"],
+                ["items", "By item"],
+              ] as const
+            ).map(([v, label]) => (
+              <label
+                key={v}
+                className={`flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-full text-sm font-semibold transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-hl ${mode === v ? "bg-panel text-on-panel" : "text-ink-dim hover:text-ink"}`}
               >
-                <p className="uppercase tracking-wider text-receipt-ink/75">Fri dinner</p>
-                <div className="my-3 border-t border-dashed border-receipt-ink/25" />
-                <p className="font-sans text-base font-semibold">{s.name}</p>
-                <p className={s.owes ? "text-[#b13a2c]" : "text-[#155a44]"}>{s.note}</p>
-                <p className="mt-4 text-xl font-semibold">{s.amount}</p>
-              </div>
+                <input type="radio" name="split-mode" className="sr-only" checked={mode === v} onChange={() => setMode(v)} />
+                {label}
+              </label>
             ))}
+          </fieldset>
+
+          <div className="mt-4 drop-shadow-[0_12px_16px_rgb(0_0_0/0.18)]">
+            <div className="receipt px-4 pb-6 pt-5 font-mono text-[13px] sm:px-5">
+              <div className="flex justify-between uppercase tracking-wider text-receipt-ink/75">
+                <span>Fri · Mamak Corner</span>
+                <span>Paid by you</span>
+              </div>
+              <div className="my-3 border-t border-dashed border-receipt-ink/25" />
+              <ul>
+                {bill.map((it, i) => (
+                  <li key={it.label}>
+                    <button
+                      type="button"
+                      onClick={() => cycle(i)}
+                      aria-label={`${it.label}, ${usd(it.cents)}, ${mode === "even" ? "shared evenly" : it.owner === "Shared" ? "shared" : `had by ${it.owner}`}. Change who had it`}
+                      className="-mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center gap-2 rounded-md px-2 text-left hover:bg-black/[0.04]"
+                    >
+                      <span className="truncate">{it.label}</span>
+                      <span className="dotted-leader" />
+                      <span className="tabular-nums">{usd(it.cents)}</span>
+                      <span
+                        className={`w-16 shrink-0 rounded px-1.5 py-0.5 text-center font-sans text-[11px] font-semibold ${mode === "even" ? OWNER_STYLE.Shared : OWNER_STYLE[it.owner]}`}
+                      >
+                        {mode === "even" ? "Even" : it.owner}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <div className="my-3 border-t border-dashed border-receipt-ink/25" />
+              <div className="flex justify-between font-semibold">
+                <span>Total</span>
+                <span className="tabular-nums">{usd(TOTAL)}</span>
+              </div>
+            </div>
           </div>
-          <div className="mt-8 rounded-2xl bg-paper-2 p-4 ring-1 ring-line">
+          <p className="mt-3 text-center text-sm text-ink-dim">Tap a line to change who had it.</p>
+
+          <ul aria-live="polite" className="mt-4 grid grid-cols-3 gap-2">
+            {(["You", "Aiman", "Sarah"] as const).map((p) => (
+              <li key={p} className={`rounded-2xl p-3 ${OWNER_STYLE[p]}`}>
+                <p className="text-xs font-semibold">{p === "You" ? "Your share" : `${p} owes you`}</p>
+                <motion.p key={`${p}-${shares[p]}`} initial={{ opacity: 0.4, y: 3 }} animate={{ opacity: 1, y: 0 }} className="font-display text-xl tabular-nums sm:text-2xl">
+                  {usd(shares[p])}
+                </motion.p>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-4 rounded-2xl bg-paper p-4 ring-1 ring-line">
             <p className="text-sm text-ink-dim">Reminder for Sarah, ready to paste</p>
             <div className="mt-2 flex items-center justify-between gap-3">
-              <p className="min-w-0">{REMINDER}</p>
+              <p className="min-w-0">{reminder}</p>
               <button
                 type="button"
                 onClick={copy}

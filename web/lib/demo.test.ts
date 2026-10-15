@@ -53,3 +53,21 @@ it("rounds float sums before formatting", async () => {
   expect(money(11.999999999999998)).toBe("$12");
   expect(money(4.5)).toBe("$4.50");
 });
+
+describe("splitBill", async () => {
+  const { splitBill } = await import("./demo");
+  const bill = [
+    { label: "Nasi lemak", cents: 1200, owner: "You" as const },
+    { label: "Mee goreng", cents: 1000, owner: "Aiman" as const },
+    { label: "Teh tarik x3", cents: 900, owner: "Shared" as const },
+    { label: "Kuih", cents: 250, owner: "Shared" as const },
+  ];
+  it("splits evenly to the cent", () => {
+    const s = splitBill(bill, "even");
+    expect(s.You + s.Aiman + s.Sarah).toBe(3350);
+    expect(s).toEqual({ You: 1118, Aiman: 1116, Sarah: 1116 });
+  });
+  it("splits by item with shared lines three ways", () => {
+    expect(splitBill(bill, "items")).toEqual({ You: 1200 + 384, Aiman: 1000 + 383, Sarah: 383 });
+  });
+});
