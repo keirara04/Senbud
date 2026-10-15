@@ -1,0 +1,35 @@
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Middleware\TrustProxies;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     */
+    public function register(): void
+    {
+        //
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        // Behind a reverse proxy every request arrives from the proxy's IP, which would make the
+        // per-IP rate limits global. Never '*': anyone could then spoof X-Forwarded-For and dodge
+        // the limits. Unset = trust no one (API exposed directly).
+        if ($proxies = config('app.trusted_proxies')) {
+            TrustProxies::at(explode(',', $proxies));
+        }
+
+        RateLimiter::for('waitlist', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
+    }
+}

@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+.git
+vendor
+# Locally-generated (dev-dependency-aware) package/service discovery cache — must never ship;
+# a require-dev provider (e.g. Laravel Pail) cached from a local `php artisan` run can't be
+# found in the --no-dev vendor install and breaks the image.
+bootstrap/cache/*.php
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+database/database.sqlite
+tests
+.phpunit.result.cache
+README.md
