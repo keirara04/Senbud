@@ -113,3 +113,93 @@ body {
   opacity: 0.35;
   transform: translateY(-4px);
 }
+
+/* ---------- Motion: highlighter strokes and printing receipts ---------- */
+
+/* Logo: receipt lines print in, one after another. */
+.logo-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 0.45s cubic-bezier(0.22, 0.68, 0.14, 1) forwards;
+}
+.logo-line:nth-of-type(2) { animation-delay: 0.12s; }
+.logo-line:nth-of-type(3) { animation-delay: 0.24s; }
+.logo-line:nth-of-type(4) { animation-delay: 0.36s; }
+@keyframes draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Buttons: a highlighter-shine sweeps across on hover. */
+.hl-sweep {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.hl-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 -60%;
+  width: 45%;
+  transform: skewX(-20deg) translateX(0);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.65), transparent);
+  z-index: -1;
+  transition: transform 0.6s cubic-bezier(0.22, 0.68, 0.14, 1);
+}
+.hl-sweep:hover::after { transform: skewX(-20deg) translateX(420%); }
+
+/* Headings: the key phrase gets a highlighter stroke. With scroll-driven animation support it swipes
+   in as the heading scrolls into view; everywhere else it is simply there. */
+.marker {
+  --mk: color-mix(in srgb, var(--hl) 80%, transparent);
+  background-image: linear-gradient(to top, var(--mk) 0 0.3em, transparent 0.3em);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  padding-inline: 0.04em;
+}
+.marker-soft { --mk: rgb(255 255 255 / 0.22); }
+@keyframes marker-swipe {
+  from { background-size: 0% 100%; }
+  to { background-size: 100% 100%; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .marker-load { animation: marker-swipe 0.8s 0.5s cubic-bezier(0.22, 0.68, 0.14, 1) both; }
+  @supports (animation-timeline: view()) {
+    .marker:not(.marker-load) {
+      animation: marker-swipe linear both;
+      animation-timeline: view();
+      animation-range: entry 60% cover 40%;
+    }
+  }
+}
+
+/* Footer barcode: a highlighter scan line passes over it on hover. */
+.barcode { position: relative; overflow: hidden; }
+.barcode::after {
+  content: "";
+  position: absolute;
+  inset: -10% auto -10% -12%;
+  width: 10%;
+  background: color-mix(in srgb, var(--hl) 85%, transparent);
+  mix-blend-mode: multiply;
+  transform: translateX(0);
+  transition: transform 0.9s ease-in-out;
+}
+.barcode:hover::after { transform: translateX(1250%); }
+
+/* Waitlist button while sending: a receipt strip prints across the button. */
+@keyframes print-strip {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.printing-strip {
+  transform-origin: left;
+  animation: print-strip 1.2s steps(12, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-line { animation: none; stroke-dashoffset: 0; }
+  .hl-sweep::after, .barcode::after { display: none; }
+  .printing-strip { animation: none; transform: scaleX(1); }
+}

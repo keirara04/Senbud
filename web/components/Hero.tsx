@@ -11,7 +11,7 @@ export function Hero() {
       <div className="relative mx-auto grid max-w-6xl gap-12 px-4 pb-20 pt-14 sm:px-6 min-[900px]:grid-cols-[1.05fr_1fr] min-[900px]:items-center min-[900px]:pb-28 min-[900px]:pt-20">
         <div>
           <h1 className="font-display text-[clamp(2.6rem,6.2vw,4.6rem)] leading-[1.02]">
-            Your money buddy that does the <em className="text-hl">boring part.</em>
+            Your money buddy that does the <em className="marker marker-load marker-soft text-hl">boring part.</em>
           </h1>
           <p className="mt-6 max-w-[34rem] text-lg leading-relaxed text-on-panel-dim">
             Snap a receipt or type “lunch 12, grab 8”. Senbud logs it, counts down to rent, and tells you when you
@@ -20,7 +20,7 @@ export function Hero() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <a
               href="#waitlist"
-              className="rounded-full bg-hl px-6 py-3.5 text-center font-semibold text-panel transition-transform hover:-translate-y-0.5"
+              className="hl-sweep rounded-full bg-hl px-6 py-3.5 text-center font-semibold text-panel transition-transform hover:-translate-y-0.5"
             >
               Get early access
             </a>

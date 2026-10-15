@@ -9,7 +9,10 @@ export function Logo({ className = "" }: { className?: string }) {
           strokeWidth="1.5"
           strokeLinejoin="round"
         />
-        <path d="M6 7h10M6 11h7M6 15h10" stroke="var(--receipt-ink)" strokeWidth="1.6" strokeLinecap="round" />
+        {/* The three receipt lines draw themselves once on load. */}
+        {["M6 7h10", "M6 11h7", "M6 15h10"].map((d) => (
+          <path key={d} className="logo-line" d={d} pathLength={1} stroke="var(--receipt-ink)" strokeWidth="1.6" strokeLinecap="round" />
+        ))}
       </svg>
       <span className="font-display text-xl font-semibold">Senbud</span>
     </span>

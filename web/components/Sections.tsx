@@ -1,4 +1,5 @@
-import { ArrowRight, Camera, Keyboard, MessageSquareText } from "lucide-react";
+import { ArrowRight, ArrowUp, Camera, Keyboard, MessageSquareText } from "lucide-react";
+import { MobileBar } from "./MobileBar";
 
 export const wrap = "mx-auto max-w-6xl px-4 sm:px-6";
 export const h2 = "font-display text-[clamp(2rem,4.4vw,3.25rem)] leading-[1.06]";
@@ -81,7 +82,7 @@ export function HowItWorks() {
     <section id="how" className="scroll-mt-16 border-t border-line">
       <div className={`${wrap} grid gap-12 py-20 sm:py-28 lg:grid-cols-[0.9fr_1.1fr]`}>
         <div className="lg:sticky lg:top-28 lg:self-start">
-          <h2 className={h2}>Three ways to add spending. Pick the lazy one.</h2>
+          <h2 className={h2}>Three ways to add spending. <span className="marker">Pick the lazy one.</span></h2>
           <p className="mt-5 max-w-md text-lg text-ink-dim">
             Every entry lands in the same place, so your budget, rent and treats stay up to date whichever way you
             use.
@@ -112,17 +113,65 @@ export function HowItWorks() {
   );
 }
 
+// Bar widths for the decorative barcode (fixed, so the HTML is identical on every build).
+const BARS = [2, 1, 3, 1, 1, 2, 4, 1, 2, 1, 3, 2, 1, 1, 4, 2, 1, 3, 1, 2, 2, 1, 3, 1, 1, 4, 1, 2, 3, 1, 2, 1, 1, 3, 2, 1];
+
+// The footer is the page's receipt: links as line items, a total, a barcode, and a way back up.
 export function Footer() {
   return (
-    <footer className="border-t border-line">
-      <div className={`${wrap} flex flex-col gap-4 py-10 text-sm text-ink-dim sm:flex-row sm:items-center sm:justify-between`}>
-        <p>© 2026 Senbud. Senbud is a budgeting tool, not financial advice.</p>
-        <nav aria-label="Footer" className="flex gap-5 [&>a]:inline-flex [&>a]:min-h-11 [&>a]:items-center">
-          <a href="#how" className="hover:text-ink">How it works</a>
-          <a href="#pricing" className="hover:text-ink">Pricing</a>
-          <a href="#faq" className="hover:text-ink">FAQ</a>
-        </nav>
+    <footer className="border-t border-line pb-24 pt-14 md:pb-14">
+      <div className="mx-auto max-w-md px-4">
+        <div className="drop-shadow-[0_18px_24px_rgb(0_0_0/0.18)]">
+          <div className="receipt px-6 pb-9 pt-7 font-mono text-[13px] sm:px-8">
+            <div className="flex justify-between uppercase tracking-wider text-receipt-ink/75">
+              <span>Senbud</span>
+              <span>Receipt #2026</span>
+            </div>
+            <div className="my-3 border-t border-dashed border-receipt-ink/25" />
+            <nav aria-label="Footer">
+              <ul>
+                {[
+                  ["How it works", "#how"],
+                  ["Pricing", "#pricing"],
+                  ["FAQ", "#faq"],
+                  ["Get early access", "#waitlist"],
+                ].map(([label, href], i) => (
+                  <li key={href}>
+                    <a href={href} className="group flex min-h-11 items-center gap-2 hover:text-[#1f3fd8]">
+                      <span className="group-hover:underline group-hover:decoration-[#eeff5a] group-hover:decoration-4 group-hover:underline-offset-2">
+                        {label}
+                      </span>
+                      <span className="dotted-leader" />
+                      <span className="tabular-nums text-receipt-ink/75">{String(i + 1).padStart(2, "0")}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            <div className="my-3 border-t border-dashed border-receipt-ink/25" />
+            <div className="flex justify-between font-semibold">
+              <span>Spent on ads</span>
+              <span>$0.00</span>
+            </div>
+            <div className="barcode mx-auto mt-6 flex h-12 w-fit items-stretch gap-[2px]" aria-hidden="true">
+              {BARS.map((w, i) => (
+                <span key={i} className="bg-receipt-ink" style={{ width: w * 1.5 }} />
+              ))}
+            </div>
+            <p className="mt-4 text-center uppercase tracking-[0.2em]">Thank you. Come again.</p>
+            <p className="mt-3 text-center text-[11px] text-receipt-ink/75">
+              © 2026 Senbud · a budgeting tool, not financial advice
+            </p>
+          </div>
+        </div>
+        <div className="mt-6 flex justify-center">
+          <a href="#top" className="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold text-ink-dim ring-1 ring-line hover:text-ink">
+            <ArrowUp size={16} aria-hidden="true" />
+            Back to top
+          </a>
+        </div>
       </div>
+      <MobileBar />
     </footer>
   );
 }

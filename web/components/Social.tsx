@@ -60,7 +60,7 @@ export function Split() {
     <section className="border-t border-line">
       <div className={`${wrap} grid items-center gap-12 py-20 sm:py-28 lg:grid-cols-2`}>
         <div>
-          <h2 className={h2}>Split the bill without the awkward group chat.</h2>
+          <h2 className={h2}>Split the bill without the <span className="marker">awkward group chat.</span></h2>
           <p className="mt-5 max-w-md text-lg text-ink-dim">
             Snap the receipt and say who was there. Split it evenly, or tap each line to say who had what. Your share
             counts as your spending; the rest is kept as IOUs until friends pay you back.
@@ -168,7 +168,7 @@ export function Wrapped() {
     <section className="border-t border-line">
       <div className={`${wrap} grid items-center gap-12 py-20 sm:py-28 lg:grid-cols-[1fr_1.1fr]`}>
         <div>
-          <h2 className={h2}>Your month, wrapped.</h2>
+          <h2 className={h2}>Your month, <span className="marker">wrapped.</span></h2>
           <p className="mt-5 max-w-md text-lg text-ink-dim">
             On the 1st, Senbud turns last month into a short story worth sharing. Share cards hide your amounts
             unless you choose to show them.

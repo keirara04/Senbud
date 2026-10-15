@@ -93,7 +93,7 @@ export function Brain() {
   return (
     <section className="border-t border-line">
       <div className={`${wrap} py-20 sm:py-28`}>
-        <h2 className={`${h2} max-w-3xl`}>It does the maths you’d rather skip.</h2>
+        <h2 className={`${h2} max-w-3xl`}>It does the maths you’d <span className="marker">rather skip.</span></h2>
         <p className="mt-5 max-w-xl text-lg text-ink-dim">
           No charts to decode. Senbud turns what you spent into a few plain answers, and speaks up at most once a day.
         </p>
