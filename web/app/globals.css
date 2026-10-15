@@ -51,9 +51,11 @@
   --color-ink-dim: var(--ink-dim);
   --color-line: var(--line);
 
-  --font-display: var(--font-fraunces);
-  --font-sans: var(--font-geist);
-  --font-mono: var(--font-geist-mono);
+  /* Apple system fonts: SF Pro and SF Mono on Apple devices, the platform's own UI font elsewhere.
+     Nothing is downloaded; SF can't be self-hosted on the web under Apple's licence. */
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 
 html {
@@ -69,7 +71,7 @@ html {
 body {
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -77,10 +79,10 @@ body {
   background: color-mix(in srgb, var(--hl) 70%, transparent);
 }
 
-/* Fraunces' soft + wonky axes give the serif its friendly, slightly hand-made feel. */
+/* SF Pro Display headlines: heavier and tighter, the way Apple sets large type. */
 .font-display {
-  font-variation-settings: "SOFT" 100, "WONK" 1;
-  letter-spacing: -0.02em;
+  font-weight: 650;
+  letter-spacing: -0.022em;
 }
 
 /* In the base layer so rounded-* utilities keep their shape; yellow + dark ring reads on cobalt and paper. */

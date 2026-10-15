@@ -10,6 +10,7 @@ import {
   FLOORS,
   FREELANCER_PAY,
   FREELANCER_PAY_FLOORS,
+  IMP_FLOORS,
   LICH_FLOOR,
   MAX_MORALE,
   MONSTERS,
@@ -125,7 +126,7 @@ function startFloor(s: State, floor: number) {
   const plan: MonsterId[] = FLOOR_PLAN[floor].map((m) =>
     m === "random" ? RANDOM_POOL[Math.floor(next(s) * RANDOM_POOL.length)] : m,
   );
-  if (s.cls === "homeCook") plan.unshift("boredomImp");
+  if (s.cls === "homeCook" && IMP_FLOORS.includes(floor)) plan.unshift("boredomImp");
   if (s.slimeDue === floor && !plan.includes("subscriptionSlime")) plan.push("subscriptionSlime");
   if (floor === LICH_FLOOR && s.gold < RENT_RESERVE) {
     if (s.ward) {
@@ -234,7 +235,9 @@ export function actions(s: State): Action[] {
 export function committed(s: State): number {
   let total = 0;
   const upcoming = [...s.queue];
-  for (let f = s.floor + 1; f <= FLOORS; f++) upcoming.push(...(FLOOR_PLAN[f] as MonsterId[]));
+  for (let f = s.floor + 1; f <= FLOORS; f++) {
+    upcoming.push(...FLOOR_PLAN[f].filter((m): m is MonsterId => m !== "random"));
+  }
   for (const m of upcoming) {
     if (MONSTERS[m].dc === null && MONSTERS[m].fleeable === false) {
       total += m === "textbookTroll" && s.cls === "scholar" ? SCHOLAR_TROLL_COST : (MONSTERS[m].cost as number);
@@ -256,11 +259,14 @@ export function act(prev: State, a: Action): State {
   const def = MONSTERS[e.monster];
 
   if (a.type === "pay") {
-    if (e.monster === "rentDragon" && s.gold < e.cost) return finish(s, "slainByRent"), s;
+    if (e.monster === "rentDragon" && s.gold < e.cost) {
+      finish(s, "slainByRent");
+      return s;
+    }
     spend(s, e.monster, e.cost);
-    if (e.monster === "cravingWraith" || e.monster === "boredomImp") {
+    if (e.monster === "cravingWraith") {
       s.treats += 1;
-      addMorale(s, e.monster === "cravingWraith" ? 2 : 1);
+      addMorale(s, 2);
     }
     if (e.monster === "subscriptionSlime" && s.slimeDue === null) s.slimeDue = s.floor; // now subscribed
     clear(s);
@@ -305,9 +311,7 @@ export function act(prev: State, a: Action): State {
   switch (a.spell) {
     case "snapScroll":
       s.discipline += 1;
-      return act({ ...s, castsLeft: s.castsLeft }, { type: "pay" }).log.length
-        ? mergeLogs(s, act(s, { type: "pay" }))
-        : s;
+      return mergeLogs(s, act(s, { type: "pay" }));
     case "partySplit": {
       const half = Math.ceil(e.cost / 2);
       s.encounter = { ...e, cost: half };

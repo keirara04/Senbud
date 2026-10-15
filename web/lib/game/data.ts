@@ -22,9 +22,9 @@ export type ClassDef = {
 };
 
 export const CLASSES: Record<ClassId, ClassDef> = {
-  scholar: { name: "Scholar", gold: 105, resistBonus: 2, blurb: "+2 to resist. Textbooks hurt more." },
-  freelancer: { name: "Freelancer", gold: 70, resistBonus: 0, blurb: "Clients sometimes pay. Sometimes." },
-  homeCook: { name: "Home Cook", gold: 100, resistBonus: 0, blurb: "Food costs half. Boredom finds you daily." },
+  scholar: { name: "Scholar", gold: 95, resistBonus: 2, blurb: "+2 to resist. Textbooks hurt more." },
+  freelancer: { name: "Freelancer", gold: 60, resistBonus: 0, blurb: "Clients sometimes pay. Sometimes." },
+  homeCook: { name: "Home Cook", gold: 115, resistBonus: 0, blurb: "Food costs half. Boredom visits every other day." },
 };
 
 export type MonsterDef = {
@@ -87,7 +87,8 @@ export const CASTS = 3;
 export const START_MORALE = 3;
 export const MAX_MORALE = 5;
 export const FREELANCER_PAY_FLOORS = [2, 4, 6];
-export const FREELANCER_PAY = 30;
+export const IMP_FLOORS = [2, 4, 6];
+export const FREELANCER_PAY = 25;
 export const SCHOLAR_TROLL_COST = 30;
 export const SLIME_EVERY = 2;
 export const BURNOUT_PENALTY = 3;
