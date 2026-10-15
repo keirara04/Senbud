@@ -1,1 +1,5 @@
 .DS_Store
+
+# Pixel-art build outputs (regenerate with art/build_sprites.py)
+art/json/
+art/output/

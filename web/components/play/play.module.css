@@ -1,0 +1,29 @@
+/* Pixel sprites: crisp scaling and a 2-frame idle bob from a horizontal strip. */
+.sprite {
+  image-rendering: pixelated;
+  background-repeat: no-repeat;
+  background-position: 0 0;
+}
+
+.idle {
+  animation: idle 0.8s steps(1) infinite;
+}
+
+@keyframes idle {
+  0% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: 100% 0;
+  }
+}
+
+.scene {
+  image-rendering: pixelated;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .idle {
+    animation: none;
+  }
+}

@@ -1,10 +1,12 @@
 import { Brain } from "@/components/Brain";
 import { Faq, Pricing, Waitlist } from "@/components/Convert";
 import { Hero } from "@/components/Hero";
+import { HowItWorks } from "@/components/HowItWorks";
 import { MotionProvider } from "@/components/MotionProvider";
 import { Nav } from "@/components/Nav";
+import { PlayTeaser } from "@/components/PlayTeaser";
 import { Privacy } from "@/components/Privacy";
-import { Footer, HowItWorks, Problem } from "@/components/Sections";
+import { Footer, Problem } from "@/components/Sections";
 import { Split, Wrapped } from "@/components/Social";
 
 const jsonLd = {
@@ -33,6 +35,7 @@ export default function Home() {
           <Brain />
           <Split />
           <Wrapped />
+          <PlayTeaser />
           <Privacy />
           <Pricing />
           <Faq />
