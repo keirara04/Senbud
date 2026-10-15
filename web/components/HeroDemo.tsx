@@ -20,7 +20,7 @@ const SAMPLE_RECEIPT: Item[] = [
 ];
 
 const ASK_CHIPS = [
-  { label: "Concert ticket", price: 40 },
+  { label: "Concert ticket", price: 20 },
   { label: "Bubble tea", price: 6 },
   { label: "Sneakers", price: 120 },
 ];
@@ -354,7 +354,9 @@ function SnapPanel({ reduced, onScanned }: { reduced: boolean | null; onScanned:
         </div>
         <div className="min-w-0">
           <p className="text-sm text-on-panel-dim">
-            {state === "done" ? "Read the shop, items and prices from the photo." : "Try it with a sample receipt from 7-Eleven."}
+            {state === "done"
+              ? "That was a sample. In the app, Senbud reads the shop, items and prices from your photo."
+              : "Try it with a sample receipt from 7-Eleven."}
           </p>
           <button
             type="button"
@@ -372,7 +374,7 @@ function SnapPanel({ reduced, onScanned }: { reduced: boolean | null; onScanned:
 }
 
 function AskPanel({ left }: { left: number }) {
-  const [price, setPrice] = useState("40");
+  const [price, setPrice] = useState("8");
   const value = Number(price);
   const result = value > 0 && value < 100_000 ? afford(value, { left, daysLeft: DAYS_LEFT, weeklyBudget: BUDGET }) : null;
   const answer = !result
@@ -403,7 +405,7 @@ function AskPanel({ left }: { left: number }) {
             key={c.label}
             type="button"
             onClick={() => setPrice(String(c.price))}
-            className="min-h-9 rounded-full border border-panel-line px-3 text-xs text-on-panel-dim hover:text-on-panel"
+            className="min-h-11 rounded-full border border-panel-line px-3 text-xs text-on-panel-dim hover:text-on-panel"
           >
             {c.label} ${c.price}
           </button>
