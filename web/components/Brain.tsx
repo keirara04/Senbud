@@ -91,7 +91,7 @@ function Jar({ fill }: { fill: number }) {
 
 export function Brain() {
   return (
-    <section className="border-t border-line">
+    <section>
       <div className={`${wrap} py-20 sm:py-28`}>
         <h2 className={`${h2} max-w-3xl`}>It does the maths you’d <span className="marker">rather skip.</span></h2>
         <p className="mt-5 max-w-xl text-lg text-ink-dim">

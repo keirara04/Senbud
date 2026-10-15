@@ -73,7 +73,7 @@ const ctaMotion = "transition-transform duration-200 hover:-translate-y-0.5 acti
 export function Pricing() {
   const [yearly, setYearly] = useState(true);
   return (
-    <section id="pricing" className="scroll-mt-16 border-t border-line">
+    <section id="pricing" className="scroll-mt-16">
       <div className={`${wrap} py-20 sm:py-28`}>
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -108,7 +108,9 @@ export function Pricing() {
           </fieldset>
         </div>
 
-        <div className="mt-12 grid items-stretch gap-4 md:grid-cols-2">
+        <div className="relative isolate mt-12 grid items-stretch gap-4 md:grid-cols-2">
+          <div aria-hidden="true" className="paper-glow cobalt -left-10 top-1/4 h-72 w-80" />
+          <div aria-hidden="true" className="paper-glow hl -right-12 bottom-10 h-80 w-80" />
           <div className="flex flex-col rounded-3xl bg-paper-2 p-7 ring-1 ring-line sm:p-9">
             <h3 className="text-xl font-semibold">Free</h3>
             <p className="mt-4 font-display text-6xl">$0</p>
@@ -180,7 +182,7 @@ const FAQ = [
 
 export function Faq() {
   return (
-    <section id="faq" className="scroll-mt-16 border-t border-line">
+    <section id="faq" className="scroll-mt-16">
       <div className={`${wrap} grid gap-10 py-20 sm:py-28 lg:grid-cols-[0.8fr_1.2fr]`}>
         <h2 className={h2}>Questions people <span className="marker">ask first.</span></h2>
         {/* Native details: answers ship in the static HTML, and name="faq" keeps one open at a time. */}

@@ -12,7 +12,9 @@ export function Problem() {
         Most budget apps want your bank password or your patience.{" "}
         <span className="marker">Senbud needs neither.</span>
       </h2>
-      <div className="mt-12 grid gap-4 md:grid-cols-2">
+      <div className="relative isolate mt-12 grid gap-4 md:grid-cols-2">
+        <div aria-hidden="true" className="paper-glow cobalt -left-10 top-10 h-64 w-72" />
+        <div aria-hidden="true" className="paper-glow hl -right-10 bottom-0 h-64 w-72" />
         <div className="flex flex-col gap-6 rounded-3xl bg-paper-2 p-6 ring-1 ring-line sm:p-8">
           <BankAsk />
           <div>
@@ -95,7 +97,7 @@ const ways = [
 
 export function HowItWorks() {
   return (
-    <section id="how" className="scroll-mt-16 border-t border-line">
+    <section id="how" className="scroll-mt-16">
       <div className={`${wrap} grid gap-12 py-20 sm:py-28 lg:grid-cols-[0.9fr_1.1fr]`}>
         <div className="lg:sticky lg:top-28 lg:self-start">
           <h2 className={h2}>Three ways to add spending. <span className="marker">Pick the lazy one.</span></h2>
@@ -104,7 +106,9 @@ export function HowItWorks() {
             use.
           </p>
         </div>
-        <ul className="grid gap-4">
+        <ul className="relative isolate grid gap-4">
+          <li aria-hidden="true" className="paper-glow hl -right-16 top-1/3 h-72 w-72 list-none" />
+          <li aria-hidden="true" className="paper-glow cobalt -left-10 bottom-10 h-64 w-64 list-none" />
           {ways.map(({ icon: Icon, title, body, from, to }) => (
             <li key={title} className="rounded-3xl bg-paper-2 p-6 ring-1 ring-line sm:p-7">
               <div className="flex items-start gap-4">
@@ -135,7 +139,7 @@ const BARS = [2, 1, 3, 1, 1, 2, 4, 1, 2, 1, 3, 2, 1, 1, 4, 2, 1, 3, 1, 2, 2, 1, 
 // The footer is the page's receipt: links as line items, a total, a barcode, and a way back up.
 export function Footer() {
   return (
-    <footer className="border-t border-line pb-24 pt-14 md:pb-14">
+    <footer className="pb-24 pt-14 md:pb-14">
       <div className="mx-auto max-w-md px-4">
         <div className="drop-shadow-[0_18px_24px_rgb(0_0_0/0.18)]">
           <div className="receipt px-6 pb-9 pt-7 font-mono text-[13px] sm:px-8">

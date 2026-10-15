@@ -57,7 +57,7 @@ export function Split() {
   }
 
   return (
-    <section className="border-t border-line">
+    <section>
       <div className={`${wrap} grid items-center gap-12 py-20 sm:py-28 lg:grid-cols-2`}>
         <div>
           <h2 className={h2}>Split the bill without the <span className="marker">awkward group chat.</span></h2>
@@ -165,7 +165,7 @@ export function Wrapped() {
   const [i, setI] = useState(0);
   const next = () => setI((i + 1) % cards.length);
   return (
-    <section className="border-t border-line">
+    <section>
       <div className={`${wrap} grid items-center gap-12 py-20 sm:py-28 lg:grid-cols-[1fr_1.1fr]`}>
         <div>
           <h2 className={h2}>Your month, <span className="marker">wrapped.</span></h2>

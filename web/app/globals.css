@@ -20,6 +20,7 @@
   --ink: #1a1c2e;
   --ink-dim: #565b75;
   --line: rgb(26 28 46 / 0.12);
+  --dot: rgb(31 63 216 / 0.13);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -29,6 +30,7 @@
     --ink: #eef0ff;
     --ink-dim: #a8b0d8;
     --line: rgb(255 255 255 / 0.1);
+    --dot: rgb(255 255 255 / 0.07);
     --accent-ink: #eeff5a;
   }
 }
@@ -69,7 +71,11 @@ html {
 }
 
 body {
-  background: var(--paper);
+  /* Dotted-notebook paper behind every light section; cobalt sections paint over it. */
+  background-color: var(--paper);
+  background-image: radial-gradient(var(--dot) 1px, transparent 1.4px);
+  background-size: 22px 22px;
+  overflow-x: clip;
   color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -245,4 +251,19 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .glow-drift, .glow-drift-rev, .float-tag { animation: none; }
+}
+
+/* Soft colour glows that sit behind key cards on the paper sections. Place inside a relative parent. */
+.paper-glow {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 9999px;
+  filter: blur(80px);
+  opacity: 0.9;
+}
+.paper-glow.cobalt { background: rgb(31 63 216 / 0.28); }
+.paper-glow.hl { background: rgb(238 255 90 / 0.75); }
+@media (prefers-color-scheme: dark) {
+  .paper-glow { opacity: 0.45; }
 }
