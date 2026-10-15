@@ -220,3 +220,29 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .glow-border { animation: none; }
 }
+
+/* Backdrops for the cobalt sections: exercise-book grid fading out from one corner. */
+.grid-paper {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.07) 1px, transparent 1px);
+  background-size: 32px 32px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 30% 20%, #000 20%, transparent 75%);
+  mask-image: radial-gradient(ellipse 80% 70% at 30% 20%, #000 20%, transparent 75%);
+}
+
+/* Slow drifting glows and floating price tags. The float uses `translate`, so it stacks with the
+   mouse-parallax transform motion sets on the same element. */
+@keyframes drift {
+  50% { translate: 60px 40px; }
+}
+@keyframes float {
+  50% { translate: 0 -12px; }
+}
+.glow-drift { animation: drift 18s ease-in-out infinite; }
+.glow-drift-rev { animation: drift 22s ease-in-out infinite reverse; }
+.float-tag { animation: float 7s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-drift, .glow-drift-rev, .float-tag { animation: none; }
+}

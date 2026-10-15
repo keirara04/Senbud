@@ -77,8 +77,9 @@ export function Privacy() {
   };
 
   return (
-    <section className="bg-panel text-on-panel">
-      <div className={`${wrap} py-20 sm:py-28`}>
+    <section className="relative overflow-hidden bg-panel text-on-panel">
+      <div aria-hidden="true" className="grid-paper pointer-events-none absolute inset-0" />
+      <div className={`relative ${wrap} py-20 sm:py-28`}>
         <h2 className={`${h2} max-w-3xl`}>Here’s exactly where your <span className="marker marker-soft">money data goes.</span></h2>
         <p className="mt-5 max-w-xl text-lg text-on-panel-dim">Follow one receipt from your hand to your budget.</p>
 

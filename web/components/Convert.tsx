@@ -237,8 +237,9 @@ export function Waitlist() {
   }
 
   return (
-    <section id="waitlist" className="scroll-mt-16 bg-panel text-on-panel">
-      <div className={`${wrap} grid gap-10 py-20 sm:py-28 lg:grid-cols-2 lg:items-center`}>
+    <section id="waitlist" className="scroll-mt-16 relative overflow-hidden bg-panel text-on-panel">
+      <div aria-hidden="true" className="grid-paper pointer-events-none absolute inset-0" />
+      <div className={`relative ${wrap} grid gap-10 py-20 sm:py-28 lg:grid-cols-2 lg:items-center`}>
         <div>
           <h2 className={h2}>
             Get <span className="marker marker-soft">early access.</span>

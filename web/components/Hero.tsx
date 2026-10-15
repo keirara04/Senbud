@@ -1,13 +1,11 @@
 import { Check } from "lucide-react";
+import { HeroBackdrop } from "./Backdrop";
 import { HeroDemo } from "./HeroDemo";
 
 export function Hero() {
   return (
     <section id="top" className="relative overflow-hidden bg-panel text-on-panel">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -left-40 -top-40 h-[34rem] w-[34rem] rounded-full bg-white/15 blur-[120px]"
-      />
+      <HeroBackdrop />
       <div className="relative mx-auto grid max-w-6xl gap-12 px-4 pb-20 pt-14 sm:px-6 min-[900px]:grid-cols-[1.05fr_1fr] min-[900px]:items-center min-[900px]:pb-28 min-[900px]:pt-20">
         <div>
           <h1 className="font-display text-[clamp(2.6rem,6.2vw,4.6rem)] leading-[1.02]">
