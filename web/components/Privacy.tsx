@@ -24,9 +24,9 @@ const STEPS = [
   {
     tab: "Saved",
     title: "It lands on your receipt, back on your phone.",
-    body: "“Mamak · $8.40” is saved where everything else is. Senbud’s servers never saw it.",
+    body: "“Corner Deli · $8.40” is saved where everything else is. Senbud’s servers never saw it.",
     where: "phone",
-    token: "Mamak · $8.40",
+    token: "Corner Deli · $8.40",
   },
 ] as const;
 

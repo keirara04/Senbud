@@ -2,7 +2,7 @@
 
 import { Check, ChevronDown } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { h2, wrap } from "./Sections";
 
 const FREE = [
@@ -150,7 +150,7 @@ export function Pricing() {
                 )}
               </AnimatePresence>
               <FeatureList items={PRO} tone="text-hl" />
-              <a href="#waitlist" className={`hl-sweep mt-9 rounded-full bg-hl py-3.5 text-center font-semibold text-panel ${ctaMotion}`}>
+              <a href="#waitlist" className={`plausible-event-name=CTA plausible-event-place=pro hl-sweep mt-9 rounded-full bg-hl py-3.5 text-center font-semibold text-panel ${ctaMotion}`}>
                 Join the Pro waitlist
               </a>
               <p className="mt-3 text-center text-sm text-on-panel-dim">Join now and your founding price stays the same when Pro opens.</p>
@@ -209,6 +209,16 @@ export function Waitlist() {
   const [message, setMessage] = useState("");
   const [joined, setJoined] = useState<{ email: string; feature: string } | null>(null);
 
+  // A friend's share link (?ref=CODE) is remembered for this visit and sent with the signup.
+  useEffect(() => {
+    try {
+      const fromUrl = new URLSearchParams(location.search).get("ref");
+      if (fromUrl && /^[\w-]{4,32}$/.test(fromUrl)) sessionStorage.setItem("senbud:ref", fromUrl);
+    } catch {
+      // Storage can be blocked; referrals are a bonus, so carry on without one.
+    }
+  }, []);
+
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (status === "sending") return; // stays enabled (readable) but ignores double submits
@@ -221,15 +231,19 @@ export function Waitlist() {
       return;
     }
     setStatus("sending");
+    let ref = "";
+    try {
+      ref = sessionStorage.getItem("senbud:ref") ?? "";
+    } catch {}
     try {
       const res = await fetch(`${API}/v1/waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(ref ? { ...data, ref } : data),
       });
       if (!res.ok) throw new Error(String(res.status));
       setStatus("done");
-      setMessage("You’re on the list. We’ll email you when early access opens.");
+      setMessage("Almost there. Check your inbox and tap the link to confirm your spot.");
       const select = form.elements.namedItem("feature") as HTMLSelectElement;
       setJoined({ email: String(data.email), feature: select.selectedOptions[0]?.text ?? "" });
     } catch {
@@ -272,14 +286,14 @@ export function Waitlist() {
                   <span className="truncate">{joined.feature}</span>
                 </p>
                 <div className="my-3 border-t border-dashed border-receipt-ink/25" />
-                <p className="text-receipt-ink/75">We’ll email you when early access opens.</p>
+                <p className="text-receipt-ink/75">We sent you a confirmation link. Tap it to lock in your spot.</p>
                 <motion.p
                   initial={{ opacity: 0, scale: 1.8, rotate: -24 }}
                   animate={{ opacity: 1, scale: 1, rotate: -12 }}
                   transition={{ delay: 0.35, type: "spring", stiffness: 420, damping: 16 }}
                   className="absolute right-5 top-14 rounded-lg border-[3px] border-[#1f3fd8] px-3 py-1 font-sans text-lg font-black uppercase tracking-wide text-[#1f3fd8]"
                 >
-                  You’re in
+                  Check email
                 </motion.p>
               </div>
             </motion.div>
@@ -316,7 +330,7 @@ export function Waitlist() {
             <button
               type="submit"
               aria-busy={status === "sending"}
-              className="hl-sweep relative mt-6 w-full overflow-hidden rounded-full bg-hl py-3.5 font-semibold text-panel"
+              className="plausible-event-name=Waitlist+submit hl-sweep relative mt-6 w-full overflow-hidden rounded-full bg-hl py-3.5 font-semibold text-panel"
             >
               {status === "sending" ? "Printing your spot…" : "Join the waitlist"}
               {status === "sending" && (

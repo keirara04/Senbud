@@ -35,7 +35,7 @@ export default function OpengraphImage() {
         >
           {[
             ["Lunch", "$12"],
-            ["Grab", "$8"],
+            ["Uber", "$8"],
             ["Bubble tea", "$6"],
           ].map(([l, a]) => (
             <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0" }}>

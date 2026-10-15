@@ -4,7 +4,7 @@ import { HeroDemo } from "./HeroDemo";
 
 export function Hero() {
   return (
-    <section id="top" className="relative overflow-hidden bg-panel text-on-panel">
+    <section id="top" tabIndex={-1} className="relative overflow-hidden bg-panel text-on-panel focus:outline-none">
       <HeroBackdrop />
       <div className="relative mx-auto grid max-w-6xl gap-12 px-4 pb-20 pt-14 sm:px-6 min-[900px]:grid-cols-[1.05fr_1fr] min-[900px]:items-center min-[900px]:pb-28 min-[900px]:pt-20">
         <div>
@@ -12,13 +12,13 @@ export function Hero() {
             Your money buddy that does the <em className="marker marker-load marker-soft text-hl">boring part.</em>
           </h1>
           <p className="mt-6 max-w-[34rem] text-lg leading-relaxed text-on-panel-dim">
-            Snap a receipt or type “lunch 12, grab 8”. Senbud logs it, counts down to rent, and tells you when you
+            Snap a receipt or type “lunch 12, uber 8”. Senbud logs it, counts down to rent, and tells you when you
             can actually afford that burger.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <a
               href="#waitlist"
-              className="hl-sweep rounded-full bg-hl px-6 py-3.5 text-center font-semibold text-panel transition-transform hover:-translate-y-0.5"
+              className="plausible-event-name=CTA plausible-event-place=hero hl-sweep rounded-full bg-hl px-6 py-3.5 text-center font-semibold text-panel transition-transform hover:-translate-y-0.5"
             >
               Get early access
             </a>

@@ -1,4 +1,5 @@
 import { ArrowRight, ArrowUp, Camera, Keyboard, MessageSquareText } from "lucide-react";
+import Link from "next/link";
 import { MobileBar } from "./MobileBar";
 import { BankAsk, StreakFade } from "./Problem";
 
@@ -62,19 +63,19 @@ const ways = [
         <span className="absolute inset-x-0 top-8 h-3 bg-hl/80" />
       </span>
     ),
-    to: <ReceiptLine label="Mamak" cat="Food" amount="$8.40" />,
+    to: <ReceiptLine label="Corner Deli" cat="Food" amount="$8.40" />,
   },
   {
     icon: MessageSquareText,
     title: "Type it like a text",
     body: "Write the way you’d tell a friend. One line can hold a whole day.",
     from: (
-      <span className="shrink-0 rounded-2xl rounded-br-md bg-panel px-3 py-2 text-sm text-on-panel">lunch 12, grab 8</span>
+      <span className="shrink-0 rounded-2xl rounded-br-md bg-panel px-3 py-2 text-sm text-on-panel">lunch 12, uber 8</span>
     ),
     to: (
       <span className="grid gap-1.5">
         <ReceiptLine label="Lunch" cat="Food" amount="$12" />
-        <ReceiptLine label="Grab" cat="Transport" amount="$8" />
+        <ReceiptLine label="Uber" cat="Transport" amount="$8" />
       </span>
     ),
   },
@@ -151,19 +152,20 @@ export function Footer() {
             <nav aria-label="Footer">
               <ul>
                 {[
-                  ["How it works", "#how"],
-                  ["Pricing", "#pricing"],
-                  ["FAQ", "#faq"],
-                  ["Get early access", "#waitlist"],
+                  ["How it works", "/#how"],
+                  ["Pricing", "/#pricing"],
+                  ["FAQ", "/#faq"],
+                  ["Compare apps", "/alternatives"],
+                  ["Get early access", "/#waitlist"],
                 ].map(([label, href], i) => (
                   <li key={href}>
-                    <a href={href} className="group flex min-h-11 items-center gap-2 hover:text-[#1f3fd8]">
+                    <Link href={href} className="group flex min-h-11 items-center gap-2 hover:text-[#1f3fd8]">
                       <span className="group-hover:underline group-hover:decoration-[#eeff5a] group-hover:decoration-4 group-hover:underline-offset-2">
                         {label}
                       </span>
                       <span className="dotted-leader" />
                       <span className="tabular-nums text-receipt-ink/75">{String(i + 1).padStart(2, "0")}</span>
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>

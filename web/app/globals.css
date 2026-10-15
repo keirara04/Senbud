@@ -63,6 +63,18 @@
 html {
   scroll-behavior: smooth;
 }
+/* No visible scrollbar: the highlighter progress line in the nav shows your place on the page instead.
+   Scrolling itself (wheel, trackpad, keys, touch) is unchanged. */
+html {
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar {
+  display: none;
+}
+/* Lenis drives scrolling itself when it's active; native smooth scrolling would fight it. */
+html.lenis {
+  scroll-behavior: auto;
+}
 
 @media (prefers-reduced-motion: reduce) {
   html {

@@ -7,20 +7,20 @@ import { type BillItem, money, type Owner, splitBill } from "@/lib/demo";
 import { h2, wrap } from "./Sections";
 
 const BILL: BillItem[] = [
-  { label: "Nasi lemak ayam", cents: 1200, owner: "You" },
-  { label: "Mee goreng", cents: 1000, owner: "Aiman" },
-  { label: "Roti canai x2", cents: 400, owner: "Sarah" },
-  { label: "Milo ais", cents: 450, owner: "Sarah" },
-  { label: "Teh tarik x3", cents: 900, owner: "Shared" },
-  { label: "Kuih platter", cents: 250, owner: "Shared" },
+  { label: "Cheeseburger", cents: 1200, owner: "You" },
+  { label: "Chicken tacos", cents: 1000, owner: "Jordan" },
+  { label: "Fries x2", cents: 400, owner: "Sarah" },
+  { label: "Iced coffee", cents: 450, owner: "Sarah" },
+  { label: "Sodas x3", cents: 900, owner: "Shared" },
+  { label: "Chips and salsa", cents: 250, owner: "Shared" },
 ];
 const TOTAL = BILL.reduce((s, i) => s + i.cents, 0);
-const OWNERS: Owner[] = ["You", "Aiman", "Sarah", "Shared"];
+const OWNERS: Owner[] = ["You", "Jordan", "Sarah", "Shared"];
 
 // Each person keeps one solid colour everywhere (solid so it reads on both light and dark pages).
 const OWNER_STYLE: Record<Owner, string> = {
   You: "bg-[#eeff5a] text-[#4a5000]",
-  Aiman: "bg-[#c4efdd] text-[#155a44]",
+  Jordan: "bg-[#c4efdd] text-[#155a44]",
   Sarah: "bg-[#ffd6cf] text-[#9e2f22]",
   Shared: "bg-[#e1e7fb] text-[#1f3fd8]",
 };
@@ -32,7 +32,7 @@ export function Split() {
   const [bill, setBill] = useState(BILL);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
   const shares = splitBill(bill, mode);
-  const reminder = `Hey Sarah! Friday dinner at the mamak: your share is ${usd(shares.Sarah)} 😊`;
+  const reminder = `Hey Sarah! Friday dinner at the diner: your share is ${usd(shares.Sarah)} 😊`;
 
   useEffect(() => {
     if (copyState === "idle") return;
@@ -50,7 +50,7 @@ export function Split() {
     }
   }
 
-  // Tapping a line passes it to the next person: You -> Aiman -> Sarah -> Shared -> You.
+  // Tapping a line passes it to the next person: You -> Jordan -> Sarah -> Shared -> You.
   function cycle(i: number) {
     setMode("items");
     setBill((prev) => prev.map((it, n) => (n === i ? { ...it, owner: OWNERS[(OWNERS.indexOf(it.owner) + 1) % OWNERS.length] } : it)));
@@ -90,7 +90,7 @@ export function Split() {
           <div className="mt-4 drop-shadow-[0_12px_16px_rgb(0_0_0/0.18)]">
             <div className="receipt px-4 pb-6 pt-5 font-mono text-[13px] sm:px-5">
               <div className="flex justify-between uppercase tracking-wider text-receipt-ink/75">
-                <span>Fri · Mamak Corner</span>
+                <span>Fri · Corner Diner</span>
                 <span>Paid by you</span>
               </div>
               <div className="my-3 border-t border-dashed border-receipt-ink/25" />
@@ -125,7 +125,7 @@ export function Split() {
           <p className="mt-3 text-center text-sm text-ink-dim">Tap a line to change who had it.</p>
 
           <ul aria-live="polite" className="mt-4 grid grid-cols-3 gap-2">
-            {(["You", "Aiman", "Sarah"] as const).map((p) => (
+            {(["You", "Jordan", "Sarah"] as const).map((p) => (
               <li key={p} className={`rounded-2xl p-3 ${OWNER_STYLE[p]}`}>
                 <p className="text-xs font-semibold">{p === "You" ? "Your share" : `${p} owes you`}</p>
                 <motion.p key={`${p}-${shares[p]}`} initial={{ opacity: 0.4, y: 3 }} animate={{ opacity: 1, y: 0 }} className="font-display text-xl tabular-nums sm:text-2xl">

@@ -5,8 +5,8 @@ import { useEffect } from "react";
 
 // Ghost price tags that drift behind the hero. depth sets how far each one moves with the mouse.
 const TAGS = [
-  { text: "kopi $4", x: "6%", y: "16%", r: -8, depth: 18, mobile: true },
-  { text: "grab $8", x: "40%", y: "8%", r: 6, depth: 10, mobile: false },
+  { text: "coffee $4", x: "6%", y: "16%", r: -8, depth: 18, mobile: true },
+  { text: "uber $8", x: "40%", y: "8%", r: 6, depth: 10, mobile: false },
   { text: "rent $650", x: "88%", y: "6%", r: 5, depth: 24, mobile: true },
   { text: "bubble tea $6", x: "4%", y: "78%", r: 7, depth: 14, mobile: false },
   { text: "netflix $15", x: "46%", y: "88%", r: -6, depth: 20, mobile: true },

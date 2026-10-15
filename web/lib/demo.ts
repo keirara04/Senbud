@@ -63,15 +63,15 @@ export const money = (value: number) => {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: n % 1 ? 2 : 0 });
 };
 
-export type Person = "You" | "Aiman" | "Sarah";
-export const PEOPLE: Person[] = ["You", "Aiman", "Sarah"];
+export type Person = "You" | "Jordan" | "Sarah";
+export const PEOPLE: Person[] = ["You", "Jordan", "Sarah"];
 export type Owner = Person | "Shared";
 export type BillItem = { label: string; cents: number; owner: Owner };
 
 // Shares in cents. Shared lines (or the whole bill, when even) split three ways; leftover cents go to
 // "You", who paid, so the shares always add up to the bill exactly.
 export function splitBill(items: BillItem[], mode: "even" | "items"): Record<Person, number> {
-  const out: Record<Person, number> = { You: 0, Aiman: 0, Sarah: 0 };
+  const out: Record<Person, number> = { You: 0, Jordan: 0, Sarah: 0 };
   let shared = 0;
   for (const it of items) {
     if (mode === "even" || it.owner === "Shared") shared += it.cents;

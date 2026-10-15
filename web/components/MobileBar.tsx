@@ -36,7 +36,7 @@ export function MobileBar() {
           <span className="text-sm">
             <span className="font-semibold">Senbud</span> <span className="text-on-panel-dim">· free, no sign-up</span>
           </span>
-          <a href="#waitlist" className="hl-sweep inline-flex min-h-11 items-center rounded-xl bg-hl px-4 text-sm font-semibold text-panel">
+          <a href="#waitlist" className="plausible-event-name=CTA plausible-event-place=mobile-bar hl-sweep inline-flex min-h-11 items-center rounded-xl bg-hl px-4 text-sm font-semibold text-panel">
             Get early access
           </a>
         </motion.div>

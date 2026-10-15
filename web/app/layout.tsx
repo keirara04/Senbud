@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
+import { SmoothScroll } from "@/components/SmoothScroll";
 import "./globals.css";
 
 const title = "Senbud — the money buddy that does the boring part";
@@ -20,7 +22,27 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className="antialiased">
-      <body className="min-h-dvh">{children}</body>
+      <body className="min-h-dvh">
+        {/* First thing keyboard users reach: jump past the nav to the page content (id="top" on every page). */}
+        <a
+          href="#top"
+          className="sr-only z-[60] rounded-full bg-hl px-4 py-2 font-semibold text-panel focus:not-sr-only focus:fixed focus:left-4 focus:top-3"
+        >
+          Skip to content
+        </a>
+        <SmoothScroll />
+        {/* Cookie-free analytics (Plausible), only when configured. CTA clicks are counted from their
+            plausible-event-* class names; no personal data or cookies. */}
+        {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
+          <Script
+            defer
+            data-domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN}
+            src={process.env.NEXT_PUBLIC_PLAUSIBLE_SRC ?? "https://plausible.io/js/script.tagged-events.js"}
+            strategy="afterInteractive"
+          />
+        )}
+        {children}
+      </body>
     </html>
   );
 }

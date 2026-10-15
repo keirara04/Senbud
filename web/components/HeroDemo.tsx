@@ -10,13 +10,13 @@ const BUDGET = 100;
 const SPENT_BEFORE = 46;
 const DAYS_LEFT = 4;
 const HOURLY = 12;
-const SCRIPT = "lunch 12, grab 8, bubble tea 6";
+const SCRIPT = "lunch 12, uber 8, boba 6";
 
 // What the "photo" in the Snap tab contains. Fixed sample: the landing page runs no AI.
 const SAMPLE_RECEIPT: Item[] = [
   { label: "Iced coffee", amount: 3.2, category: "Treat" },
-  { label: "Onigiri", amount: 2.8, category: "Food" },
-  { label: "Bus card top-up", amount: 10, category: "Transport" },
+  { label: "Bagel", amount: 2.8, category: "Food" },
+  { label: "Metro card top-up", amount: 10, category: "Transport" },
 ];
 
 const ASK_CHIPS = [
@@ -290,7 +290,7 @@ function TypePanel({
               setText("");
             }
           }}
-          placeholder="kopi 4, netflix 15"
+          placeholder="coffee 4, netflix 15"
           autoComplete="off"
           className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-base text-on-panel placeholder:text-on-panel-dim/80 focus:outline-none focus-visible:shadow-none"
         />
