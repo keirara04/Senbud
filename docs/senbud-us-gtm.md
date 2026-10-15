@@ -1,4 +1,4 @@
-# Ledgerly: how to sell it in the US
+# Senbud: how to sell it in the US
 
 Go-to-market research. Compiled 16 October 2026. Every source was accessed on that date. Claims tagged UNVERIFIED come from search summaries, from third parties, or are contradicted by other sources. Check them before relying on them. This report is not legal or tax advice.
 
@@ -6,9 +6,9 @@ Go-to-market research. Compiled 16 October 2026. Every source was accessed on th
 
 ## Verdict
 
-It is possible to sell Ledgerly in the US, but not as it stands today, and not at first with a paid plan.
+It is possible to sell Senbud in the US, but not as it stands today, and not at first with a paid plan.
 
-- **Competition.** The apps Ledgerly competes with are the free manual-entry tiers: EveryDollar Free, Goodbudget Free, Spendee Basic, and self-hosted Actual Budget. The $100/yr bank-sync apps are a different market.
+- **Competition.** The apps Senbud competes with are the free manual-entry tiers: EveryDollar Free, Goodbudget Free, Spendee Basic, and self-hosted Actual Budget. The $100/yr bank-sync apps are a different market.
 - **No proof yet.** No solo-built, privacy-first budgeting app was found with published revenue. The closest one, Plika, had 7,500 visitors in its first month and $0 revenue.
 - **The one success.** The only solo budgeting founder with public numbers is Lunch Money. It grew through a Show HN launch, Twitter and a blog to 1,000 paying users and $80k ARR about 20 months after launch (Jen Yip's Indie Hackers AMA, March 2021, confirmed on the page: https://www.indiehackers.com/post/i-bootstrapped-a-budgeting-app-to-80k-arr-as-a-company-of-one-and-digital-nomad-ama-1096ac5400).
 
@@ -24,7 +24,7 @@ The 90-day plan is below.
 
 ## 1. Who buys it
 
-| Segment | Why they'd pick Ledgerly | Where they are |
+| Segment | Why they'd pick Senbud | Where they are |
 |---|---|---|
 | Privacy-conscious budgeters who won't link their bank | No account, no Plaid, data stays on the device | Hacker News, r/privacy, r/selfhosted, privacy newsletters |
 | Ex-Mint users who now use spreadsheets | Charts and budgets without the setup | r/personalfinance, r/budget, "Mint alternative" searches |
@@ -57,7 +57,7 @@ Budgeting is a habit most people don't keep. Expect people to drop off quickly.
 | Simplifi | $6.99/mo billed annually ($3.99 is a promo) | No | Yes | Web, iOS, Android | quicken.com/products/simplifi |
 | Actual Budget | Free (open source); hosted about $1.50/mo | Yes | Optional | Web, self-hosted | actualbudget.org |
 
-**What this means for Ledgerly's prices.**
+**What this means for Senbud's prices.**
 
 - **$59/yr.** It's cheaper than every app with bank sync, which charge about $80–110. Without bank sync, though, the real comparison is $0 (EveryDollar Free, Spendee Basic, Actual Budget). A paid tier has to offer something none of those free tiers do.
 - **$7/mo.** This is reasonable. Copilot works out to $7.92/mo and Simplifi to $6.99/mo.
@@ -75,7 +75,7 @@ Budgeting is a habit most people don't keep. Expect people to drop off quickly.
 
 The landing page promises **"No account, ever"** and a **14-day trial**. You can't deliver both with the current design, because checkouts, licence keys, refunds and trials all need a small server. Here's the smallest setup that keeps the free tier fully local:
 
-1. **Hosted checkout.** Payments happen on the merchant of record's page; Ledgerly itself never handles card details.
+1. **Hosted checkout.** Payments happen on the merchant of record's page; Senbud itself never handles card details.
 2. **Webhook.** A serverless function (for example Cloudflare Workers or Vercel) receives the purchase event and stores the email, plan, expiry and a hash of the licence key.
 3. **Licence key** emailed to the buyer.
 4. **App check.** The app validates the key online when it starts. It caches a signed result for 7–14 days so it keeps working offline.
@@ -149,7 +149,7 @@ Update the copy to match. "No account for the free app" is accurate. "No account
 
 ## 6. Mobile
 
-Many US budgeting app users are on mobile, and Ledgerly is web only today.
+Many US budgeting app users are on mobile, and Senbud is web only today.
 
 - **PWA (installable web app).** No store fees and no app review. This is the right choice to start. Test whether iOS keeps the stored data.
 - **App Store.** Apple's Small Business Program takes 15%, dropping to 10% on subscriptions after the first year. https://developer.apple.com/app-store/small-business-program/

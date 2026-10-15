@@ -1,48 +1,46 @@
 @import "tailwindcss";
 
-/* Ledgerly landing tokens.
-   Plum "night" panels stay dark in both schemes; the paper sections follow the system. */
+/* Senbud landing tokens: cobalt "pen" panels and a highlighter accent.
+   Cobalt panels stay the same in both schemes; the paper sections follow the system. */
 :root {
-  --plum: #1b1035;
-  --plum-2: #26184a;
-  --plum-line: rgb(255 255 255 / 0.1);
-  --on-plum: #f6f3ff;
-  --on-plum-dim: #b8afd3;
-  --lilac: #b9a6ff;
-  --lilac-deep: #6a4fe0;
-  --mango: #ffb547;
+  --panel: #1f3fd8;
+  --panel-2: #1733b5;
+  --panel-line: rgb(255 255 255 / 0.16);
+  --on-panel: #f4f6ff;
+  --on-panel-dim: #c9d2ff;
+  --hl: #eeff5a;
+  --accent-ink: #1f3fd8;
   --coral: #ff6b5b;
   --mint: #4fd1a5;
-  --receipt: #fbfbf8;
-  --receipt-ink: #2b2733;
+  --receipt: #ffffff;
+  --receipt-ink: #1a1c2e;
 
-  --paper: #f3f1f8;
+  --paper: #f5f6fa;
   --paper-2: #ffffff;
-  --ink: #26232e;
-  --ink-dim: #5f5a6b;
-  --line: rgb(38 35 46 / 0.12);
+  --ink: #1a1c2e;
+  --ink-dim: #565b75;
+  --line: rgb(26 28 46 / 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #120b24;
-    --paper-2: #1b1233;
-    --ink: #efeaf9;
-    --ink-dim: #a9a1bf;
+    --paper: #0b1033;
+    --paper-2: #131a4a;
+    --ink: #eef0ff;
+    --ink-dim: #a8b0d8;
     --line: rgb(255 255 255 / 0.1);
-    --lilac-deep: #b9a6ff;
+    --accent-ink: #eeff5a;
   }
 }
 
 @theme inline {
-  --color-plum: var(--plum);
-  --color-plum-2: var(--plum-2);
-  --color-plum-line: var(--plum-line);
-  --color-on-plum: var(--on-plum);
-  --color-on-plum-dim: var(--on-plum-dim);
-  --color-lilac: var(--lilac);
-  --color-lilac-deep: var(--lilac-deep);
-  --color-mango: var(--mango);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-panel-line: var(--panel-line);
+  --color-on-panel: var(--on-panel);
+  --color-on-panel-dim: var(--on-panel-dim);
+  --color-hl: var(--hl);
+  --color-accent-ink: var(--accent-ink);
   --color-coral: var(--coral);
   --color-mint: var(--mint);
   --color-receipt: var(--receipt);
@@ -76,7 +74,7 @@ body {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--lilac) 40%, transparent);
+  background: color-mix(in srgb, var(--hl) 70%, transparent);
 }
 
 /* Fraunces' soft + wonky axes give the serif its friendly, slightly hand-made feel. */
@@ -86,8 +84,9 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--lilac);
-  outline-offset: 3px;
+  outline: 2px solid var(--hl);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--ink);
   border-radius: 6px;
 }
 

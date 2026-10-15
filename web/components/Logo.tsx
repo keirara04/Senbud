@@ -5,13 +5,13 @@ export function Logo({ className = "" }: { className?: string }) {
         <path
           d="M2 1h18v22l-3-2-3 2-3-2-3 2-3-2-3 2z"
           fill="var(--receipt)"
-          stroke="var(--lilac)"
+          stroke="var(--hl)"
           strokeWidth="1.5"
           strokeLinejoin="round"
         />
         <path d="M6 7h10M6 11h7M6 15h10" stroke="var(--receipt-ink)" strokeWidth="1.6" strokeLinecap="round" />
       </svg>
-      <span className="font-display text-xl font-semibold">Ledgerly</span>
+      <span className="font-display text-xl font-semibold">Senbud</span>
     </span>
   );
 }

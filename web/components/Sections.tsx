@@ -8,7 +8,7 @@ export function Problem() {
   return (
     <section className={`${wrap} py-20 sm:py-28`}>
       <p className={`${h2} max-w-4xl`}>
-        Most budget apps want your bank password or your patience. Ledgerly needs neither.
+        Most budget apps want your bank password or your patience. Senbud needs neither.
       </p>
       <div className="mt-10 grid max-w-4xl gap-8 text-lg leading-relaxed text-ink-dim sm:grid-cols-2">
         <p>Linking a bank account to an app you found last week feels like a lot to ask. So people don’t.</p>
@@ -22,7 +22,7 @@ const ways = [
   {
     icon: Camera,
     title: "Snap it",
-    body: "Take a photo of a receipt or a screenshot of your banking app. Ledgerly reads the shop, amount and date.",
+    body: "Take a photo of a receipt or a screenshot of your banking app. Senbud reads the shop, amount and date.",
     sample: "IMG_2041.jpg → Mamak · $8.40",
   },
   {
@@ -53,7 +53,7 @@ export function HowItWorks() {
         <ul className="divide-y divide-line border-y border-line">
           {ways.map(({ icon: Icon, title, body, sample }) => (
             <li key={title} className="grid gap-3 py-7 sm:grid-cols-[auto_1fr] sm:gap-6">
-              <span className="flex size-11 items-center justify-center rounded-xl bg-lilac/20 text-lilac-deep">
+              <span className="flex size-11 items-center justify-center rounded-xl bg-hl/20 text-accent-ink">
                 <Icon size={22} aria-hidden="true" />
               </span>
               <div>
@@ -85,28 +85,28 @@ function Column({ icon, title, children, tone }: { icon: ReactNode; title: strin
 
 export function Privacy() {
   return (
-    <section className="bg-plum text-on-plum">
+    <section className="bg-panel text-on-panel">
       <div className={`${wrap} py-20 sm:py-28`}>
         <h2 className={`${h2} max-w-3xl`}>Here’s exactly where your money data goes.</h2>
         <div className="mt-12 grid gap-4 md:grid-cols-3">
-          <Column icon={<MonitorSmartphone className="text-mint" aria-hidden="true" />} title="Stays on your device" tone="bg-plum-2">
+          <Column icon={<MonitorSmartphone className="text-mint" aria-hidden="true" />} title="Stays on your device" tone="bg-panel-2">
             <li>Every transaction, budget and receipt photo</li>
             <li>Your rent, treats and friends’ IOUs</li>
             <li>Export it all as a CSV whenever you like</li>
           </Column>
-          <Column icon={<Lock className="text-mango" aria-hidden="true" />} title="Sent to the AI, if you turn it on" tone="bg-plum-2">
+          <Column icon={<Lock className="text-hl" aria-hidden="true" />} title="Sent to the AI, if you turn it on" tone="bg-panel-2">
             <li>Only the photo or line you’re adding right now</li>
             <li>A short summary of this month to answer questions</li>
-            <li>Nothing is kept on Ledgerly’s servers</li>
+            <li>Nothing is kept on Senbud’s servers</li>
           </Column>
-          <Column icon={<ShieldOff className="text-coral" aria-hidden="true" />} title="Never" tone="bg-plum-2">
+          <Column icon={<ShieldOff className="text-coral" aria-hidden="true" />} title="Never" tone="bg-panel-2">
             <li>Your bank login or card numbers</li>
             <li>Ads, or selling your data</li>
             <li>Locking your data behind a paywall</li>
           </Column>
         </div>
-        <p className="mt-8 max-w-2xl text-on-plum-dim">
-          Because your data lives in your browser, clearing your browser data deletes it. Ledgerly reminds you to
+        <p className="mt-8 max-w-2xl text-on-panel-dim">
+          Because your data lives in your browser, clearing your browser data deletes it. Senbud reminds you to
           export a backup, and the file is yours to keep.
         </p>
       </div>
@@ -118,7 +118,7 @@ export function Footer() {
   return (
     <footer className="border-t border-line">
       <div className={`${wrap} flex flex-col gap-4 py-10 text-sm text-ink-dim sm:flex-row sm:items-center sm:justify-between`}>
-        <p>© 2026 Ledgerly. Ledgerly is a budgeting tool, not financial advice.</p>
+        <p>© 2026 Senbud. Senbud is a budgeting tool, not financial advice.</p>
         <nav aria-label="Footer" className="flex gap-5 [&>a]:inline-flex [&>a]:min-h-11 [&>a]:items-center">
           <a href="#how" className="hover:text-ink">How it works</a>
           <a href="#pricing" className="hover:text-ink">Pricing</a>

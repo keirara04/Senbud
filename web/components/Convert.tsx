@@ -48,7 +48,7 @@ export function Pricing() {
                 role="radio"
                 aria-checked={yearly === o.v}
                 onClick={() => setYearly(o.v)}
-                className={`min-h-11 rounded-full px-4 text-sm font-semibold transition-colors ${yearly === o.v ? "bg-plum text-on-plum" : "text-ink-dim hover:text-ink"}`}
+                className={`min-h-11 rounded-full px-4 text-sm font-semibold transition-colors ${yearly === o.v ? "bg-panel text-on-panel" : "text-ink-dim hover:text-ink"}`}
               >
                 {o.label}
               </button>
@@ -64,7 +64,7 @@ export function Pricing() {
             <ul className="mt-8 flex-1 space-y-3">
               {FREE.map((f) => (
                 <li key={f} className="flex gap-3">
-                  <Check size={18} className="mt-0.5 shrink-0 text-lilac-deep" aria-hidden="true" />
+                  <Check size={18} className="mt-0.5 shrink-0 text-accent-ink" aria-hidden="true" />
                   {f}
                 </li>
               ))}
@@ -74,25 +74,25 @@ export function Pricing() {
             </a>
           </div>
 
-          <div className="flex flex-col rounded-3xl bg-plum p-7 text-on-plum ring-2 ring-lilac/60 sm:p-9">
+          <div className="flex flex-col rounded-3xl bg-panel p-7 text-on-panel ring-2 ring-hl/60 sm:p-9">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold">Pro</h3>
-              <span className="rounded-full bg-mango px-3 py-1 text-xs font-semibold text-plum">Opens soon</span>
+              <span className="rounded-full bg-hl px-3 py-1 text-xs font-semibold text-panel">Opens soon</span>
             </div>
             <p className="mt-4 font-display text-6xl tabular-nums">{yearly ? "$39" : "$4.99"}</p>
-            <p className="mt-1 text-on-plum-dim">{yearly ? "per year, about $3.25 a month" : "per month, cancel any time"}</p>
+            <p className="mt-1 text-on-panel-dim">{yearly ? "per year, about $3.25 a month" : "per month, cancel any time"}</p>
             <ul className="mt-8 flex-1 space-y-3">
               {PRO.map((f) => (
                 <li key={f} className="flex gap-3">
-                  <Check size={18} className="mt-0.5 shrink-0 text-mango" aria-hidden="true" />
+                  <Check size={18} className="mt-0.5 shrink-0 text-hl" aria-hidden="true" />
                   {f}
                 </li>
               ))}
             </ul>
-            <a href="#waitlist" className="mt-9 rounded-full bg-lilac py-3.5 text-center font-semibold text-plum">
+            <a href="#waitlist" className="mt-9 rounded-full bg-hl py-3.5 text-center font-semibold text-panel">
               Join the Pro waitlist
             </a>
-            <p className="mt-3 text-center text-sm text-on-plum-dim">Join now and your founding price stays the same when Pro opens.</p>
+            <p className="mt-3 text-center text-sm text-on-panel-dim">Join now and your founding price stays the same when Pro opens.</p>
           </div>
         </div>
       </div>
@@ -101,21 +101,21 @@ export function Pricing() {
 }
 
 const FAQ = [
-  ["Do I need to connect my bank?", "No. You add spending by photo, by typing a line, or by tapping it in. Ledgerly never asks for a bank login."],
+  ["Do I need to connect my bank?", "No. You add spending by photo, by typing a line, or by tapping it in. Senbud never asks for a bank login."],
   [
     "Where is my data stored?",
-    "In your browser, on your device. Nothing about your spending is stored on Ledgerly’s servers. You can export everything as a CSV at any time.",
+    "In your browser, on your device. Nothing about your spending is stored on Senbud’s servers. You can export everything as a CSV at any time.",
   ],
   [
     "What happens if I clear my browser data?",
-    "Your Ledgerly data is deleted with it, the same as any site data. Ledgerly reminds you to export a backup, and you can import that file again later.",
+    "Your Senbud data is deleted with it, the same as any site data. Senbud reminds you to export a backup, and you can import that file again later.",
   ],
   [
     "What does the AI see?",
-    "AI features are off until you turn them on. When you use them, only the photo or line you’re adding and a short summary of this month are sent to the AI model to get an answer. They aren’t stored by Ledgerly.",
+    "AI features are off until you turn them on. When you use them, only the photo or line you’re adding and a short summary of this month are sent to the AI model to get an answer. They aren’t stored by Senbud.",
   ],
-  ["Does it work on my phone?", "Yes. Ledgerly is a web app you can add to your home screen. It works offline for everything except the AI features."],
-  ["When can I use it?", "Ledgerly is in development. Join the waitlist and you’ll get an email when early access opens."],
+  ["Does it work on my phone?", "Yes. Senbud is a web app you can add to your home screen. It works offline for everything except the AI features."],
+  ["When can I use it?", "Senbud is in development. Join the waitlist and you’ll get an email when early access opens."],
 ] as const;
 
 export function Faq() {
@@ -153,7 +153,7 @@ export function Waitlist() {
     if (!API) {
       setStatus("error");
       setMessage("The waitlist isn’t open yet, so your email wasn’t saved. Please check back soon.");
-      console.warn("Waitlist disabled: set NEXT_PUBLIC_API_URL to the Ledgerly API base URL.");
+      console.warn("Waitlist disabled: set NEXT_PUBLIC_API_URL to the Senbud API base URL.");
       return;
     }
     setStatus("sending");
@@ -173,16 +173,16 @@ export function Waitlist() {
   }
 
   return (
-    <section id="waitlist" className="scroll-mt-16 bg-plum text-on-plum">
+    <section id="waitlist" className="scroll-mt-16 bg-panel text-on-panel">
       <div className={`${wrap} grid gap-10 py-20 sm:py-28 lg:grid-cols-2 lg:items-center`}>
         <div>
           <h2 className={h2}>Get early access.</h2>
-          <p className="mt-5 max-w-md text-lg text-on-plum-dim">
-            Ledgerly is being built now. Join the list and tell us which feature you want first. It decides what we
+          <p className="mt-5 max-w-md text-lg text-on-panel-dim">
+            Senbud is being built now. Join the list and tell us which feature you want first. It decides what we
             ship next.
           </p>
         </div>
-        <form onSubmit={submit} className="rounded-3xl bg-plum-2 p-6 sm:p-8">
+        <form onSubmit={submit} className="rounded-3xl bg-panel-2 p-6 sm:p-8">
           <label htmlFor="email" className="text-sm font-medium">
             Email
           </label>
@@ -193,7 +193,7 @@ export function Waitlist() {
             required
             autoComplete="email"
             placeholder="you@example.com"
-            className="mt-2 w-full rounded-xl bg-plum px-4 py-3 text-on-plum ring-1 ring-plum-line placeholder:text-on-plum-dim/60 focus:outline-none focus:ring-2 focus:ring-lilac"
+            className="mt-2 w-full rounded-xl bg-panel px-4 py-3 text-on-panel ring-1 ring-panel-line placeholder:text-on-panel-dim/60 focus:outline-none focus:ring-2 focus:ring-hl"
           />
           <label htmlFor="feature" className="mt-5 block text-sm font-medium">
             Which feature do you want most?
@@ -202,7 +202,7 @@ export function Waitlist() {
             id="feature"
             name="feature"
             defaultValue="receipt"
-            className="mt-2 w-full rounded-xl bg-plum px-4 py-3 text-on-plum ring-1 ring-plum-line focus:outline-none focus:ring-2 focus:ring-lilac"
+            className="mt-2 w-full rounded-xl bg-panel px-4 py-3 text-on-panel ring-1 ring-panel-line focus:outline-none focus:ring-2 focus:ring-hl"
           >
             <option value="receipt">Snap receipts</option>
             <option value="afford">Can I afford it?</option>
@@ -213,11 +213,11 @@ export function Waitlist() {
           <button
             type="submit"
             disabled={status === "sending"}
-            className="mt-6 w-full rounded-full bg-lilac py-3.5 font-semibold text-plum disabled:opacity-60"
+            className="mt-6 w-full rounded-full bg-hl py-3.5 font-semibold text-panel disabled:opacity-60"
           >
             {status === "sending" ? "Joining…" : "Join the waitlist"}
           </button>
-          <p aria-live="polite" className={`mt-4 min-h-6 text-sm ${status === "error" ? "text-coral" : "text-mint"}`}>
+          <p aria-live="polite" className={`mt-4 min-h-6 text-sm ${status === "error" ? "text-[#ffc2b8]" : "text-hl"}`}>
             {message}
           </p>
         </form>

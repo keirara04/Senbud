@@ -1,4 +1,4 @@
-# Ledgerly: product spec v1
+# Senbud: product spec v1
 
 Status: brainstorm locked, no code yet. Date: 16 October 2026.
 
@@ -57,7 +57,7 @@ NUDGE (max 1/day) → AI phrases it friendly
 ```
 
 **AI sees:** the input, plus a small summary: this period's totals, budget state, and the last 20 transactions.
-**AI never sees:** the full ledger history or any bank credentials. Nothing is stored on a Ledgerly server.
+**AI never sees:** the full ledger history or any bank credentials. Nothing is stored on a Senbud server.
 
 ---
 
@@ -233,13 +233,13 @@ New stores on top of the existing transactions and category budgets:
 
 ## 10. Tech stack (decided)
 
-**Project folder:** `~/VS CODE/Ledgerly/`, with `web/` (Next.js) and `api/` (Laravel). This is the same layout as MakanApa.
+**Project folder:** `~/VS CODE/Senbud/`, with `web/` (Next.js) and `api/` (Laravel). This is the same layout as MakanApa.
 
 ### Frontend: `web/`
 | Layer | Choice |
 |---|---|
 | Framework | Next.js (App Router) + React + TypeScript, built as static files (`output: "export"`) |
-| Styling | Tailwind CSS (Ledgerly's current look as design tokens) |
+| Styling | Tailwind CSS (Senbud's current look as design tokens) |
 | Marketing / SEO | `(marketing)/` routes pre-rendered to static HTML, including `alternatives/[slug]` via `generateStaticParams` |
 | App | `/app/*`, runs entirely in the browser (`"use client"`) |
 | Local data | Dexie (IndexedDB) |
@@ -260,7 +260,7 @@ New stores on top of the existing transactions and category budgets:
 
 ### Deployment
 - Self-hosted with Docker: one container for `web` (nginx serving the static files) and one for `api` (Laravel + queue worker + scheduler).
-- Domains: `ledgerly.app` (web) and `api.ledgerly.app` (Laravel). CORS is restricted to the web domain.
+- Domains: `senbud.app` (web) and `api.senbud.app` (Laravel). CORS is restricted to the web domain.
 - Secrets live in the server's environment: the OpenRouter key, the Polar webhook secret, the keys for signing licences, and the Web Push keys.
 
 ### Rules
@@ -269,6 +269,6 @@ New stores on top of the existing transactions and category budgets:
 
 ## 11. Still open
 - **Bank sync:** decide after launch.
-- **Name and branding:** check whether "Ledgerly" is free (domain, trademark).
+- **Name and branding:** check whether "Senbud" is free (domain, trademark).
 - **Onboarding:** under 60 seconds to get budget, rent and payday set.
 - **Proxy vs users' own key** for AI in production.

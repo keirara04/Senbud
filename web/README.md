@@ -1,6 +1,6 @@
-# Ledgerly web
+# Senbud web
 
-Landing page (and later the app) for Ledgerly. Next.js static export + Tailwind CSS.
+Landing page (and later the app) for Senbud. Next.js static export + Tailwind CSS.
 
 ```bash
 npm install

@@ -6,26 +6,26 @@ const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
   style: ["normal", "italic"],
-  axes: ["SOFT", "WONK", "opsz"],
+  axes: ["SOFT", "WONK"],
 });
 
 const geist = Geist({ variable: "--font-geist", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
-const title = "Ledgerly — the money buddy that does the boring part";
+const title = "Senbud — the money buddy that does the boring part";
 const description =
-  "Snap a receipt or type “lunch 12, grab 8”. Ledgerly logs it, counts down to rent, and tells you when you can afford a treat. No bank password needed.";
+  "Snap a receipt or type “lunch 12, grab 8”. Senbud logs it, counts down to rent, and tells you when you can afford a treat. No bank password needed.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title,
   description,
-  openGraph: { title, description, type: "website", siteName: "Ledgerly" },
+  openGraph: { title, description, type: "website", siteName: "Senbud" },
   twitter: { card: "summary_large_image", title, description },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1b1035",
+  themeColor: "#1f3fd8",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

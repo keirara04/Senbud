@@ -14,10 +14,10 @@ const SCRIPT = "lunch 12, grab 8, bubble tea 6";
 type Line = Item & { id: number; batch: number };
 
 export const CATEGORY_COLOR: Record<Category, string> = {
-  Food: "bg-lilac/25 text-[#5a3fd0]",
-  Transport: "bg-mint/25 text-[#1f7a5c]",
-  Treat: "bg-mango/30 text-[#8a5300]",
-  Groceries: "bg-mint/25 text-[#1f7a5c]",
+  Food: "bg-[#1f3fd8]/12 text-[#1f3fd8]",
+  Transport: "bg-mint/25 text-[#155a44]",
+  Treat: "bg-[#eeff5a] text-[#4a5000]",
+  Groceries: "bg-mint/25 text-[#155a44]",
   Subscription: "bg-coral/20 text-[#b13a2c]",
   Other: "bg-black/5 text-receipt-ink/70",
 };
@@ -80,38 +80,38 @@ export function Hero() {
   }, [toast]);
 
   return (
-    <section id="top" className="relative overflow-hidden bg-plum text-on-plum">
+    <section id="top" className="relative overflow-hidden bg-panel text-on-panel">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -left-40 -top-40 h-[34rem] w-[34rem] rounded-full bg-lilac-deep/40 blur-[120px]"
+        className="pointer-events-none absolute -left-40 -top-40 h-[34rem] w-[34rem] rounded-full bg-white/15 blur-[120px]"
       />
       <div className="relative mx-auto grid max-w-6xl gap-12 px-4 pb-20 pt-14 sm:px-6 min-[900px]:grid-cols-[1.05fr_1fr] min-[900px]:items-center min-[900px]:pb-28 min-[900px]:pt-20">
         <div>
           <h1 className="font-display text-[clamp(2.6rem,6.2vw,4.6rem)] leading-[1.02]">
-            Your money buddy that does the <em className="text-lilac">boring part.</em>
+            Your money buddy that does the <em className="text-hl">boring part.</em>
           </h1>
-          <p className="mt-6 max-w-[34rem] text-lg leading-relaxed text-on-plum-dim">
-            Snap a receipt or type “lunch 12, grab 8”. Ledgerly logs it, counts down to rent, and tells you when you
+          <p className="mt-6 max-w-[34rem] text-lg leading-relaxed text-on-panel-dim">
+            Snap a receipt or type “lunch 12, grab 8”. Senbud logs it, counts down to rent, and tells you when you
             can actually afford that burger.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <a
               href="#waitlist"
-              className="rounded-full bg-lilac px-6 py-3.5 text-center font-semibold text-plum transition-transform hover:-translate-y-0.5"
+              className="rounded-full bg-hl px-6 py-3.5 text-center font-semibold text-panel transition-transform hover:-translate-y-0.5"
             >
               Get early access
             </a>
             <a
               href="#how"
-              className="rounded-full border border-plum-line px-6 py-3.5 text-center font-semibold text-on-plum transition-colors hover:bg-white/5"
+              className="rounded-full border border-panel-line px-6 py-3.5 text-center font-semibold text-on-panel transition-colors hover:bg-white/5"
             >
               See how it works
             </a>
           </div>
-          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-on-plum-dim">
+          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-on-panel-dim">
             {["No bank password", "No sign-up to try", "Free plan forever"].map((t) => (
               <li key={t} className="flex items-center gap-2">
-                <Check size={16} className="text-mint" aria-hidden="true" />
+                <Check size={16} className="text-hl" aria-hidden="true" />
                 {t}
               </li>
             ))}
@@ -125,7 +125,7 @@ export function Hero() {
               scripted.current = false;
               add(text);
             }}
-            className="flex items-center gap-2 rounded-2xl border border-plum-line bg-plum-2 p-2 shadow-[0_20px_60px_-20px_rgb(0_0_0/0.6)]"
+            className="flex items-center gap-2 rounded-2xl border border-panel-line bg-panel-2 p-2 shadow-[0_20px_60px_-20px_rgb(0_0_0/0.6)]"
           >
             <label htmlFor="quick-add" className="sr-only">
               Type what you spent
@@ -145,19 +145,19 @@ export function Hero() {
               }}
               placeholder="Try: kopi 4, netflix 15"
               autoComplete="off"
-              className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-base text-on-plum placeholder:text-on-plum-dim/60 focus:outline-none"
+              className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-base text-on-panel placeholder:text-on-panel-dim/60 focus:outline-none"
             />
             <button
               type="submit"
-              className="flex items-center gap-1.5 rounded-xl bg-lilac px-4 py-2.5 text-sm font-semibold text-plum"
+              className="flex items-center gap-1.5 rounded-xl bg-hl px-4 py-2.5 text-sm font-semibold text-panel"
             >
               Add <CornerDownLeft size={14} aria-hidden="true" />
             </button>
           </form>
-          {error && <p className="mt-2 px-2 text-sm text-coral">{error}</p>}
+          {error && <p className="mt-2 px-2 text-sm text-hl">{error}</p>}
 
           <div className="receipt mt-5 px-6 pb-8 pt-7 font-mono text-[13px] shadow-[0_30px_60px_-25px_rgb(0_0_0/0.7)] sm:rotate-[1.2deg]">
-            <div className="flex justify-between uppercase tracking-wider text-receipt-ink/60">
+            <div className="flex justify-between uppercase tracking-wider text-receipt-ink/75">
               <span>Today</span>
               <span>Week 3 · day 4</span>
             </div>
@@ -183,7 +183,7 @@ export function Hero() {
                   </motion.li>
                 ))}
               </AnimatePresence>
-              {!lines.length && <li className="py-1 text-receipt-ink/50">Nothing logged yet today</li>}
+              {!lines.length && <li className="py-1 text-receipt-ink/75">Nothing logged yet today</li>}
             </ul>
             <div className="my-3 border-t border-dashed border-receipt-ink/25" />
             <div className="flex justify-between font-semibold">
@@ -193,8 +193,8 @@ export function Hero() {
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-3">
-            <div className="col-span-2 rounded-2xl bg-plum-2 p-4 sm:col-span-1">
-              <p className="text-sm text-on-plum-dim">Safe to spend today</p>
+            <div className="col-span-2 rounded-2xl bg-panel-2 p-4 sm:col-span-1">
+              <p className="text-sm text-on-panel-dim">Safe to spend today</p>
               <motion.p
                 key={safeToday.toFixed(2)}
                 initial={reduced ? false : { opacity: 0.4, y: 4 }}
@@ -205,15 +205,15 @@ export function Hero() {
               </motion.p>
               <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
                 <motion.div
-                  className={`h-full rounded-full ${weekPct > 85 ? "bg-coral" : "bg-lilac"}`}
+                  className={`h-full rounded-full ${weekPct > 85 ? "bg-coral" : "bg-hl"}`}
                   animate={{ width: `${weekPct}%` }}
                 />
               </div>
-              <p className="mt-2 text-xs text-on-plum-dim">
+              <p className="mt-2 text-xs text-on-panel-dim">
                 {money(SPENT_BEFORE + spentToday)} of {money(BUDGET)} this week
               </p>
             </div>
-            <div className="col-span-2 flex flex-col justify-between rounded-2xl bg-mango p-4 text-plum sm:col-span-1">
+            <div className="col-span-2 flex flex-col justify-between rounded-2xl bg-hl p-4 text-panel sm:col-span-1">
               <p className="text-sm font-medium">Rent in 6 days</p>
               <p className="font-display text-4xl">$650</p>
               <p className="flex items-center gap-1.5 text-xs font-medium">
@@ -235,7 +235,7 @@ export function Hero() {
                     Added {toast.count} {toast.count === 1 ? "item" : "items"}. Safe to spend today:{" "}
                     {money(Math.floor(safeToday * 100) / 100)}
                   </span>
-                  <button type="button" onClick={undo} className="-my-2 inline-flex min-h-11 items-center px-2 font-semibold text-[#5a3fd0] underline-offset-2 hover:underline">
+                  <button type="button" onClick={undo} className="-my-2 inline-flex min-h-11 items-center px-2 font-semibold text-[#1f3fd8] underline-offset-2 hover:underline">
                     Undo
                   </button>
                 </motion.div>

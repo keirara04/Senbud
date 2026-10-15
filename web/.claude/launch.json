@@ -1,7 +1,7 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "ledgerly-web-dev", "runtimeExecutable": "npx", "runtimeArgs": ["next", "dev", "-p", "3107"], "port": 3107 },
-    { "name": "ledgerly-web-out", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "3108", "--bind", "127.0.0.1", "--directory", "out"], "port": 3108 }
+    { "name": "senbud-web-dev", "runtimeExecutable": "npx", "runtimeArgs": ["next", "dev", "-p", "3107"], "port": 3107 },
+    { "name": "senbud-web-out", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "3108", "--bind", "127.0.0.1", "--directory", "out"], "port": 3108 }
   ]
 }

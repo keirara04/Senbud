@@ -11,7 +11,7 @@ const HOURLY = 12;
 
 const VERDICT: Record<Verdict, { title: string; tone: string }> = {
   yes: { title: "Yes, go for it", tone: "bg-mint/25 text-[#14583f] dark:text-mint" },
-  tight: { title: "Doable, but tight", tone: "bg-mango/30 text-[#7a4a00] dark:text-mango" },
+  tight: { title: "Doable, but tight", tone: "bg-hl text-[#4a5000]" },
   no: { title: "Not this week", tone: "bg-coral/20 text-[#9e2f22] dark:text-coral" },
 };
 
@@ -25,11 +25,11 @@ function AffordTile() {
   return (
     <div className="rounded-3xl bg-paper-2 p-6 ring-1 ring-line sm:p-8 lg:row-span-2">
       <h3 className="text-xl font-semibold">Can I afford it?</h3>
-      <p className="mt-1.5 text-ink-dim">Ask before you buy. Ledgerly checks your week, keeps rent safe, and answers straight.</p>
+      <p className="mt-1.5 text-ink-dim">Ask before you buy. Senbud checks your week, keeps rent safe, and answers straight.</p>
       <label htmlFor={id} className="mt-6 block text-sm font-medium">
         Price of the thing you want
       </label>
-      <div className="mt-2 flex items-center rounded-2xl bg-paper px-4 ring-1 ring-line focus-within:ring-2 focus-within:ring-lilac">
+      <div className="mt-2 flex items-center rounded-2xl bg-paper px-4 ring-1 ring-line focus-within:ring-2 focus-within:ring-accent-ink">
         <span className="font-display text-3xl text-ink-dim">$</span>
         <input
           id={id}
@@ -66,8 +66,8 @@ function Jar({ fill }: { fill: number }) {
   const h = 84 * fill;
   return (
     <svg viewBox="0 0 80 110" className="h-28 w-auto" aria-hidden="true">
-      <rect x="18" y="4" width="44" height="12" rx="4" fill="var(--plum)" />
-      <path d="M14 22h52c4 0 6 3 6 7v68c0 7-5 11-12 11H20c-7 0-12-4-12-11V29c0-4 2-7 6-7z" fill="rgb(255 255 255 / .35)" stroke="var(--plum)" strokeWidth="3" />
+      <rect x="18" y="4" width="44" height="12" rx="4" fill="var(--panel)" />
+      <path d="M14 22h52c4 0 6 3 6 7v68c0 7-5 11-12 11H20c-7 0-12-4-12-11V29c0-4 2-7 6-7z" fill="rgb(255 255 255 / .35)" stroke="var(--panel)" strokeWidth="3" />
       <clipPath id="jar-clip">
         <path d="M14 22h52c4 0 6 3 6 7v68c0 7-5 11-12 11H20c-7 0-12-4-12-11V29c0-4 2-7 6-7z" />
       </clipPath>
@@ -75,7 +75,7 @@ function Jar({ fill }: { fill: number }) {
         clipPath="url(#jar-clip)"
         x="0"
         width="80"
-        fill="var(--plum)"
+        fill="var(--panel)"
         fillOpacity=".85"
         initial={reduced ? false : { y: 108, height: 0 }}
         whileInView={{ y: 108 - h, height: h }}
@@ -92,24 +92,24 @@ export function Brain() {
       <div className={`${wrap} py-20 sm:py-28`}>
         <h2 className={`${h2} max-w-3xl`}>It does the maths you’d rather skip.</h2>
         <p className="mt-5 max-w-xl text-lg text-ink-dim">
-          No charts to decode. Ledgerly turns what you spent into a few plain answers, and speaks up at most once a day.
+          No charts to decode. Senbud turns what you spent into a few plain answers, and speaks up at most once a day.
         </p>
 
         <div className="mt-12 grid gap-4 lg:grid-cols-[1.15fr_1fr_1fr] lg:grid-rows-[auto_auto]">
           <AffordTile />
 
-          <div className="flex flex-col justify-between rounded-3xl bg-plum p-6 text-on-plum sm:p-8">
-            <CalendarClock className="text-lilac" aria-hidden="true" />
+          <div className="flex flex-col justify-between rounded-3xl bg-panel p-6 text-on-panel sm:p-8">
+            <CalendarClock className="text-hl" aria-hidden="true" />
             <div className="mt-10">
               <p className="font-display text-6xl">6 days</p>
-              <p className="mt-2 text-on-plum-dim">until rent. $650 is already set aside, so it never counts as spending money.</p>
+              <p className="mt-2 text-on-panel-dim">until rent. $650 is already set aside, so it never counts as spending money.</p>
             </div>
           </div>
 
-          <div className="flex items-end justify-between gap-4 rounded-3xl bg-mango p-6 text-plum sm:p-8">
+          <div className="flex items-end justify-between gap-4 rounded-3xl bg-hl p-6 text-panel sm:p-8">
             <div>
               <h3 className="text-xl font-semibold">Treat jar</h3>
-              <p className="mt-1.5 text-plum/80">Money you didn’t spend last week rolls in here.</p>
+              <p className="mt-1.5 text-panel/80">Money you didn’t spend last week rolls in here.</p>
               <p className="mt-6 font-display text-5xl">$23</p>
               <p className="mt-1 font-medium">That’s 3 bubble teas, guilt-free.</p>
             </div>
@@ -118,7 +118,7 @@ export function Brain() {
 
           <div className="rounded-3xl bg-paper-2 p-6 ring-1 ring-line sm:p-8 lg:col-span-2">
             <div className="flex items-center gap-3">
-              <Repeat className="text-lilac-deep" aria-hidden="true" />
+              <Repeat className="text-accent-ink" aria-hidden="true" />
               <h3 className="text-xl font-semibold">Subscriptions it noticed</h3>
             </div>
             <ul className="mt-5 divide-y divide-line">
