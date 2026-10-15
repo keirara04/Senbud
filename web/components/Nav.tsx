@@ -19,7 +19,7 @@ export function Nav() {
 
   useMotionValueEvent(scrollY, "change", (y) => setCondensed(y > 24));
 
-  // The link for whichever section sits in the middle of the screen gets the highlighter.
+  // The link for whichever section sits in the middle of the screen gets a soft pill behind it.
   useEffect(() => {
     // Every section is watched, so the marker clears over sections that have no link of their own.
     const io = new IntersectionObserver(
@@ -56,7 +56,7 @@ export function Nav() {
                     <motion.span
                       layoutId="nav-marker"
                       aria-hidden="true"
-                      className="absolute inset-x-2 bottom-2 h-1.5 -skew-x-12 rounded-sm bg-hl/80"
+                      className="absolute inset-x-0 inset-y-1.5 rounded-full bg-white/15"
                       transition={{ type: "spring", stiffness: 380, damping: 32 }}
                     />
                   )}
