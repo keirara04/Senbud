@@ -3,7 +3,8 @@ import { Faq, Pricing, Waitlist } from "@/components/Convert";
 import { Hero } from "@/components/Hero";
 import { MotionProvider } from "@/components/MotionProvider";
 import { Nav } from "@/components/Nav";
-import { Footer, HowItWorks, Privacy, Problem } from "@/components/Sections";
+import { Privacy } from "@/components/Privacy";
+import { Footer, HowItWorks, Problem } from "@/components/Sections";
 import { Split, Wrapped } from "@/components/Social";
 
 const jsonLd = {
