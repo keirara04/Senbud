@@ -54,6 +54,9 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    // The landing page origin: CORS allows it (config/cors.php) and email confirmations redirect to it.
+    'web_origin' => env('WEB_ORIGIN', 'http://localhost:3000'),
+
     // Comma-separated IPs/CIDRs of the reverse proxy in front of the API (see AppServiceProvider).
     'trusted_proxies' => env('TRUSTED_PROXIES'),
 
