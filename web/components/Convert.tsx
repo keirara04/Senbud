@@ -27,6 +27,49 @@ const PRO = [
   "Full recap, yearly edition and share cards",
 ];
 
+// Checks tick in one after another the first time a card scrolls into view.
+function FeatureList({ items, tone }: { items: string[]; tone: string }) {
+  return (
+    <ul className="mt-8 flex-1 space-y-3">
+      {items.map((f, i) => (
+        <motion.li
+          key={f}
+          initial={{ opacity: 0, x: -8 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ delay: i * 0.05, duration: 0.3 }}
+          className="flex gap-3"
+        >
+          <Check size={18} className={`mt-0.5 shrink-0 ${tone}`} aria-hidden="true" />
+          {f}
+        </motion.li>
+      ))}
+    </ul>
+  );
+}
+
+// The price rolls up to its new value when the billing period changes.
+function RollingPrice({ value }: { value: string }) {
+  return (
+    <span className="relative inline-flex h-[1.1em] overflow-hidden align-bottom">
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.span
+          key={value}
+          initial={{ y: "100%", opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: "-100%", opacity: 0 }}
+          transition={{ type: "spring", stiffness: 360, damping: 30 }}
+          className="tabular-nums"
+        >
+          {value}
+        </motion.span>
+      </AnimatePresence>
+    </span>
+  );
+}
+
+const ctaMotion = "transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]";
+
 export function Pricing() {
   const [yearly, setYearly] = useState(true);
   return (
@@ -34,69 +77,82 @@ export function Pricing() {
       <div className={`${wrap} py-20 sm:py-28`}>
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className={h2}>Free covers the basics. <span className="marker">Pro does the typing.</span></h2>
+            <h2 className={h2}>
+              Free covers the basics. <span className="marker">Pro does the typing.</span>
+            </h2>
             <p className="mt-4 max-w-lg text-lg text-ink-dim">Free stays free, and exporting your data is never behind a paywall.</p>
           </div>
-          <fieldset className="flex shrink-0 rounded-full bg-paper-2 p-1 ring-1 ring-line">
+          <fieldset className="flex shrink-0 self-start rounded-full bg-paper-2 p-1 ring-1 ring-line sm:self-auto">
             <legend className="sr-only">Billing period</legend>
             {[
-              { v: false, label: "Monthly" },
-              { v: true, label: "Yearly, save 35%" },
+              { v: false, label: "Monthly", tag: null },
+              { v: true, label: "Yearly", tag: "save 35%" },
             ].map((o) => (
               <label
                 key={o.label}
-                className={`flex min-h-11 cursor-pointer items-center rounded-full px-4 text-sm font-semibold transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-hl ${yearly === o.v ? "bg-panel text-on-panel" : "text-ink-dim hover:text-ink"}`}
+                className={`relative flex min-h-11 cursor-pointer items-center gap-2 rounded-full px-4 text-sm font-semibold transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-hl ${yearly === o.v ? "text-on-panel" : "text-ink-dim hover:text-ink"}`}
               >
-                <input
-                  type="radio"
-                  name="billing"
-                  className="sr-only"
-                  checked={yearly === o.v}
-                  onChange={() => setYearly(o.v)}
-                />
-                {o.label}
+                {yearly === o.v && (
+                  <motion.span
+                    layoutId="billing-pill"
+                    aria-hidden="true"
+                    className="absolute inset-0 rounded-full bg-panel"
+                    transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                  />
+                )}
+                <input type="radio" name="billing" className="sr-only" checked={yearly === o.v} onChange={() => setYearly(o.v)} />
+                <span className="relative">{o.label}</span>
+                {o.tag && <span className="relative rounded-full bg-hl px-2 py-0.5 text-[11px] font-bold text-panel">{o.tag}</span>}
               </label>
             ))}
           </fieldset>
         </div>
 
-        <div className="mt-12 grid gap-4 md:grid-cols-2">
+        <div className="mt-12 grid items-stretch gap-4 md:grid-cols-2">
           <div className="flex flex-col rounded-3xl bg-paper-2 p-7 ring-1 ring-line sm:p-9">
             <h3 className="text-xl font-semibold">Free</h3>
             <p className="mt-4 font-display text-6xl">$0</p>
             <p className="mt-1 text-ink-dim">forever, no card needed</p>
-            <ul className="mt-8 flex-1 space-y-3">
-              {FREE.map((f) => (
-                <li key={f} className="flex gap-3">
-                  <Check size={18} className="mt-0.5 shrink-0 text-accent-ink" aria-hidden="true" />
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <a href="#waitlist" className="mt-9 rounded-full py-3.5 text-center font-semibold ring-1 ring-line transition-colors hover:bg-paper">
+            <FeatureList items={FREE} tone="text-accent-ink" />
+            <a
+              href="#waitlist"
+              className={`mt-9 rounded-full py-3.5 text-center font-semibold ring-1 ring-line transition-colors hover:bg-panel hover:text-on-panel hover:ring-panel ${ctaMotion}`}
+            >
               Get early access
             </a>
           </div>
 
-          <div className="flex flex-col rounded-3xl bg-panel p-7 text-on-panel ring-2 ring-hl/60 sm:p-9">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold">Pro</h3>
-              <span className="rounded-full bg-hl px-3 py-1 text-xs font-semibold text-panel">Opens soon</span>
+          {/* A highlighter glow travels around the Pro card's border. */}
+          <div className="glow-border rounded-3xl p-[2px] shadow-[0_30px_60px_-30px_rgb(31_63_216/0.7)]">
+            <div className="flex h-full flex-col rounded-[calc(1.5rem-2px)] bg-panel p-7 text-on-panel sm:p-9">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold">Pro</h3>
+                <span className="rounded-full bg-hl px-3 py-1 text-xs font-semibold text-panel">Opens soon</span>
+              </div>
+              <p className="mt-4 font-display text-6xl">
+                <RollingPrice value={yearly ? "$39" : "$4.99"} />
+              </p>
+              <p className="mt-1 text-on-panel-dim">{yearly ? "per year, about $3.25 a month" : "per month, cancel any time"}</p>
+              <AnimatePresence initial={false}>
+                {yearly && (
+                  <motion.p
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <span className="mt-3 inline-block rounded-lg bg-white/10 px-3 py-1.5 text-sm">
+                      You save <span className="font-semibold text-hl">$20.88</span> a year, less than one bubble tea a month
+                    </span>
+                  </motion.p>
+                )}
+              </AnimatePresence>
+              <FeatureList items={PRO} tone="text-hl" />
+              <a href="#waitlist" className={`hl-sweep mt-9 rounded-full bg-hl py-3.5 text-center font-semibold text-panel ${ctaMotion}`}>
+                Join the Pro waitlist
+              </a>
+              <p className="mt-3 text-center text-sm text-on-panel-dim">Join now and your founding price stays the same when Pro opens.</p>
             </div>
-            <p className="mt-4 font-display text-6xl tabular-nums">{yearly ? "$39" : "$4.99"}</p>
-            <p className="mt-1 text-on-panel-dim">{yearly ? "per year, about $3.25 a month" : "per month, cancel any time"}</p>
-            <ul className="mt-8 flex-1 space-y-3">
-              {PRO.map((f) => (
-                <li key={f} className="flex gap-3">
-                  <Check size={18} className="mt-0.5 shrink-0 text-hl" aria-hidden="true" />
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <a href="#waitlist" className="mt-9 rounded-full bg-hl py-3.5 text-center font-semibold text-panel">
-              Join the Pro waitlist
-            </a>
-            <p className="mt-3 text-center text-sm text-on-panel-dim">Join now and your founding price stays the same when Pro opens.</p>
           </div>
         </div>
       </div>

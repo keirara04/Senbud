@@ -203,3 +203,20 @@ body {
   .hl-sweep::after, .barcode::after { display: none; }
   .printing-strip { animation: none; transform: scaleX(1); }
 }
+
+/* Pro pricing card: a highlighter glow travels slowly around the border. */
+@property --spin {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+.glow-border {
+  background: conic-gradient(from var(--spin), var(--hl), transparent 25%, transparent 60%, var(--hl));
+  animation: spin-border 6s linear infinite;
+}
+@keyframes spin-border {
+  to { --spin: 360deg; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .glow-border { animation: none; }
+}
