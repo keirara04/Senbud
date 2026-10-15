@@ -1,5 +1,6 @@
 import { ArrowRight, ArrowUp, Camera, Keyboard, MessageSquareText } from "lucide-react";
 import { MobileBar } from "./MobileBar";
+import { BankAsk, StreakFade } from "./Problem";
 
 export const wrap = "mx-auto max-w-6xl px-4 sm:px-6";
 export const h2 = "font-display text-[clamp(2rem,4.4vw,3.25rem)] leading-[1.06]";
@@ -7,12 +8,27 @@ export const h2 = "font-display text-[clamp(2rem,4.4vw,3.25rem)] leading-[1.06]"
 export function Problem() {
   return (
     <section className={`${wrap} py-20 sm:py-28`}>
-      <p className={`${h2} max-w-4xl`}>
-        Most budget apps want your bank password or your patience. Senbud needs neither.
-      </p>
-      <div className="mt-10 grid max-w-4xl gap-8 text-lg leading-relaxed text-ink-dim sm:grid-cols-2">
-        <p>Linking a bank account to an app you found last week feels like a lot to ask. So people don’t.</p>
-        <p>Typing in every coffee and bus fare gets old by week two. So people stop.</p>
+      <h2 className={`${h2} max-w-4xl`}>
+        Most budget apps want your bank password or your patience.{" "}
+        <span className="marker">Senbud needs neither.</span>
+      </h2>
+      <div className="mt-12 grid gap-4 md:grid-cols-2">
+        <div className="flex flex-col gap-6 rounded-3xl bg-paper-2 p-6 ring-1 ring-line sm:p-8">
+          <BankAsk />
+          <div>
+            <h3 className="text-lg font-semibold">The bank-login ask</h3>
+            <p className="mt-1.5 text-ink-dim">
+              Linking a bank account to an app you found last week feels like a lot to ask. So people don’t.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col gap-6 rounded-3xl bg-paper-2 p-6 ring-1 ring-line sm:p-8">
+          <StreakFade />
+          <div>
+            <h3 className="text-lg font-semibold">The typing marathon</h3>
+            <p className="mt-1.5 text-ink-dim">Typing in every coffee and bus fare gets old by week two. So people stop.</p>
+          </div>
+        </div>
       </div>
     </section>
   );
