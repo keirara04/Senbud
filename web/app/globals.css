@@ -67,6 +67,9 @@ html {
    Scrolling itself (wheel, trackpad, keys, touch) is unchanged. */
 html {
   scrollbar-width: none;
+  /* Decorative glows may poke past the edges; never let them make the page scroll sideways.
+     clip (not hidden) keeps the sticky nav working. */
+  overflow-x: clip;
 }
 html::-webkit-scrollbar {
   display: none;
