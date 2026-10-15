@@ -30,21 +30,25 @@ export function Hero() {
   const [error, setError] = useState("");
   const scripted = useRef(true);
   const nextId = useRef(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [toastPaused, setToastPaused] = useState(false);
 
   const spentToday = lines.reduce((s, l) => s + l.amount, 0);
   const left = BUDGET - SPENT_BEFORE - spentToday;
   const safeToday = Math.max(0, left / DAYS_LEFT);
   const weekPct = Math.min(100, ((SPENT_BEFORE + spentToday) / BUDGET) * 100);
 
-  function add(value: string) {
+  // The scripted demo adds silently; only the visitor's own entries get a toast.
+  function add(value: string, { silent = false } = {}) {
     const items = parseSpending(value);
     if (!items.length) {
       setError("Add an amount, like “lunch 12”.");
       return;
     }
     const batch = nextId.current;
-    setLines((prev) => [...prev, ...items.map((it) => ({ ...it, id: nextId.current++, batch }))].slice(-6));
-    setToast({ batch, count: items.length });
+    const added = items.map((it) => ({ ...it, id: nextId.current++, batch }));
+    setLines((prev) => [...prev, ...added]);
+    setToast(silent ? null : { batch, count: items.length });
     setText("");
     setError("");
   }
@@ -53,13 +57,16 @@ export function Hero() {
     if (!toast) return;
     setLines((prev) => prev.filter((l) => l.batch !== toast.batch));
     setToast(null);
+    inputRef.current?.focus();
   }
 
   // One orchestrated moment: the demo types and prints a line on load.
   useEffect(() => {
     if (reduced) {
-      add(SCRIPT);
-      scripted.current = false;
+      if (scripted.current) {
+        scripted.current = false;
+        add(SCRIPT, { silent: true });
+      }
       return;
     }
     let i = 0;
@@ -68,16 +75,17 @@ export function Hero() {
       i++;
       setText(SCRIPT.slice(0, i));
       if (i < SCRIPT.length) timer = setTimeout(tick, 42);
-      else timer = setTimeout(() => scripted.current && (add(SCRIPT), (scripted.current = false)), 350);
+      else timer = setTimeout(() => scripted.current && ((scripted.current = false), add(SCRIPT, { silent: true })), 350);
     }, 700);
     return () => clearTimeout(timer);
   }, [reduced]);
 
+  // The toast waits while the visitor is hovering or focused on it, so Undo never vanishes mid-reach.
   useEffect(() => {
-    if (!toast) return;
+    if (!toast || toastPaused) return;
     const t = setTimeout(() => setToast(null), 6000);
     return () => clearTimeout(t);
-  }, [toast]);
+  }, [toast, toastPaused]);
 
   return (
     <section id="top" className="relative overflow-hidden bg-panel text-on-panel">
@@ -125,14 +133,17 @@ export function Hero() {
               scripted.current = false;
               add(text);
             }}
-            className="flex items-center gap-2 rounded-2xl border border-panel-line bg-panel-2 p-2 shadow-[0_20px_60px_-20px_rgb(0_0_0/0.6)]"
+            className="flex items-center gap-2 rounded-2xl border border-panel-line bg-panel-2 p-2 shadow-[0_20px_60px_-20px_rgb(0_0_0/0.6)] focus-within:ring-2 focus-within:ring-hl"
           >
             <label htmlFor="quick-add" className="sr-only">
               Type what you spent
             </label>
             <input
               id="quick-add"
+              ref={inputRef}
               value={text}
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? "quick-add-error" : undefined}
               onChange={(e) => {
                 scripted.current = false;
                 setText(e.target.value);
@@ -145,7 +156,7 @@ export function Hero() {
               }}
               placeholder="Try: kopi 4, netflix 15"
               autoComplete="off"
-              className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-base text-on-panel placeholder:text-on-panel-dim/60 focus:outline-none"
+              className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-base text-on-panel placeholder:text-on-panel-dim/80 focus:outline-none focus-visible:shadow-none"
             />
             <button
               type="submit"
@@ -154,9 +165,14 @@ export function Hero() {
               Add <CornerDownLeft size={14} aria-hidden="true" />
             </button>
           </form>
-          {error && <p className="mt-2 px-2 text-sm text-hl">{error}</p>}
+          {error && (
+            <p id="quick-add-error" role="alert" className="mt-2 px-2 text-sm text-hl">
+              {error}
+            </p>
+          )}
 
-          <div className="receipt mt-5 px-6 pb-8 pt-7 font-mono text-[13px] shadow-[0_30px_60px_-25px_rgb(0_0_0/0.7)] sm:rotate-[1.2deg]">
+          <div className="mt-5 drop-shadow-[0_22px_28px_rgb(0_0_0/0.35)] sm:rotate-[1.2deg]">
+          <div className="receipt px-6 pb-8 pt-7 font-mono text-[13px]">
             <div className="flex justify-between uppercase tracking-wider text-receipt-ink/75">
               <span>Today</span>
               <span>Week 3 · day 4</span>
@@ -164,14 +180,14 @@ export function Hero() {
             <div className="my-3 border-t border-dashed border-receipt-ink/25" />
             <ul className="min-h-[7.5rem]">
               <AnimatePresence initial={false}>
-                {lines.map((l, i) => (
+                {lines.slice(-6).map((l, i) => (
                   <motion.li
                     key={l.id}
                     layout
-                    initial={reduced ? false : { opacity: 0, y: -8 }}
+                    initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: 24 }}
-                    transition={{ duration: 0.28, delay: reduced ? 0 : (i % 3) * 0.12 }}
+                    transition={{ duration: 0.28, delay: (i % 3) * 0.12 }}
                     className="flex items-center gap-2 py-1"
                   >
                     <span className="truncate">{l.label}</span>
@@ -191,13 +207,14 @@ export function Hero() {
               <span className="tabular-nums">{money(spentToday)}</span>
             </div>
           </div>
+          </div>
 
           <div className="mt-5 grid grid-cols-2 gap-3">
             <div className="col-span-2 rounded-2xl bg-panel-2 p-4 sm:col-span-1">
               <p className="text-sm text-on-panel-dim">Safe to spend today</p>
               <motion.p
                 key={safeToday.toFixed(2)}
-                initial={reduced ? false : { opacity: 0.4, y: 4 }}
+                initial={{ opacity: 0.4, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="font-display text-4xl tabular-nums"
               >
@@ -222,11 +239,18 @@ export function Hero() {
             </div>
           </div>
 
-          <div aria-live="polite" className="mt-4 flex h-10 justify-center">
+          <div
+            aria-live="polite"
+            className="mt-4 flex h-10 justify-center"
+            onMouseEnter={() => setToastPaused(true)}
+            onMouseLeave={() => setToastPaused(false)}
+            onFocus={() => setToastPaused(true)}
+            onBlur={() => setToastPaused(false)}
+          >
             <AnimatePresence>
               {toast && (
                 <motion.div
-                  initial={reduced ? false : { opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
                   className="flex items-center gap-3 rounded-full bg-receipt px-4 py-2 text-sm text-receipt-ink shadow-lg"

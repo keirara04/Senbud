@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Check, Copy } from "lucide-react";
-import { useState } from "react";
+import { Check, ChevronRight, Copy } from "lucide-react";
+import { useEffect, useState } from "react";
 import { h2, wrap } from "./Sections";
 
 const shares = [
@@ -14,15 +14,21 @@ const shares = [
 const REMINDER = "Hey Sarah! Friday dinner came to $14 each 😊";
 
 export function Split() {
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
+
+  useEffect(() => {
+    if (copyState === "idle") return;
+    const t = setTimeout(() => setCopyState("idle"), 2000);
+    return () => clearTimeout(t);
+  }, [copyState]);
 
   async function copy() {
     try {
+      // Clipboard is only available on https (or localhost); fail visibly anywhere else.
       await navigator.clipboard.writeText(REMINDER);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setCopyState("copied");
     } catch {
-      setCopied(false);
+      setCopyState("failed");
     }
   }
 
@@ -39,12 +45,12 @@ export function Split() {
         </div>
 
         <div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 drop-shadow-[0_14px_18px_rgb(0_0_0/0.22)]">
             {shares.map((s, i) => (
               <div
                 key={s.name}
                 style={{ rotate: `${(i - 1) * 2.5}deg` }}
-                className="receipt flex-1 px-3 pb-6 pt-5 font-mono text-[13px] shadow-[0_20px_40px_-24px_rgb(0_0_0/0.5)] sm:px-4"
+                className="receipt flex-1 px-3 pb-6 pt-5 font-mono text-[13px] sm:px-4"
               >
                 <p className="uppercase tracking-wider text-receipt-ink/75">Fri dinner</p>
                 <div className="my-3 border-t border-dashed border-receipt-ink/25" />
@@ -63,8 +69,8 @@ export function Split() {
                 onClick={copy}
                 className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-panel px-4 text-sm font-semibold text-on-panel"
               >
-                {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
-                <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
+                {copyState === "copied" ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+                <span aria-live="polite">{{ idle: "Copy", copied: "Copied", failed: "Copy failed" }[copyState]}</span>
               </button>
             </div>
           </div>
@@ -82,40 +88,51 @@ const cards = [
 
 export function Wrapped() {
   const [i, setI] = useState(0);
+  const next = () => setI((i + 1) % cards.length);
   return (
     <section className="border-t border-line">
       <div className={`${wrap} grid items-center gap-12 py-20 sm:py-28 lg:grid-cols-[1fr_1.1fr]`}>
-        <div className="order-2 lg:order-1">
-          <div className="relative mx-auto h-[26rem] w-full max-w-[18rem] sm:max-w-[20rem]">
-              {cards.map((c, n) => {
-                const pos = (n - i + cards.length) % cards.length;
-                return (
-                  <motion.button
-                    type="button"
-                    key={c.big}
-                    onClick={() => setI((i + 1) % cards.length)}
-                    aria-hidden={pos !== 0}
-                    tabIndex={pos === 0 ? 0 : -1}
-                    animate={{ rotate: pos * 5 - 2, x: pos * 12, y: pos * 10, zIndex: cards.length - pos, scale: 1 - pos * 0.04 }}
-                    transition={{ type: "spring", stiffness: 260, damping: 26 }}
-                    className={`absolute inset-0 flex flex-col justify-between rounded-[2rem] p-7 text-left shadow-[0_30px_60px_-30px_rgb(0_0_0/0.6)] ${c.bg}`}
-                  >
-                    <span className="text-sm font-medium opacity-80">{c.top}</span>
-                    <span className="font-display text-5xl leading-none">{c.big}</span>
-                    <span className="text-lg">{c.foot}</span>
-                    <span className="sr-only">Show next card</span>
-                  </motion.button>
-                );
-              })}
-          </div>
-          <p className="mt-6 text-center text-sm text-ink-dim">Tap the card to flip through</p>
-        </div>
-        <div className="order-1 lg:order-2">
+        <div>
           <h2 className={h2}>Your month, wrapped.</h2>
           <p className="mt-5 max-w-md text-lg text-ink-dim">
             On the 1st, Senbud turns last month into a short story worth sharing. Share cards hide your amounts
             unless you choose to show them.
           </p>
+        </div>
+        <div className="lg:order-first">
+          {/* The stack is a picture; the button below is the control. Clicking a card also flips it. */}
+          <div
+            className="relative mx-auto h-[26rem] w-full max-w-[18rem] cursor-pointer sm:max-w-[20rem]"
+            onClick={next}
+          >
+            {cards.map((c, n) => {
+              const pos = (n - i + cards.length) % cards.length;
+              return (
+                <motion.div
+                  key={c.big}
+                  aria-hidden={pos !== 0}
+                  initial={false}
+                  animate={{ rotate: pos * 5 - 2, x: pos * 12, y: pos * 10, zIndex: cards.length - pos, scale: 1 - pos * 0.04 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 26 }}
+                  className={`absolute inset-0 flex flex-col justify-between rounded-[2rem] p-7 shadow-[0_30px_60px_-30px_rgb(0_0_0/0.6)] ${c.bg}`}
+                >
+                  <span className="text-sm font-medium opacity-80">{c.top}</span>
+                  <span className="font-display text-5xl leading-none">{c.big}</span>
+                  <span className="text-lg">{c.foot}</span>
+                </motion.div>
+              );
+            })}
+          </div>
+          <div className="mt-6 flex justify-center">
+            <button
+              type="button"
+              onClick={next}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm font-semibold text-ink-dim ring-1 ring-line hover:text-ink"
+            >
+              Next card <span className="tabular-nums">({i + 1} of {cards.length})</span>
+              <ChevronRight size={16} aria-hidden="true" />
+            </button>
+          </div>
         </div>
       </div>
     </section>

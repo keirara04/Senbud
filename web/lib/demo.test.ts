@@ -17,6 +17,20 @@ describe("parseSpending", () => {
     ]);
   });
 
+  it("matches whole words only", () => {
+    expect(parseSpending("business lunch 20, farewell dinner 30, buses 3").map((i) => i.category)).toEqual([
+      "Food",
+      "Food",
+      "Transport",
+    ]);
+  });
+
+  it("handles thousands, bad decimals, negatives and counts", () => {
+    expect(parseSpending("1,200 rent")).toEqual([{ label: "Rent", amount: 1200, category: "Other" }]);
+    expect(parseSpending("coffee 12.5.3, lunch 12.555, -5 lunch")).toEqual([]);
+    expect(parseSpending("2 coffees 9")).toEqual([{ label: "2 coffees", amount: 9, category: "Treat" }]);
+  });
+
   it("falls back to Other and a default label", () => {
     expect(parseSpending("7")).toEqual([{ label: "Something", amount: 7, category: "Other" }]);
   });
@@ -32,4 +46,10 @@ describe("afford", () => {
 it("rounds hours of work to half hours", () => {
   expect(hoursOfWork(60, 12)).toBe(5);
   expect(hoursOfWork(40, 12)).toBe(3.5);
+});
+
+it("rounds float sums before formatting", async () => {
+  const { money } = await import("./demo");
+  expect(money(11.999999999999998)).toBe("$12");
+  expect(money(4.5)).toBe("$4.50");
 });

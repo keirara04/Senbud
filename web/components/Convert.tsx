@@ -1,6 +1,5 @@
 "use client";
 
-import * as Accordion from "@radix-ui/react-accordion";
 import { Check, ChevronDown } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { h2, wrap } from "./Sections";
@@ -37,23 +36,27 @@ export function Pricing() {
             <h2 className={h2}>Free covers the basics. Pro does the typing.</h2>
             <p className="mt-4 max-w-lg text-lg text-ink-dim">Free stays free, and exporting your data is never behind a paywall.</p>
           </div>
-          <div role="radiogroup" aria-label="Billing period" className="flex shrink-0 rounded-full bg-paper-2 p-1 ring-1 ring-line">
+          <fieldset className="flex shrink-0 rounded-full bg-paper-2 p-1 ring-1 ring-line">
+            <legend className="sr-only">Billing period</legend>
             {[
               { v: false, label: "Monthly" },
               { v: true, label: "Yearly, save 35%" },
             ].map((o) => (
-              <button
+              <label
                 key={o.label}
-                type="button"
-                role="radio"
-                aria-checked={yearly === o.v}
-                onClick={() => setYearly(o.v)}
-                className={`min-h-11 rounded-full px-4 text-sm font-semibold transition-colors ${yearly === o.v ? "bg-panel text-on-panel" : "text-ink-dim hover:text-ink"}`}
+                className={`flex min-h-11 cursor-pointer items-center rounded-full px-4 text-sm font-semibold transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-hl ${yearly === o.v ? "bg-panel text-on-panel" : "text-ink-dim hover:text-ink"}`}
               >
+                <input
+                  type="radio"
+                  name="billing"
+                  className="sr-only"
+                  checked={yearly === o.v}
+                  onChange={() => setYearly(o.v)}
+                />
                 {o.label}
-              </button>
+              </label>
             ))}
-          </div>
+          </fieldset>
         </div>
 
         <div className="mt-12 grid gap-4 md:grid-cols-2">
@@ -123,19 +126,18 @@ export function Faq() {
     <section id="faq" className="scroll-mt-16 border-t border-line">
       <div className={`${wrap} grid gap-10 py-20 sm:py-28 lg:grid-cols-[0.8fr_1.2fr]`}>
         <h2 className={h2}>Questions people ask first.</h2>
-        <Accordion.Root type="single" collapsible className="divide-y divide-line border-y border-line">
+        {/* Native details: answers ship in the static HTML, and name="faq" keeps one open at a time. */}
+        <div className="divide-y divide-line border-y border-line">
           {FAQ.map(([q, a]) => (
-            <Accordion.Item key={q} value={q}>
-              <Accordion.Header>
-                <Accordion.Trigger className="group flex w-full items-center justify-between gap-4 py-5 text-left text-lg font-semibold">
-                  {q}
-                  <ChevronDown className="shrink-0 transition-transform group-data-[state=open]:rotate-180" aria-hidden="true" />
-                </Accordion.Trigger>
-              </Accordion.Header>
-              <Accordion.Content className="pb-5 pr-8 text-ink-dim">{a}</Accordion.Content>
-            </Accordion.Item>
+            <details key={q} name="faq" className="group">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-lg font-semibold [&::-webkit-details-marker]:hidden">
+                {q}
+                <ChevronDown className="shrink-0 transition-transform group-open:rotate-180" aria-hidden="true" />
+              </summary>
+              <p className="pb-5 pr-8 text-ink-dim">{a}</p>
+            </details>
           ))}
-        </Accordion.Root>
+        </div>
       </div>
     </section>
   );

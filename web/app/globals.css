@@ -83,11 +83,13 @@ body {
   letter-spacing: -0.02em;
 }
 
-:focus-visible {
-  outline: 2px solid var(--hl);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 5px var(--ink);
-  border-radius: 6px;
+/* In the base layer so rounded-* utilities keep their shape; yellow + dark ring reads on cobalt and paper. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--hl);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 5px var(--ink);
+  }
 }
 
 /* Thermal receipt: zig-zag torn edges top and bottom. */

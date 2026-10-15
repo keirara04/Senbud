@@ -4,33 +4,40 @@ export type Category = "Food" | "Transport" | "Treat" | "Groceries" | "Subscript
 
 export type Item = { label: string; amount: number; category: Category };
 
-const RULES: [RegExp, Category][] = [
-  [/bubble ?tea|boba|coffee|kopi|latte|starbucks|cake|ice ?cream|dessert|burger|big ?mac|fries|snack/, "Treat"],
-  [/netflix|spotify|youtube|icloud|disney|prime|gym|chatgpt|subscription/, "Subscription"],
-  [/grab|uber|lyft|taxi|bus|train|mrt|lrt|metro|petrol|gas|parking|fare/, "Transport"],
-  [/grocer|market|tesco|walmart|aldi|lotus|mydin|trader joe|costco/, "Groceries"],
-  [/lunch|dinner|breakfast|brunch|food|nasi|mee|pizza|sushi|ramen|mamak|meal|chipotle/, "Food"],
-];
+// Whole words only (plus simple plurals), so "business lunch" isn't read as a bus fare.
+const RULES: [RegExp, Category][] = (
+  [
+    ["bubble ?tea|boba|coffee|kopi|latte|starbucks|cake|ice ?cream|dessert|burger|big ?mac|fries|snack", "Treat"],
+    ["netflix|spotify|youtube|icloud|disney|prime|gym|chatgpt|subscription", "Subscription"],
+    ["grab|uber|lyft|taxi|bus|train|mrt|lrt|metro|petrol|gas|parking|fare", "Transport"],
+    ["grocer(?:y|ies)?|market|tesco|walmart|aldi|lotus|mydin|trader joe|costco", "Groceries"],
+    ["lunch|dinner|breakfast|brunch|food|nasi|mee|pizza|sushi|ramen|mamak|meal|chipotle", "Food"],
+  ] as const
+).map(([words, cat]) => [new RegExp(`\\b(?:${words})(?:e?s)?\\b`), cat]);
 
 export function categorize(label: string): Category {
   const l = label.toLowerCase();
   return RULES.find(([re]) => re.test(l))?.[1] ?? "Other";
 }
 
-// "lunch 12, grab 8 and $4.50 kopi" -> 3 items. Chunks without a number are ignored.
+// A whole number or one with up to 2 decimals, not part of a longer number and not negative.
+const AMOUNT = /(?<![\d.-])\d+(?:\.\d{1,2})?(?![\d.])/g;
+
+// "lunch 12, grab 8 and $4.50 kopi" -> 3 items. Chunks without a valid amount are ignored.
 export function parseSpending(text: string): Item[] {
   return text
+    .replace(/(\d),(?=\d{3}\b)/g, "$1") // "1,200" -> "1200" before splitting on commas
     .split(/,|;|\n|\band\b|\+/i)
     .map((chunk) => chunk.trim())
     .flatMap((chunk) => {
-      const m = chunk.match(/(\d+(?:\.\d{1,2})?)/);
-      if (!m) return [];
-      const amount = Number(m[1]);
+      const m = [...chunk.matchAll(AMOUNT)].at(-1); // "2 coffees 9" -> 9
+      if (!m || m.index === undefined) return [];
+      const amount = Number(m[0]);
       if (!(amount > 0 && amount < 100_000)) return [];
       const label =
-        chunk
-          .replace(m[0], " ")
+        `${chunk.slice(0, m.index)} ${chunk.slice(m.index + m[0].length)}`
           .replace(/\$|\b(rm|usd|bucks?|dollars?)\b/gi, " ")
+          .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "")
           .replace(/\s+/g, " ")
           .trim() || "Something";
       return [{ label: label[0].toUpperCase() + label.slice(1), amount, category: categorize(label) }];
@@ -51,5 +58,7 @@ export function afford(price: number, opts: { left: number; daysLeft: number; we
 // Price in hours of work, rounded to the nearest half hour.
 export const hoursOfWork = (price: number, hourly: number) => Math.round((price / hourly) * 2) / 2;
 
-export const money = (n: number) =>
-  n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: n % 1 ? 2 : 0 });
+export const money = (value: number) => {
+  const n = Math.round(value * 100) / 100; // float sums like 11.999999999999998 -> 12
+  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: n % 1 ? 2 : 0 });
+};

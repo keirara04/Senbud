@@ -40,6 +40,7 @@ function AffordTile() {
         />
       </div>
       <div aria-live="polite" className="mt-5 min-h-[9.5rem]">
+        {!result && <p className="text-ink-dim">Enter a price, like 40.</p>}
         {result && (
           <motion.div key={result.verdict} initial={{ opacity: 0.5, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}>
             <p className={`inline-block rounded-full px-3 py-1 text-sm font-semibold ${VERDICT[result.verdict].tone}`}>
@@ -48,7 +49,9 @@ function AffordTile() {
             <p className="mt-3 text-lg">
               {result.verdict === "no"
                 ? `You have ${money(WEEK.left)} left this week and rent is in 6 days. It fits next week.`
-                : `You'd still have ${money(Math.floor(result.perDayAfter * 100) / 100)} a day until Sunday, and rent stays covered.`}
+                : result.perDayAfter < 0.01
+                  ? "It would use everything left this week. Rent stays covered, but there’s nothing left for food until Monday."
+                  : `You'd still have ${money(Math.floor(result.perDayAfter * 100) / 100)} a day until Sunday, and rent stays covered.`}
             </p>
             <p className="mt-2 text-ink-dim">
               That’s {hoursOfWork(value, HOURLY)} hours of work at {money(HOURLY)} an hour.
@@ -77,10 +80,10 @@ function Jar({ fill }: { fill: number }) {
         width="80"
         fill="var(--panel)"
         fillOpacity=".85"
-        initial={reduced ? false : { y: 108, height: 0 }}
+        initial={{ y: 108, height: 0 }}
         whileInView={{ y: 108 - h, height: h }}
         viewport={{ once: true }}
-        transition={{ duration: 1.1, ease: [0.22, 0.68, 0.14, 1] }}
+        transition={{ duration: reduced ? 0 : 1.1, ease: [0.22, 0.68, 0.14, 1] }}
       />
     </svg>
   );
