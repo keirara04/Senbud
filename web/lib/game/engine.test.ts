@@ -82,14 +82,16 @@ describe("late-fee lich", () => {
 });
 
 describe("classes", () => {
-  it("home cook meets the boredom imp on Tue, Thu and Sat only", () => {
-    let s = newGame("homeCook", 5);
+  it("home cook's boredom imp visits Tue, Thu and Sat (Wed only via the random encounter)", () => {
     const impFloors = new Set<number>();
-    while (!s.ending) {
-      if (s.encounter?.monster === "boredomImp") impFloors.add(s.floor);
-      s = act(s, actions(s)[0]);
+    for (let seed = 1; seed < 100; seed++) {
+      let s = newGame("homeCook", seed);
+      while (!s.ending) {
+        if (s.encounter?.monster === "boredomImp") impFloors.add(s.floor);
+        s = act(s, s.encounter?.monster === "rentDragon" ? { type: "pay" } : actions(s).at(-1)!);
+      }
     }
-    for (const f of impFloors) expect([2, 4, 6]).toContain(f);
+    expect([...impFloors].sort()).toEqual([2, 3, 4, 6]);
   });
 
   it("home cook pays half for food", () => {
@@ -146,6 +148,26 @@ describe("spells", () => {
     const after = act(s, { type: "cast", spell: "partySplit" });
     expect(after.gold).toBe(s.gold - 15);
     expect(after.castsLeft).toBe(2);
+  });
+
+  it("hours sight adds +4 to the next resist only", () => {
+    const s = facing(newGame("freelancer", 1), "impulseGoblin", 10, { queue: ["impulseGoblin"] });
+    const sighted = act(s, { type: "cast", spell: "hoursSight" });
+    expect(sighted.nextResistBonus).toBe(4);
+    const rolled = act(sighted, { type: "resist" });
+    const roll = rolled.log.find((e) => e.kind === "roll");
+    expect(roll?.kind === "roll" && roll.total - roll.d20).toBe(4);
+    expect(rolled.nextResistBonus).toBe(0);
+  });
+
+  it("ward of budget can't be cast from floor 4 on", () => {
+    const s = facing(newGame("scholar", 1), "impulseGoblin", 10, { floor: 4 });
+    expect(actions(s)).not.toContainEqual({ type: "cast", spell: "wardOfBudget" });
+  });
+
+  it("snap scroll on the rent dragon still needs the gold", () => {
+    const s = facing(newGame("scholar", 1), "rentDragon", 40, { floor: 5, gold: 30 });
+    expect(act(s, { type: "cast", spell: "snapScroll" }).ending).toBe("slainByRent");
   });
 
   it("snap scroll pays in full and adds discipline", () => {

@@ -16,7 +16,6 @@ import {
   MONSTERS,
   type MonsterId,
   RANDOM_POOL,
-  RENT_FLOOR,
   RENT_RESERVE,
   SCHOLAR_TROLL_COST,
   SLIME_EVERY,
