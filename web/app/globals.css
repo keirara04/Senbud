@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+/* Ledgerly landing tokens.
+   Plum "night" panels stay dark in both schemes; the paper sections follow the system. */
+:root {
+  --plum: #1b1035;
+  --plum-2: #26184a;
+  --plum-line: rgb(255 255 255 / 0.1);
+  --on-plum: #f6f3ff;
+  --on-plum-dim: #b8afd3;
+  --lilac: #b9a6ff;
+  --lilac-deep: #6a4fe0;
+  --mango: #ffb547;
+  --coral: #ff6b5b;
+  --mint: #4fd1a5;
+  --receipt: #fbfbf8;
+  --receipt-ink: #2b2733;
+
+  --paper: #f3f1f8;
+  --paper-2: #ffffff;
+  --ink: #26232e;
+  --ink-dim: #5f5a6b;
+  --line: rgb(38 35 46 / 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #120b24;
+    --paper-2: #1b1233;
+    --ink: #efeaf9;
+    --ink-dim: #a9a1bf;
+    --line: rgb(255 255 255 / 0.1);
+    --lilac-deep: #b9a6ff;
+  }
+}
+
+@theme inline {
+  --color-plum: var(--plum);
+  --color-plum-2: var(--plum-2);
+  --color-plum-line: var(--plum-line);
+  --color-on-plum: var(--on-plum);
+  --color-on-plum-dim: var(--on-plum-dim);
+  --color-lilac: var(--lilac);
+  --color-lilac-deep: var(--lilac-deep);
+  --color-mango: var(--mango);
+  --color-coral: var(--coral);
+  --color-mint: var(--mint);
+  --color-receipt: var(--receipt);
+  --color-receipt-ink: var(--receipt-ink);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-ink: var(--ink);
+  --color-ink-dim: var(--ink-dim);
+  --color-line: var(--line);
+
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-geist);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--lilac) 40%, transparent);
+}
+
+/* Fraunces' soft + wonky axes give the serif its friendly, slightly hand-made feel. */
+.font-display {
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  letter-spacing: -0.02em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--lilac);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Thermal receipt: zig-zag torn edges top and bottom. */
+.receipt {
+  --tooth: 10px;
+  background: var(--receipt);
+  color: var(--receipt-ink);
+  -webkit-mask:
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 90deg, #0000 91deg) bottom / var(--tooth) 51% repeat-x,
+    conic-gradient(from 135deg at top, #0000, #000 1deg 90deg, #0000 91deg) top / var(--tooth) 51% repeat-x;
+  mask:
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 90deg, #0000 91deg) bottom / var(--tooth) 51% repeat-x,
+    conic-gradient(from 135deg at top, #0000, #000 1deg 90deg, #0000 91deg) top / var(--tooth) 51% repeat-x;
+}
+
+.dotted-leader {
+  flex: 1;
+  border-bottom: 1px dotted currentColor;
+  opacity: 0.35;
+  transform: translateY(-4px);
+}
