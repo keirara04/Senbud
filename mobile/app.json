@@ -51,6 +51,8 @@
       }
     },
     "android": {
+      "userInterfaceStyle": "dark",
+      "backgroundColor": "#0b1033",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
