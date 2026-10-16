@@ -95,7 +95,7 @@ export default function Split() {
           </Card>
         ) : (
           <>
-            <Field label="How much was the bill?" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" placeholder="45" autoFocus />
+            <Field label="How much was the bill?" value={amount} onChangeText={(v) => setAmount(v.replace(/[^\d.]/g, ""))} keyboardType="decimal-pad" placeholder="45" autoFocus />
             <Field label="What was it?" value={note} onChangeText={setNote} placeholder="Dinner at Ali Maju" />
           </>
         )}
@@ -115,10 +115,14 @@ export default function Split() {
           <TextInput
             value={newName}
             onChangeText={setNewName}
-            onSubmitEditing={() => addPerson(newName)}
+            onSubmitEditing={(e) => addPerson(e.nativeEvent.text)}
             placeholder="Add a name"
             placeholderTextColor={t.textDim}
             returnKeyType="done"
+            autoCorrect={false}
+            spellCheck={false}
+            autoCapitalize="words"
+            blurOnSubmit={false}
             accessibilityLabel="Add a name"
             style={{ flex: 1, minHeight: touch.min, fontSize: 17, color: t.text, backgroundColor: t.surface, borderRadius: radius.sm, borderWidth: 1, borderColor: t.line, paddingHorizontal: space.sm + space.xs }}
           />

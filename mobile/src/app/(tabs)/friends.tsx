@@ -96,7 +96,7 @@ export default function Friends() {
         </Card>
       ) : (
         <View style={{ gap: space.xs }}>
-          <T>Paid for the group? Snap the receipt, or type something like “dinner 45 with Aiman and Sarah”.</T>
+          <T>Paid for the group? Split it here, or tap Split on a scanned receipt.</T>
           <T variant="caption" tone="textDim">
             Friends are just names. Senbud doesn’t read your contacts.
           </T>

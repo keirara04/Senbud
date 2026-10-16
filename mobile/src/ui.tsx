@@ -383,7 +383,8 @@ const s = StyleSheet.create({
   page: { padding: space.md, gap: space.md, flexGrow: 1 },
   card: { borderRadius: radius.md, padding: space.md, gap: space.sm },
   // Wraps so large accessibility text pushes items onto a new line instead of off screen.
-  row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
+  // alignContent: wrapped rows with a minHeight otherwise sit at the top of it.
+  row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', alignContent: 'center', gap: space.sm },
   button: { minHeight: touch.min, borderRadius: radius.sm, borderWidth: 1, paddingHorizontal: space.md, alignItems: 'center', justifyContent: 'center' },
   textButton: { minHeight: touch.min, justifyContent: 'center', paddingHorizontal: space.xs },
   input: { minHeight: touch.min, borderRadius: radius.sm, borderWidth: 1, paddingHorizontal: space.sm + space.xs },
