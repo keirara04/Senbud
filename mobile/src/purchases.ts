@@ -8,7 +8,8 @@ import Purchases, { type CustomerInfo, LOG_LEVEL } from 'react-native-purchases'
 
 import { setPro } from '@/db';
 
-export const ENTITLEMENT = 'pro';
+// The entitlement identifier as set in the RevenueCat dashboard.
+export const ENTITLEMENT = 'senbud_pro';
 
 // The Test Store key only in debug builds: a release build configured with it crashes on purpose.
 // Keys are public SDK keys, read from mobile/.env.local (gitignored) so they're easy to rotate.
@@ -28,7 +29,13 @@ export function purchasesReady(): boolean {
   return true;
 }
 
-export const hasPro = (info: CustomerInfo) => ENTITLEMENT in info.entitlements.active;
+export function hasPro(info: CustomerInfo) {
+  const pro = ENTITLEMENT in info.entitlements.active;
+  // A purchase that unlocks nothing usually means the product isn't attached to the "pro" entitlement.
+  if (__DEV__ && !pro && info.activeSubscriptions.length)
+    console.warn(`[Senbud] active subscriptions ${JSON.stringify(info.activeSubscriptions)} but entitlements are ${JSON.stringify(Object.keys(info.entitlements.all))}; attach the products to "${ENTITLEMENT}" in RevenueCat.`);
+  return pro;
+}
 
 /** Keeps the local Pro cache in step with RevenueCat. Mount once, inside SQLiteProvider. */
 export function ProSync() {
