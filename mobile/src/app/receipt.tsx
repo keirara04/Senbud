@@ -54,8 +54,10 @@ export default function ReceiptScreen() {
   }
 
   async function pick(source: 'camera' | 'library') {
-    const perm = source === 'camera' ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return setStep({ kind: 'pick', error: `Senbud needs ${source === 'camera' ? 'camera' : 'photo'} access for this. You can allow it in Settings.` });
+    // Only the camera needs permission. The system photo picker shares just the one photo chosen, so
+    // asking for the whole library would be needless (and iOS would show a full-access prompt).
+    if (source === 'camera' && !(await ImagePicker.requestCameraPermissionsAsync()).granted)
+      return setStep({ kind: 'pick', error: 'Senbud needs camera access for this. You can allow it in Settings, or choose a photo instead.' });
     const launch = source === 'camera' ? ImagePicker.launchCameraAsync : ImagePicker.launchImageLibraryAsync;
     const picked = await launch({ mediaTypes: ['images'], quality: 1 });
     if (picked.canceled || !app) return;
