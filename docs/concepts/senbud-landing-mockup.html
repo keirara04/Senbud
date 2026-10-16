@@ -291,7 +291,7 @@ body { font-size: 17px; }
 .cbar .cwrap { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; justify-content: space-between; padding-block: 6px; }
 .cbar a { color: inherit; }
 .cbar .seg-page { background: rgba(127,127,127,.25); }
-.cbar .seg-page button { color: inherit; opacity: .75; min-height: 28px; padding: 4px 10px; }
+.cbar .seg-page button { color: inherit; opacity: .75; min-height: 36px; padding: 4px 12px; }
 .cbar .seg-page button[aria-pressed="true"] { background: var(--bg); color: var(--text); opacity: 1; }
 .lnav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: var(--panel); color: var(--on-panel); border-bottom: 1px solid rgba(255,255,255,.14); }
 .lnav .cwrap { display: flex; align-items: center; gap: 24px; min-height: 64px; }
@@ -323,7 +323,7 @@ h2 { font: 800 clamp(32px, 4.2vw, 52px)/1.04 var(--display); letter-spacing: -0.
 .hero-band { padding-block: 72px 0; overflow: hidden; }
 .hero-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 40px; align-items: end; }
 .hero-copy { padding-bottom: 96px; }
-@media (max-width: 1000px) { .hero-grid { grid-template-columns: 1fr; } .hero-copy { padding-bottom: 0; } }
+@media (max-width: 1099px) { .hero-grid { grid-template-columns: 1fr; } .hero-copy { padding-bottom: 0; } }
 .join { display: flex; gap: 8px; margin-top: 30px; max-width: 520px; flex-wrap: wrap; }
 .join input { flex: 1 1 220px; min-height: 52px; border-radius: 999px; border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.1); color: var(--on-panel); padding: 0 22px; font: 400 17px var(--sans); }
 .join input::placeholder { color: var(--on-panel-dim); }
@@ -338,8 +338,8 @@ h2 { font: 800 clamp(32px, 4.2vw, 52px)/1.04 var(--display); letter-spacing: -0.
 .hero-phone .phone { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: 0; height: 760px; box-shadow: 0 30px 80px rgba(0,0,0,.35); }
 .bud-say { position: absolute; z-index: 3; left: 0; top: 150px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; filter: drop-shadow(0 12px 24px rgba(0,0,0,.25)); }
 .say-slip { --tooth: 8px; padding: 12px 14px 14px; display: grid; gap: 2px; font-size: 14px; line-height: 19px; width: 200px; transform: rotate(-3deg); }
-@media (min-width: 1100px) { .bud-say { left: -70px; } }
-@media (max-width: 1000px) { .bud-say { left: 0; top: 40px; } .hero-art { margin-top: 24px; } .zoom.hero-phone { zoom: .82; } }
+@media (min-width: 1100px) { .bud-say { left: -70px; top: 150px; } .say-slip { width: 200px; } }
+@media (max-width: 1099px) { .bud-say { left: 0; top: 40px; } .hero-art { margin-top: 24px; } .zoom.hero-phone { zoom: .82; } }
 @media (max-width: 420px) { .bud-say svg { width: 76px; height: 76px; } .say-slip { width: 160px; font-size: 13px; } .zoom.hero-phone { zoom: .74; } }
 .sec-intro { max-width: 720px; display: grid; gap: 16px; margin-bottom: 48px; }
 .sec-intro p { margin: 0; font-size: 19px; line-height: 28px; color: var(--dim); }
@@ -403,7 +403,7 @@ h2 { font: 800 clamp(32px, 4.2vw, 52px)/1.04 var(--display); letter-spacing: -0.
 .plist li::before { content: ""; position: absolute; left: 2px; top: 5px; width: 12px; height: 7px; border-left: 2px solid var(--good); border-bottom: 2px solid var(--good); transform: rotate(-45deg); }
 .plist.on-c li::before { border-color: var(--hl); }
 .seg-mini { display: inline-flex; background: rgba(255,255,255,.14); border-radius: 999px; padding: 3px; font: 600 13px/1 var(--sans); }
-.seg-mini button { font: inherit; border: 0; background: transparent; cursor: pointer; padding: 0 14px; min-height: 36px; border-radius: 999px; color: var(--on-panel-dim); }
+.seg-mini button { font: inherit; border: 0; background: transparent; cursor: pointer; padding: 0 16px; min-height: 44px; border-radius: 999px; color: var(--on-panel-dim); }
 .seg-mini button.on { background: var(--on-panel); color: var(--panel); }
 .faq-grid { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 48px; }
 @media (max-width: 900px) { .faq-grid { grid-template-columns: 1fr; } }
@@ -453,7 +453,7 @@ td:first-child { font-weight: 650; white-space: nowrap; }
   .jar-wave { animation: wave 3s linear infinite; }
 }
 /* stacked hero: Bud sits beside the phone, not at the far edge */
-@media (max-width: 1000px) { .bud-say { left: calc(50% - 380px); } }
+@media (max-width: 1099px) { .bud-say { left: calc(50% - 380px); } }
 @media (max-width: 760px) { .hero-art { flex-direction: column; align-items: center; } .bud-say { position: static; flex-direction: row; align-items: center; margin-bottom: 8px; } .say-slip { transform: rotate(-2deg); } }
 
 /* ---------- build notes ---------- */
@@ -801,11 +801,11 @@ td:first-child { font-weight: 650; white-space: nowrap; }
     <div class="note-grid">
       <div class="note"><h3>Responsiveness</h3><ul>
         <li><b>1100 px and up:</b> two-column hero, Bud overlaps the phone’s left edge, three phones in a row.</li>
-        <li><b>1000 px and down:</b> hero stacks (headline, form, then phone), Bud moves beside the phone.</li>
+        <li><b>Below 1100 px:</b> hero stacks (headline, form, then phone), and Bud moves beside the phone.</li>
         <li><b>1060 px and down:</b> the three app screens become a swipeable row with scroll snap, so each phone stays a readable size.</li>
         <li><b>900 px and down:</b> receipt slips, privacy cards and the Bud/Friends splits go to one column; privacy arrows turn downward.</li>
         <li><b>760 px and down:</b> nav keeps only the logo and the waitlist button; pricing cards stack; section padding drops from 96 to 64 px.</li>
-        <li><b>420 px and down:</b> hero phone scales to 74%, Bud to 76 px. Gutter never under 20 px, no sideways scrolling, every tap at least 48 px.</li>
+        <li><b>420 px and down:</b> hero phone scales to 74%, Bud to 76 px. Gutter never under 20 px and no sideways scrolling. Buttons and fields are 48 px tall; the small Yearly/Monthly switch is 44 px (Apple’s minimum).</li>
         <li>Phones are drawn at real 375 pt and scaled with <code>zoom</code>, so the app screens stay pixel-true at every width.</li>
       </ul></div>
       <div class="note"><h3>Animation</h3><ul>
@@ -845,7 +845,7 @@ td:first-child { font-weight: 650; white-space: nowrap; }
         <tr><td>Assistant</td><td>Not on the page</td><td>New “Meet Bud” section with Bud’s receipt-slip answers</td><td>Bud is the brand’s new face and Pro’s main selling point</td></tr>
         <tr><td>Friends</td><td>Diner receipt split and a reminder “ready to paste”</td><td>Three numbered steps and the phone’s Send on WhatsApp sheet</td><td>Matches the redesigned 3-step split and the new one-tap reminder</td></tr>
         <tr><td>Privacy</td><td>Animated phone-to-AI diagram</td><td>Three cards: on your phone, only if AI is on, back on your phone</td><td>Same story, says “no account” too, and works without motion</td></tr>
-        <tr><td>Wrapped, game</td><td>Two full sections</td><td>Folded into one “Also in the app” strip with subscriptions and rent</td><td>Page is about 40% shorter; the extras stay visible</td></tr>
+        <tr><td>Wrapped, game</td><td>Two full sections</td><td>Folded into one “Also in the app” strip with subscriptions and rent</td><td>The page is about a quarter shorter (7,900 px vs 10,300 px at 1440 wide), and the extras stay visible</td></tr>
         <tr><td>Pricing</td><td>Same prices, longer Pro list</td><td>Pro card uses the paywall copy word for word: three benefits, yearly first</td><td>Website and in-app paywall say the same thing</td></tr>
         <tr><td>FAQ</td><td>Browser storage answers</td><td>Account-free, phone storage, backups, what the AI sees, when it’s out</td><td>Answers the questions the app now raises</td></tr>
         <tr><td>Footer</td><td>Receipt footer</td><td>Kept, with Bud added to the line items</td><td>It’s the most on-brand thing on the current page</td></tr>
