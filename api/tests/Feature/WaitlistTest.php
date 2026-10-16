@@ -164,6 +164,13 @@ class WaitlistTest extends TestCase
         $this->assertDatabaseCount('waitlist_signups', 0);
     }
 
+    public function test_feature_is_optional(): void
+    {
+        $this->postJson('/v1/waitlist', ['email' => 'ana@example.com'])->assertOk()->assertExactJson(self::PENDING);
+
+        $this->assertDatabaseHas('waitlist_signups', ['email' => 'ana@example.com', 'feature' => null]);
+    }
+
     public function test_invalid_feature_is_rejected(): void
     {
         $this->signup('ana@example.com', ['feature' => 'crypto'])

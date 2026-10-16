@@ -36,9 +36,7 @@ export function WaitlistForm({ place, center = false }: { place: "hero" | "end";
       ref = sessionStorage.getItem("senbud:ref") ?? "";
     } catch {}
     try {
-      // ponytail: the API still requires a feature pick and these forms no longer ask, so every
-      // signup says "receipt". Make `feature` optional in api/ WaitlistController if that survey matters.
-      const body = { email, feature: "receipt", ...(ref && { ref }) };
+      const body = { email, ...(ref && { ref }) };
       const res = await fetch(`${API}/v1/waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
