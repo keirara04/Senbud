@@ -184,6 +184,7 @@ Branch `claude/nifty-kalam-3076ea`.
   - Never compare formatted money strings across platforms in tests.
   - Keep `money` tests on `en-US` in Node.
   - If exact output ever matters (for example, CSV export), format from `formatToParts` or from cents yourself.
+- **`money` assumes two-decimal currencies.** It forces 2 fraction digits for non-whole amounts, so `money(4.5, "JPY", "ja-JP")` prints `￥4.50`. That's wrong for currencies with no minor unit, such as JPY and KRW. Fix it in Phase 1 if the app supports them: let `Intl`'s defaults decide the digits, or read them from `resolvedOptions()`.
 - The regex compiler (`hermesc`) also accepts lookbehind and `\p{L}`, and rejects an invalid `\p{…}` name, so a regex Hermes can't handle fails the build rather than slipping through to runtime.
 
 **Styling: NativeWind v5 rc vs shared tokens plus StyleSheet**
