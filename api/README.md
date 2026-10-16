@@ -84,6 +84,7 @@ Laravel's usual variables (`APP_KEY`, `DB_*`, ...) plus:
 | `WEB_ORIGIN` | `http://localhost:3000` | The only browser origin allowed by CORS, and where confirm links redirect. Exact match: scheme, host and port, no trailing slash. Production: `https://senbud.com`. |
 | `MAIL_*` | `MAIL_MAILER=log` | See [Email](#email). |
 | `APP_ORIGIN` | `http://localhost:8081` | The web app's origin. CORS also allows it, and its browser requests get a free daily allowance on top of the usual caps: 3 receipts and 10 Bud questions per device (`AppServiceProvider`). Production: `https://app.senbud.com`. |
+| `UNLIMITED_DEVICES` | empty | Comma-separated device ids with no limits on receipts and Bud questions, for the owner's own phone and browsers. Find a device's id in the app under Settings → Support ID. Every call still costs OpenRouter money. |
 | `TRUSTED_PROXIES` | empty | Comma-separated IPs/CIDRs of the reverse proxy in front of the API. Without it, every request behind a proxy shares the proxy's IP and the per-IP rate limit becomes global. Never `*`: anyone could then fake their IP. |
 | `RUN_MIGRATIONS` | `true` | Docker only. Run `migrate --force` when the container starts. |
 

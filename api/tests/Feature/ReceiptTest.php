@@ -158,6 +158,15 @@ class ReceiptTest extends TestCase
         $this->send()->assertOk();
     }
 
+    public function test_listed_devices_have_no_limits(): void
+    {
+        config(['app.unlimited_devices' => 'ffffffff-0000-4000-8000-000000000000, '.strtoupper(self::DEVICE)]);
+        self::fakeModel(['merchant' => null, 'date' => null, 'currency' => null, 'items' => [], 'total' => null]);
+        for ($i = 0; $i < 8; $i++) {
+            $this->send([], ['Origin' => config('app.app_origin')])->assertOk();
+        }
+    }
+
     public function test_cors_allows_the_web_app_and_its_device_id_header(): void
     {
         config(['cors.allowed_origins' => ['https://senbud.com', 'https://app.senbud.com']]);

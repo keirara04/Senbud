@@ -47,15 +47,23 @@ class AppServiceProvider extends ServiceProvider
         // The web app has no Pro yet, so its browsers get a small free allowance a day. Browsers can't
         // forge Origin; other clients can, but then they only get the app's caps above, as today.
         $web = fn (Request $request) => $request->header('Origin') === config('app.app_origin');
+        // The owner's own devices (UNLIMITED_DEVICES, from Settings → Support ID) skip every AI limit.
+        // A device id is a random UUID only that phone or browser knows, so listing it is safe enough.
+        $unlimited = function (Request $request) {
+            $device = $request->header('X-Device-Id');
+            $list = array_filter(array_map('trim', explode(',', (string) config('app.unlimited_devices'))));
+
+            return is_string($device) && $device !== '' && in_array(strtolower($device), array_map('strtolower', $list), true);
+        };
         // The web caps go first: the first limit hit sets Retry-After, and the app reads a day-sized one
         // as "that's today's free allowance".
-        RateLimiter::for('receipt', fn (Request $request) => [
+        RateLimiter::for('receipt', fn (Request $request) => $unlimited($request) ? Limit::none() : [
             ...($web($request) ? [Limit::perDay(self::WEB_FREE_RECEIPTS)->by('web:'.$who($request)), Limit::perDay(30)->by('web-ip:'.$request->ip())] : []),
             Limit::perMinute(6)->by($who($request)), Limit::perDay(60)->by($who($request)), Limit::perDay(200)->by('ip:'.$request->ip()),
         ]);
         // Separate keys from receipts (Laravel prefixes them with the limiter name), so asking never
         // uses up receipt reads.
-        RateLimiter::for('ask', fn (Request $request) => [
+        RateLimiter::for('ask', fn (Request $request) => $unlimited($request) ? Limit::none() : [
             ...($web($request) ? [Limit::perDay(self::WEB_FREE_QUESTIONS)->by('web:'.$who($request)), Limit::perDay(60)->by('web-ip:'.$request->ip())] : []),
             Limit::perMinute(10)->by($who($request)), Limit::perDay(100)->by($who($request)), Limit::perDay(300)->by('ip:'.$request->ip()),
         ]);

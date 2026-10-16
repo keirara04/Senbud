@@ -3,6 +3,7 @@
 import { money, toCsv } from '@senbud/core';
 import { space } from '@senbud/core/tokens';
 import { router, useFocusEffect } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
 import { useSQLiteContext } from 'expo-sqlite';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useState } from 'react';
@@ -18,6 +19,7 @@ import { AiSwitch, applyTheme, Button, Card, ListGroup, ListRow, Row, Screen, Se
 export default function Settings() {
   const db = useSQLiteContext();
   const [app, setApp] = useState<AppState | null>(null);
+  const [copied, setCopied] = useState(false);
   const [setup, setSetup] = useState<Setup | null>(null);
   const [manageUrl, setManageUrl] = useState<string | null>(null);
 
@@ -149,6 +151,21 @@ export default function Settings() {
         <TextButton title="Privacy" tone="textDim" onPress={() => WebBrowser.openBrowserAsync(PRIVACY)} />
         <T tone="textDim">·</T>
         <TextButton title="Terms" tone="textDim" onPress={() => WebBrowser.openBrowserAsync(TERMS)} />
+      </Row>
+      {/* The anonymous id the API rate-limits by. Quote it to support, or list it in the API's
+          UNLIMITED_DEVICES for your own devices. */}
+      <Row style={{ justifyContent: 'center' }}>
+        <T variant="caption" tone="textDim">
+          Support ID {app.deviceId.slice(0, 8)}
+        </T>
+        <TextButton
+          title={copied ? 'Copied' : 'Copy'}
+          tone="textDim"
+          onPress={async () => {
+            await Clipboard.setStringAsync(app.deviceId);
+            setCopied(true);
+          }}
+        />
       </Row>
     </Screen>
   );
