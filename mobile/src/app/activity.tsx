@@ -1,12 +1,21 @@
-import { money } from '@senbud/core';
+import { addDays, money } from '@senbud/core';
 import { space } from '@senbud/core/tokens';
 import { useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 
-import { deleteTransactions, listTransactions, loadSetup, type Profile, type Txn } from '@/db';
+import { deleteTransactions, listTransactions, loadSetup, type Profile, today, type Txn } from '@/db';
 import { Card, CategoryChip, Row, T, useTheme } from '@/ui';
+
+// "Today", "Yesterday", else a short local date ("Oct 14"). Dates are local calendar days, read at noon UTC
+// so no time zone can shift them.
+function dayLabel(date: string, locale: string) {
+  const now = today();
+  if (date === now) return 'Today';
+  if (date === addDays(now, -1)) return 'Yesterday';
+  return new Date(`${date}T12:00:00Z`).toLocaleDateString(locale, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+}
 
 export default function Activity() {
   const db = useSQLiteContext();
@@ -46,12 +55,13 @@ export default function Activity() {
       renderItem={({ item }) => (
         <Card>
           <Row>
-            <View style={{ flex: 1, gap: space.xs }}>
+            {/* flexBasis, not flex: 1, so at large text the amount wraps below instead of squeezing the label. */}
+            <View style={{ flexGrow: 1, flexBasis: 180, gap: space.xs }}>
               <T variant="bodyStrong">{item.label}</T>
               <Row style={{ justifyContent: 'flex-start' }}>
                 <CategoryChip category={item.category} />
                 <T variant="caption" tone="textDim">
-                  {item.date}
+                  {dayLabel(item.date, profile.locale)}
                 </T>
               </Row>
             </View>

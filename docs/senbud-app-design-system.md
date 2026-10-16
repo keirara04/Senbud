@@ -187,4 +187,7 @@ The voice is a friendly older cousin who's good with money.
 
 - **Dotted-notebook background and torn receipt edges.** They need `react-native-svg`, which isn't worth adding for decoration yet. Revisit for Wrapped share images.
 - **No custom font, icon set or illustration style yet.** Use emoji sparingly and system symbols when an icon set is chosen. `expo-symbols` is already installed for SF Symbols on iOS.
+- **In dark mode, `primary` and `highlight` buttons look the same** (both highlighter yellow), so the "single most important action" emphasis disappears at night. Accepted for now. If a screen ever needs both, give dark `primary` its own fill.
+- **Large text checked on iOS only.** At the largest accessibility size on the iPhone 17 simulator, Home and Activity wrap correctly. That's after three fixes: `Row` wraps, inputs drop their fixed line height, and the hero number is capped at 1.3× and shrinks to fit. Android at large font scale is not checked yet.
+- **`money` minor digits:** verified on iOS Hermes (KRW). Android is inferred, since it matched Node in every Phase 0 `Intl` probe.
 - **No user-selectable theme.** The app follows the system setting (`userInterfaceStyle: automatic`). Settings gets a light/dark/system choice in Phase 1.

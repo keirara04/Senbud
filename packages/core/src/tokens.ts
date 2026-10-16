@@ -9,6 +9,7 @@ export const palette = {
   cobalt: "#1f3fd8", // the "pen": panels, primary buttons, links on light
   cobaltDeep: "#1733b5", // pressed cobalt
   highlighter: "#eeff5a", // the one loud accent: key numbers on cobalt, markers, focus
+  highlighterPressed: "#d4e64a",
   highlighterInk: "#4a5000",
   coral: "#ff6b5b", // fill only on light (2.8:1 on white)
   coralInk: "#9e2f22", // coral text on light
@@ -72,7 +73,7 @@ const dark: Theme = {
   textDim: palette.moonDim,
   line: "rgba(255, 255, 255, 0.1)",
   accent: palette.highlighter, // cobalt on night is too dark to read; the web flips to highlighter too
-  accentPressed: "#d4e64a",
+  accentPressed: palette.highlighterPressed,
   onAccent: palette.ink,
   panel: palette.cobalt,
   onPanel: palette.onCobalt,

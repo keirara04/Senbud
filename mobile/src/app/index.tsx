@@ -96,7 +96,7 @@ export default function Home() {
         <T variant="label" tone="onPanelDim">
           Safe to spend today
         </T>
-        <T variant="hero" tone="highlight" money accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit>
+        <T variant="hero" tone="highlight" money accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit maxFontSizeMultiplier={1.3}>
           {fmt(safe.perDay)}
         </T>
         <T variant="caption" tone="onPanelDim">

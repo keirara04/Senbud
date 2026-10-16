@@ -1,7 +1,7 @@
 // Senbud UI kit: the component layer on top of @senbud/core/tokens. Screens use these, never raw colours.
 // Spec: docs/senbud-app-design-system.md.
 import type { Category } from '@senbud/core';
-import { categoryColors, motion, radius, space, type Theme, themes, touch, type } from '@senbud/core/tokens';
+import { categoryColors, motion, palette, radius, space, type Theme, themes, touch, type } from '@senbud/core/tokens';
 import type { ReactNode } from 'react';
 import {
   Pressable,
@@ -97,7 +97,7 @@ export function Button({
   const t = useTheme();
   const look: Record<ButtonVariant, { bg: string; pressed: string; fg: string; border?: string }> = {
     primary: { bg: t.accent, pressed: t.accentPressed, fg: t.onAccent },
-    highlight: { bg: t.highlight, pressed: '#d4e64a', fg: t.onHighlight },
+    highlight: { bg: t.highlight, pressed: palette.highlighterPressed, fg: t.onHighlight },
     secondary: { bg: 'transparent', pressed: t.surfaceSunken, fg: t.accent, border: t.line },
     danger: { bg: 'transparent', pressed: t.surfaceSunken, fg: t.bad, border: t.line },
   };
@@ -144,7 +144,8 @@ export function Field({ label, error, ...input }: { label: string; error?: strin
         placeholderTextColor={t.textDim}
         selectionColor={t.accent}
         {...input}
-        style={[s.input, type.body, { backgroundColor: t.surface, color: t.text, borderColor: error ? t.bad : t.line }]}
+        // No lineHeight on inputs: a fixed one clips the text at large accessibility sizes.
+        style={[s.input, { fontSize: type.body.fontSize, backgroundColor: t.surface, color: t.text, borderColor: error ? t.bad : t.line }]}
       />
       {error ? (
         <T variant="caption" tone="bad">
@@ -250,7 +251,8 @@ export function useNavigationTheme() {
 const s = StyleSheet.create({
   page: { padding: space.md, gap: space.md, flexGrow: 1 },
   card: { borderRadius: radius.md, padding: space.md, gap: space.sm },
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
+  // Wraps so large accessibility text pushes items onto a new line instead of off screen.
+  row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   button: { minHeight: touch.min, borderRadius: radius.sm, borderWidth: 1, paddingHorizontal: space.md, alignItems: 'center', justifyContent: 'center' },
   textButton: { minHeight: touch.min, justifyContent: 'center', paddingHorizontal: space.xs },
   input: { minHeight: touch.min, borderRadius: radius.sm, borderWidth: 1, paddingHorizontal: space.sm + space.xs },
