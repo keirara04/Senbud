@@ -180,8 +180,9 @@ export async function addIous(db: SQLiteDatabase, ious: Iou[]) {
       await db.runAsync('INSERT INTO ious (friend, cents, direction, note, date, paid) VALUES (?, ?, ?, ?, ?, ?)', i.friend, i.cents, i.direction, i.note, i.date, i.paid ? 1 : 0);
   });
 }
-export const setFriendPaid = (db: SQLiteDatabase, friend: string, paid: boolean) =>
-  db.runAsync('UPDATE ious SET paid = ? WHERE friend = ? AND paid = ?', paid ? 1 : 0, friend, paid ? 0 : 1);
+// By id, so Undo reopens only what was just marked, never older settled IOUs.
+export const setIousPaid = (db: SQLiteDatabase, ids: number[], paid: boolean) =>
+  db.runAsync(`UPDATE ious SET paid = ? WHERE id IN (${ids.map(() => '?').join(',')})`, paid ? 1 : 0, ...ids);
 
 // Subscriptions (detected, then confirmed by the person).
 export async function listSubscriptions(db: SQLiteDatabase): Promise<Subscription[]> {

@@ -47,3 +47,21 @@ describe("pickNudge", () => {
     expect(pickNudge({ ...base, treats: [tealive], onTrack: false })).toBeNull();
   });
 });
+
+describe("splitByItems", () => {
+  it("gives each person their items and splits shared ones evenly, leftover cents to the payer", async () => {
+    const { splitByItems } = await import("./index");
+    const items = [
+      { cents: 1200, owners: ["You"] as const },
+      { cents: 930, owners: ["Aiman"] as const },
+      { cents: 1000, owners: ["You", "Aiman", "Sarah"] as const },
+    ];
+    const shares = splitByItems(items.map((i) => ({ cents: i.cents, owners: [...i.owners] })), ["You", "Aiman", "Sarah"], "You");
+    expect(shares).toEqual({ You: 1200 + 334, Aiman: 930 + 333, Sarah: 333 });
+    expect(shares.You + shares.Aiman + shares.Sarah).toBe(3130);
+  });
+  it("skips items nobody claimed", async () => {
+    const { splitByItems } = await import("./index");
+    expect(splitByItems([{ cents: 500, owners: [] }], ["You", "Sarah"], "You")).toEqual({ You: 0, Sarah: 0 });
+  });
+});

@@ -229,6 +229,23 @@ export function CategoryPicker({ value, onChange }: { value: Category; onChange:
   );
 }
 
+// A friend: initials on a sunken circle. Never a photo, and no contacts access (friends are just names).
+export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
+  const t = useTheme();
+  const initials = name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('');
+  return (
+    <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: t.surfaceSunken, alignItems: 'center', justifyContent: 'center' }}
+    >
+      <T variant="bodyStrong" style={{ fontSize: size * 0.4 }}>
+        {initials}
+      </T>
+    </View>
+  );
+}
+
 // Budget pace: fill colour carries the status, the label next to it says it in words (never colour alone).
 // tone="panel" sits on cobalt: a white 22% track, and coralLight for over (plain coral is 2.7:1 there).
 export function Progress({ value, status, tone }: { value: number; status: 'ok' | 'close' | 'over'; tone?: 'panel' }) {

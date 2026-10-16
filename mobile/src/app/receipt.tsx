@@ -205,6 +205,20 @@ export default function ReceiptScreen() {
           disabled={!kept.length}
           onPress={() => save(receipt, keep)}
         />
+        <Button
+          title="Split this with friends"
+          variant="secondary"
+          disabled={!kept.length}
+          onPress={() =>
+            router.push({
+              pathname: '/split',
+              params: {
+                merchant: receipt.merchant ?? undefined,
+                items: JSON.stringify(kept.map((i) => ({ label: i.label, cents: Math.round(i.amount * 100), category: i.category }))),
+              },
+            })
+          }
+        />
         <Button title="Try another photo" variant="secondary" onPress={() => setStep({ kind: 'pick' })} />
       </Screen>
     );
