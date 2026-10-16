@@ -183,6 +183,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 
 ### 4.1b Welcome (first launch)
 
+- **Decided 16 Oct 2026:** Senbud stays account-free. Data lives in SQLite on the phone; a backup file covers moving phones. Optional Sign in with Apple or Google comes later, only for encrypted sync, as a Pro feature.
 - **No sign-in wall.** The spec promises no bank login and no accounts, and Pro uses an anonymous RevenueCat id, so "Get started" goes straight to Setup.
 - **Top to bottom:**
   1. Logo.
@@ -193,7 +194,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
   6. `primary` "Get started".
   7. `TextButton` "I've used Senbud before".
 - **"I've used Senbud before"** opens a sheet: "Senbud keeps everything on your phone, so there's no account to log in to." It offers "Restore from a backup" (Files or Google Drive) and "Restore Senbud Pro" (Apple or Google account).
-- **Sign in (only if encrypted sync ships, spec 8):**
+- **Sign in (later, Pro, for encrypted sync only):**
   - An optional sheet: "Use Senbud on more than one phone". It explains that spending is encrypted on the phone before it's sent.
   - Buttons: Sign in with Apple first, then "Continue with Google", then "Not now".
   - If Google sign-in is offered on iOS, Sign in with Apple is required (App Review 4.8).
@@ -477,14 +478,13 @@ These are additions to `ui.tsx` for the screens above. Each takes colours from `
 
 ### 4.11 Open questions (need the user's call before building)
 
-1. **Does Senbud get accounts at all?** Today there's no login on purpose (no bank login, no accounts, anonymous Pro). The concepts draw a welcome screen, plus an optional sign-in only for future sync. A real login screen would change the privacy promise and the store data forms.
-2. **Friends hero in highlighter both ways?** Should the Friends hero use highlighter in both directions (4.5), instead of good/bad colour?
-3. **Treats Marker and dark `primary`:** should the Treats Marker be dropped? And should dark `primary` get its own fill? In dark mode `accent` is highlighter, so every `primary` button is yellow: Friends ("Split a bill", "Mark paid") and the assistant's "Yes, split it" show two yellow things on one screen.
-4. **Category limits free or Pro?** Spec 4.2 says they "exist already"; spec 8 makes "multiple budgets" Pro.
-5. **What does a chat question send?** Only the proposed summary, or more? This decides the privacy copy and the store data forms.
-6. **Nudges inside their cards?** Should rent and pace nudges live inside their own cards on Home (4.2)?
-7. **Share image link:** does the share image get a URL or handle? The domain isn't settled (spec 11).
-8. **Are by-item splits and full Wrapped still Pro?** Spec 8 says yes, and the concepts lock them. The paywall the user chose lists only receipts, the unlimited assistant and subscription reminders.
+1. **Friends hero in highlighter both ways?** Should the Friends hero use highlighter in both directions (4.5), instead of good/bad colour?
+2. **Treats Marker and dark `primary`:** should the Treats Marker be dropped? And should dark `primary` get its own fill? In dark mode `accent` is highlighter, so every `primary` button is yellow: Friends ("Split a bill", "Mark paid") and the assistant's "Yes, split it" show two yellow things on one screen.
+3. **Category limits free or Pro?** Spec 4.2 says they "exist already"; spec 8 makes "multiple budgets" Pro.
+4. **What does a chat question send?** Only the proposed summary, or more? This decides the privacy copy and the store data forms.
+5. **Nudges inside their cards?** Should rent and pace nudges live inside their own cards on Home (4.2)?
+6. **Share image link:** does the share image get a URL or handle? The domain isn't settled (spec 11).
+7. **Are by-item splits and full Wrapped still Pro?** Spec 8 says yes, and the concepts lock them. The paywall the user chose lists only receipts, the unlimited assistant and subscription reminders.
 
 ## 5. Voice
 

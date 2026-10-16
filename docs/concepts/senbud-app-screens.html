@@ -376,7 +376,7 @@ body {
       <ul class="decide">
         <li><b>There’s no login today, on purpose.</b> The spec promises no bank login and no accounts, and Pro works through an anonymous RevenueCat id. So the first screen is a welcome, not a sign-in wall: “Get started” goes straight to Setup.</li>
         <li><b>Returning people</b> tap “I’ve used Senbud before” and get the two things that bring them back: restore a backup file, and restore Pro.</li>
-        <li><b>Sign in is drawn for later:</b> only if encrypted sync between phones ships (spec 8, Pro). It’s optional and skippable. If Google sign-in is offered on iOS, Sign in with Apple must be too (App Store rule 4.8), and it goes first.</li>
+        <li><b>Decided: no accounts now.</b> Sign in with Apple or Google comes later as a Pro feature, only for encrypted sync between phones. It’s optional and skippable. If Google sign-in is offered on iOS, Sign in with Apple must be too (App Store rule 4.8), and it goes first.</li>
         <li>Bud, the logo and one cobalt button. No highlighter except the logo’s own “bud”.</li>
       </ul>
     </div>
@@ -425,7 +425,7 @@ body {
       </figure>
 
       <figure class="shot">
-        <figcaption><b>Sign in, only if sync ships.</b> Optional, skippable, Apple first.</figcaption>
+        <figcaption><b>Sign in, later (Pro).</b> Only for sync between phones. Optional, skippable, Apple first.</figcaption>
         <div class="phone">
           <div class="sb"><span>9:41</span><i></i></div>
           <div class="scroll" style="padding:12px 24px 34px;gap:16px">
@@ -440,7 +440,7 @@ body {
           <div class="scrim"></div>
           <div class="sheet" style="top:300px">
             <div class="grab"></div>
-            <div class="row start" style="gap:12px;flex-wrap:nowrap"><svg class="bud" width="48" height="48" aria-hidden="true"><use href="#bud-yay"/></svg><h3 class="heading grow">Use Senbud on more than one phone</h3></div>
+            <div class="row start" style="gap:12px;flex-wrap:nowrap"><svg class="bud" width="48" height="48" aria-hidden="true"><use href="#bud-yay"/></svg><h3 class="heading grow">Use Senbud on more than one phone</h3><span class="chip c-other"><svg class="ic" style="width:14px;height:14px"><use href="#i-lock"/></svg>Pro</span></div>
             <span class="dim">Optional. Sign in only to sync. Your spending is encrypted on this phone before it’s sent.</span>
             <div class="btn apple">Sign in with Apple</div>
             <div class="btn secondary" style="color:var(--text)">Continue with Google</div>
@@ -1649,7 +1649,6 @@ body {
       </div>
     </div>
     <ol class="qs">
-      <li><b>Does Senbud get accounts at all?</b> There’s no login today on purpose (no bank login, no accounts, anonymous Pro). These frames draw a welcome screen and an optional sign-in only for future sync. A real login would change the privacy promise.</li>
       <li><b>Friends hero in highlighter both ways?</b> Section 4 said good/bad colour. Painting “you owe RM 8” coral reads as a telling-off.</li>
       <li><b>Drop the Marker on Treats?</b> Highlighter number + Marker + Add-to-jar would be three yellow things. Bigger version of the same problem: in dark mode <code>accent</code> is highlighter, so every <code>primary</code> button is yellow. Friends (“Split a bill”, “Mark paid”) and the assistant’s “Yes, split it” end up with two yellow things. Give dark <code>primary</code> its own fill?</li>
       <li><b>Are category limits free or Pro?</b> The spec says they “exist already” but makes “multiple budgets” Pro.</li>
