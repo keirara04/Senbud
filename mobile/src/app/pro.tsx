@@ -10,11 +10,8 @@ import { ActivityIndicator, Pressable, View } from 'react-native';
 import Purchases, { PACKAGE_TYPE, PURCHASES_ERROR_CODE, type PurchasesPackage } from 'react-native-purchases';
 
 import { loadSetup, setPro } from '@/db';
-import { hasPro, purchasesReady } from '@/purchases';
+import { hasPro, PRIVACY, purchasesReady, TERMS } from '@/purchases';
 import { Button, Card, Icon, type IconName, Row, Screen, T, TextButton, useTheme } from '@/ui';
-
-const TERMS = 'https://senbud.app/terms';
-const PRIVACY = 'https://senbud.app/privacy';
 
 const BENEFITS: [IconName, string, string][] = [
   [{ ios: 'camera', android: 'photo_camera' }, 'Snap receipts', 'Take a photo and it’s added and sorted.'],

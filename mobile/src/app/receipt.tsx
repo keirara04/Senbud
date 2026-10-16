@@ -16,6 +16,7 @@ import { Button, Card, CategoryChip, Row, Screen, T, UndoBar, useTheme } from '@
 type Step =
   | { kind: 'loading' }
   | { kind: 'pro' }
+  | { kind: 'aiOff' }
   | { kind: 'consent' }
   | { kind: 'pick'; error?: string }
   | { kind: 'reading' }
@@ -57,7 +58,7 @@ export default function ReceiptScreen() {
         } catch {}
       }
       setApp(a);
-      setStep(!a.pro ? { kind: 'pro' } : a.aiConsentAt ? { kind: 'pick' } : { kind: 'consent' });
+      setStep(!a.pro ? { kind: 'pro' } : !a.aiEnabled ? { kind: 'aiOff' } : a.aiConsentAt ? { kind: 'pick' } : { kind: 'consent' });
       })();
     }, [db, step.kind]),
   );
@@ -132,6 +133,16 @@ export default function ReceiptScreen() {
         <T variant="caption" tone="textDim">
           Typing expenses, budgets and rent stay free.
         </T>
+      </Screen>
+    );
+
+  if (step.kind === 'aiOff')
+    return (
+      <Screen>
+        <T variant="title">AI is off</T>
+        <T tone="textDim">Reading a receipt needs AI. You turned it off in Settings, so nothing is sent.</T>
+        <Button title="Turn it on in Settings" onPress={() => router.replace('/settings')} />
+        <Button title="Type it instead" variant="secondary" onPress={() => router.back()} />
       </Screen>
     );
 

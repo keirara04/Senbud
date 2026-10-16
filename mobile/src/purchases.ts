@@ -12,6 +12,10 @@ import { loadApp, setPro } from '@/db';
 // The entitlement identifier as set in the RevenueCat dashboard.
 export const ENTITLEMENT = 'senbud_pro';
 
+// Shown on the paywall (App Store 3.1.2) and in Settings.
+export const TERMS = 'https://senbud.app/terms';
+export const PRIVACY = 'https://senbud.app/privacy';
+
 // The Test Store key only in debug builds: a release build configured with it crashes on purpose.
 // Keys are public SDK keys, read from mobile/.env.local (gitignored) so they're easy to rotate.
 const KEY = __DEV__

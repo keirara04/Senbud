@@ -8,6 +8,7 @@ export default function HomeStack() {
       <Stack.Screen name="activity" options={{ title: 'Activity' }} />
       <Stack.Screen name="afford" options={{ title: 'Can I afford it?' }} />
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+      <Stack.Screen name="sent" options={{ title: 'What gets sent' }} />
     </Stack>
   );
 }

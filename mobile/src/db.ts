@@ -109,6 +109,42 @@ export const eraseAll = (db: SQLiteDatabase) =>
     DELETE FROM category_limits; DELETE FROM treats; DELETE FROM treat_jar_history; DELETE FROM ious; DELETE FROM subscriptions; DELETE FROM rules;
     UPDATE treat_jar SET balance_cents = 0, goal_name = NULL, goal_cents = NULL;`);
 
+// "Back up everything": every user table as rows, plus the app settings. Not device_id (a new phone
+// gets its own) and not pro (the store owns that; Restore purchases brings it back).
+const BACKUP_TABLES = ['transactions', 'budget', 'bills', 'profile', 'category_limits', 'treats', 'treat_jar', 'treat_jar_history', 'ious', 'subscriptions', 'rules'];
+const BACKUP_SETTINGS = ['hourly_rate_cents', 'ai_enabled', 'theme', 'ai_consent_at'];
+type Row = Record<string, string | number | null>;
+export type Backup = { app: 'senbud'; schema: number; tables: Record<string, Row[]>; settings: Row };
+
+export async function exportAll(db: SQLiteDatabase): Promise<Backup> {
+  const tables: Record<string, Row[]> = {};
+  for (const t of BACKUP_TABLES) tables[t] = await db.getAllAsync<Row>(`SELECT * FROM ${t}`);
+  const settings = (await db.getFirstAsync<Row>(`SELECT ${BACKUP_SETTINGS.join(', ')} FROM app`)) ?? {};
+  return { app: 'senbud', schema: MIGRATIONS.length, tables, settings };
+}
+
+// Replaces everything with a backup file the person picked. The file is untrusted: column names must
+// exist in the table (they go into SQL), values must be plain numbers, strings or null.
+export async function importAll(db: SQLiteDatabase, data: unknown) {
+  const b = data as Partial<Backup>;
+  if (b?.app !== 'senbud' || typeof b.schema !== 'number' || typeof b.tables !== 'object' || !b.tables) throw new Error('not a Senbud backup');
+  if (b.schema > MIGRATIONS.length) throw new Error('backup is from a newer Senbud');
+  const plain = (v: unknown) => v === null || typeof v === 'string' || typeof v === 'number';
+  await db.withTransactionAsync(async () => {
+    for (const t of BACKUP_TABLES) {
+      const cols = new Set((await db.getAllAsync<{ name: string }>(`PRAGMA table_info(${t})`)).map((c) => c.name));
+      await db.runAsync(`DELETE FROM ${t}`);
+      for (const row of b.tables![t] ?? []) {
+        const keys = Object.keys(row).filter((k) => cols.has(k) && plain(row[k]));
+        if (keys.length) await db.runAsync(`INSERT INTO ${t} (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`, ...keys.map((k) => row[k]));
+      }
+    }
+    await db.runAsync('INSERT OR IGNORE INTO treat_jar (id) VALUES (1)');
+    const s = b.settings ?? {};
+    for (const k of BACKUP_SETTINGS) if (k in s && plain(s[k])) await db.runAsync(`UPDATE app SET ${k} = ?`, s[k]);
+  });
+}
+
 export type Theme = 'system' | 'light' | 'dark';
 export type AppState = { deviceId: string; aiConsentAt: string | null; pro: boolean; hourlyRateCents: number | null; aiEnabled: boolean; theme: Theme };
 

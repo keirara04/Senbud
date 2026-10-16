@@ -115,7 +115,7 @@ export default function Afford() {
       {typed && !app.hourlyRateCents && (
         <Card>
           <T>Want prices in hours of work? Add what you earn an hour.</T>
-          <TextButton title="Add hourly rate" onPress={() => router.push('/settings')} />
+          <TextButton title="Add hourly rate" onPress={() => router.push('/rate')} />
         </Card>
       )}
       {result && result.verdict !== 'no' && <Button title="I bought it" variant="secondary" onPress={bought} />}

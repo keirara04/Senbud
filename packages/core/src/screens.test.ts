@@ -65,3 +65,11 @@ describe("splitByItems", () => {
     expect(splitByItems([{ cents: 500, owners: [] }], ["You", "Sarah"], "You")).toEqual({ You: 0, Sarah: 0 });
   });
 });
+
+describe("toCsv", () => {
+  it("writes major units and quotes labels with commas or quotes", async () => {
+    const { toCsv } = await import("./index");
+    const csv = toCsv([{ date: "2026-10-16", cents: 450, label: 'Kopi, "large"', category: "Food" }], "MYR");
+    expect(csv.split("\n")).toEqual(["date,amount,currency,label,category,source", '2026-10-16,4.5,MYR,"Kopi, ""large""",Food,manual']);
+  });
+});

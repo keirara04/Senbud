@@ -4,10 +4,12 @@ import type { Category } from '@senbud/core';
 import { categoryColors, motion, palette, radius, space, type Theme, themes, touch, type } from '@senbud/core/tokens';
 import type { ReactNode } from 'react';
 import {
+  Appearance,
   Pressable,
   ScrollView,
   type StyleProp,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   type TextInputProps,
@@ -295,6 +297,63 @@ export function Icon({ name, size = 24, color, label }: { name: IconName; size?:
     />
   );
 }
+
+// One row of an inset grouped list (Settings): label, optional value, chevron when it goes somewhere.
+// `first` drops the divider above it. `right` replaces value and chevron (a Switch, say).
+export function ListRow({ label, value, onPress, first, right, tone }: { label: string; value?: string; onPress?: () => void; first?: boolean; right?: ReactNode; tone?: Tone }) {
+  const t = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={value ? `${label}, ${value}` : label}
+      style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: space.sm, borderTopWidth: first ? 0 : 1, borderColor: t.line, opacity: pressed ? 0.6 : 1 })}
+    >
+      <T tone={tone} style={{ flex: 1 }}>
+        {label}
+      </T>
+      {right ?? (
+        <>
+          {value ? <T tone="textDim">{value}</T> : null}
+          {onPress ? <Icon name={{ ios: 'chevron.right', android: 'chevron_right' }} size={14} color={t.textDim} /> : null}
+        </>
+      )}
+    </Pressable>
+  );
+}
+
+// A titled group of ListRows on one card, with an optional footnote.
+export function ListGroup({ title, children, footer }: { title: string; children: ReactNode; footer?: string }) {
+  return (
+    <View style={{ gap: space.sm }}>
+      <T variant="label" tone="textDim">
+        {title}
+      </T>
+      <Card style={{ gap: 0, paddingVertical: space.xs }}>{children}</Card>
+      {footer ? (
+        <T variant="caption" tone="textDim">
+          {footer}
+        </T>
+      ) : null}
+    </View>
+  );
+}
+
+// The one AI switch, in Settings and again under "What gets sent".
+export function AiSwitch({ value, onChange, first = true }: { value: boolean; onChange: (on: boolean) => void; first?: boolean }) {
+  const t = useTheme();
+  return (
+    <ListRow
+      first={first}
+      label="Use AI for photos and questions"
+      right={<Switch value={value} onValueChange={onChange} trackColor={{ true: t.primary }} accessibilityLabel="Use AI for photos and questions" />}
+    />
+  );
+}
+
+// Light / Dark / System from Settings. 'unspecified' hands the choice back to the OS.
+export const applyTheme = (theme: 'system' | 'light' | 'dark') => Appearance.setColorScheme(theme === 'system' ? 'unspecified' : theme);
 
 // Centre of the tab bar: Bud on a raised cobalt circle (56 pt). Opens the assistant; never switches tabs.
 // In dark mode a periwinkle ring keeps the circle visible (cobalt on night is 2.4:1).

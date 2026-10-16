@@ -93,3 +93,8 @@ export function splitBill<P extends string>(
   out[payer] += shared - each * people.length;
   return out;
 }
+
+// "Export spending (CSV)": one row per expense, amounts in major units, labels quoted when they need it.
+const csvCell = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+export const toCsv = (txns: import("./types").Transaction[], currency: string) =>
+  ["date,amount,currency,label,category,source", ...txns.map((x) => [x.date, String(x.cents / 100), currency, csvCell(x.label), x.category, x.source ?? "manual"].join(","))].join("\n");
