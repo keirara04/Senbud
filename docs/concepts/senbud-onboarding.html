@@ -1,0 +1,794 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Senbud Onboarding Concept</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Senbud onboarding redesign. Tokens and phone kit from docs/concepts/senbud-app-screens.html (mirrors tokens.ts).
+   Layout: a storyboard row of five frames, then one clickable prototype phone, then the motion spec. */
+
+/* Concept page for the Senbud app. Every colour below is copied from packages/core/src/tokens.ts.
+   Layout: a dotted-notebook page; each screen is a row of 375 x 812 pt phone frames drawn at 1 px = 1 pt. */
+:root {
+  --bg: #f5f6fa; --surface: #ffffff; --sunken: #e6e8f0; --text: #1a1c2e; --dim: #565b75;
+  --line: rgba(26, 28, 46, 0.12); --accent: #1f3fd8; --on-accent: #f4f6ff;
+  --panel: #1f3fd8; --on-panel: #f4f6ff; --on-panel-dim: #c9d2ff;
+  --hl: #eeff5a; --on-hl: #1a1c2e;
+  --good: #155a44; --good-fill: #4fd1a5; --warn: #8a5a00; --warn-fill: #f5c542; --bad: #9e2f22; --bad-fill: #ff6b5b;
+  --panel-bad-fill: #ff8a7d; /* coral fails 3:1 on cobalt (2.7); coralLight passes (3.3) */
+  --dot: rgba(31, 63, 216, 0.13); --bezel: #1a1c2e; --scrim: rgba(11, 16, 51, 0.45);
+  --float: 0 8px 24px rgba(11, 16, 51, 0.22); --fab-ring: transparent; --undo-act: #eeff5a;
+  --chart-food: #9e2f22; --chart-transport: #1f3fd8; --chart-treat: #4a5000; --chart-groceries: #155a44; --chart-sub: #5b3fb8; --chart-other: #3d4256;
+  /* receipt + category chips stay the same in both schemes, as on the web */
+  --receipt: #ffffff; --receipt-ink: #1a1c2e; --receipt-dim: #565b75;
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --display: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1033; --surface: #131a4a; --sunken: #1c2560; --text: #eef0ff; --dim: #a8b0d8;
+    --line: rgba(255, 255, 255, 0.1); --accent: #eeff5a; --on-accent: #1a1c2e;
+    --good: #4fd1a5; --warn: #f5c542; --bad: #ff8a7d;
+    --dot: rgba(255, 255, 255, 0.07); --bezel: #2a3170; --float: 0 8px 24px rgba(0, 0, 0, 0.5); --fab-ring: #c9d2ff; --undo-act: #1f3fd8; /* highlighter on the light Undo bar is 1.0:1, so dark mode uses cobalt (6.7:1) */
+    --chart-food: #ffd6cf; --chart-transport: #e1e7fb; --chart-treat: #eeff5a; --chart-groceries: #c4efdd; --chart-sub: #ece6ff; --chart-other: #e6e8f0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b1033; --surface: #131a4a; --sunken: #1c2560; --text: #eef0ff; --dim: #a8b0d8;
+  --line: rgba(255, 255, 255, 0.1); --accent: #eeff5a; --on-accent: #1a1c2e;
+  --good: #4fd1a5; --warn: #f5c542; --bad: #ff8a7d;
+  --dot: rgba(255, 255, 255, 0.07); --bezel: #2a3170; --float: 0 8px 24px rgba(0, 0, 0, 0.5); --fab-ring: #c9d2ff; --undo-act: #1f3fd8; /* highlighter on the light Undo bar is 1.0:1, so dark mode uses cobalt (6.7:1) */
+  --chart-food: #ffd6cf; --chart-transport: #e1e7fb; --chart-treat: #eeff5a; --chart-groceries: #c4efdd; --chart-sub: #ece6ff; --chart-other: #e6e8f0;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background-color: var(--bg); color: var(--text); font: 17px/24px var(--sans);
+  background-image: radial-gradient(var(--dot) 1px, transparent 1.4px); background-size: 22px 22px;
+  -webkit-font-smoothing: antialiased;
+}
+:focus-visible { outline: 2px solid var(--hl); outline-offset: 2px; box-shadow: 0 0 0 5px var(--text); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 96px; }
+
+/* ---------- page chrome ---------- */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.top .wrap { padding-block: 10px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+.jump { display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 14px; }
+.jump a { color: var(--accent); text-decoration: none; font-weight: 600; min-height: 32px; display: inline-flex; align-items: center; }
+.jump a:hover { text-decoration: underline; }
+.intro { padding-block: 48px 24px; display: grid; gap: 16px; max-width: 760px; }
+.intro h1 { font: 800 44px/48px var(--display); letter-spacing: -1.2px; margin: 0; text-wrap: balance; }
+.mk { background: linear-gradient(transparent 8%, var(--hl) 8%, var(--hl) 92%, transparent 92%); color: var(--on-hl); padding: 0 4px; border-radius: 3px; }
+.intro p { margin: 0; color: var(--dim); max-width: 65ch; }
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; padding: 0; margin: 8px 0 0; list-style: none; }
+.rules li { background: var(--surface); border-radius: 16px; padding: 12px 16px; font-size: 14px; line-height: 19px; color: var(--dim); }
+.rules b { color: var(--text); display: block; font-size: 15px; }
+.sec { padding-block: 40px 8px; border-top: 1px solid var(--line); scroll-margin-top: 64px; }
+.sec-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 16px 40px; align-items: start; }
+@media (max-width: 820px) { .sec-head { grid-template-columns: 1fr; } }
+.eyebrow { font: 700 12px/16px var(--sans); letter-spacing: .6px; text-transform: uppercase; color: var(--dim); }
+.sec h2 { font: 800 32px/36px var(--display); letter-spacing: -.8px; margin: 4px 0 8px; }
+.sec .job { margin: 0; color: var(--dim); }
+.decide { margin: 0; padding-left: 18px; font-size: 15px; line-height: 21px; display: grid; gap: 6px; }
+.decide b { font-weight: 650; }
+.shots { display: flex; gap: 32px; overflow-x: auto; padding: 24px 4px 24px; scroll-snap-type: x proximity; }
+.shot { margin: 0; flex: none; display: grid; gap: 10px; width: 375px; scroll-snap-align: start; }
+.shot figcaption { font-size: 14px; line-height: 19px; color: var(--dim); min-height: 38px; }
+.shot figcaption b { color: var(--text); font-weight: 650; }
+.seg-page { display: inline-flex; background: var(--sunken); border-radius: 8px; padding: 3px; gap: 3px; }
+.seg-page button { font: 600 14px/18px var(--sans); border: 0; background: transparent; color: var(--dim); border-radius: 6px; padding: 7px 12px; min-height: 34px; cursor: pointer; }
+.seg-page button[aria-pressed="true"] { background: var(--surface); color: var(--text); }
+
+/* ---------- phone kit (1 px = 1 pt) ---------- */
+.phone { width: 375px; height: 812px; border-radius: 48px; border: 10px solid var(--bezel); background: var(--bg); position: relative; overflow: hidden; display: flex; flex-direction: column; font: 17px/24px var(--sans); color: var(--text); }
+.sb { height: 44px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 26px 0 30px; font: 600 15px/1 var(--sans); }
+.sb i { width: 24px; height: 11px; border: 1.5px solid currentColor; border-radius: 3px; opacity: .8; position: relative; }
+.sb i::after { content: ""; position: absolute; inset: 1.5px 5px 1.5px 1.5px; background: currentColor; border-radius: 1px; }
+.navbar { flex: none; display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 8px 0 16px; }
+.navbar.center { justify-content: center; position: relative; font-weight: 600; }
+.navbar.center .back { position: absolute; left: 4px; }
+.lt { font: 700 34px/41px var(--display); letter-spacing: .3px; margin: 0; padding: 0 16px 8px; flex: none; }
+.scroll { flex: 1; overflow: hidden; padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 16px; position: relative; }
+.scroll.tight { gap: 8px; }
+.tabs { flex: none; height: 83px; display: grid; grid-template-columns: repeat(5, 1fr); position: relative; padding: 6px 8px 0; border-top: .5px solid var(--line); background: var(--surface); }
+.tabs a { display: grid; justify-items: center; align-content: start; gap: 2px; font: 500 10px/12px var(--sans); color: var(--dim); text-decoration: none; min-height: 48px; }
+.tabs a.on { color: var(--accent); }
+.tabs .ic { width: 26px; height: 26px; }
+.tabs .budtab { position: relative; color: var(--text); font-weight: 600; }
+.tabs .budtab .fab { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); right: auto; bottom: auto; }
+.tabs .budtab .bl { margin-top: 34px; }
+.home-ind { position: absolute; bottom: 8px; left: 50%; width: 134px; height: 5px; border-radius: 3px; background: var(--text); transform: translateX(-50%); opacity: .9; z-index: 9; }
+
+.ic { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.ibtn { width: 48px; height: 48px; display: inline-grid; place-items: center; border-radius: 24px; color: var(--accent); flex: none; }
+.back { display: inline-flex; align-items: center; color: var(--accent); min-height: 48px; padding-right: 8px; }
+
+.card { background: var(--surface); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px; flex: none; }
+.panel { background: var(--panel); color: var(--on-panel); }
+.hero { font: 800 52px/58px var(--display); letter-spacing: -1.4px; color: var(--hl); font-variant-numeric: tabular-nums; }
+.title { font: 700 28px/34px var(--display); letter-spacing: -.6px; margin: 0; }
+.heading { font: 700 20px/26px var(--display); letter-spacing: -.3px; margin: 0; }
+.strong { font-weight: 600; }
+.cap { font-size: 14px; line-height: 19px; }
+.lab { font: 700 12px/16px var(--sans); letter-spacing: .6px; text-transform: uppercase; color: var(--dim); }
+.panel .lab, .pdim { color: var(--on-panel-dim); }
+.dim { color: var(--dim); } .good { color: var(--good); } .warn { color: var(--warn); } .bad { color: var(--bad); } .acc { color: var(--accent); }
+.money { font-variant-numeric: tabular-nums; }
+.row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+.row.start { justify-content: flex-start; }
+.grow { flex: 1 1 auto; min-width: 0; }
+.stack { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+.btn { min-height: 48px; border-radius: 8px; border: 1px solid transparent; padding: 0 16px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; text-align: center; }
+.btn.primary { background: var(--accent); color: var(--on-accent); }
+.btn.hl { background: var(--hl); color: var(--on-hl); }
+.btn.secondary { border-color: var(--line); color: var(--accent); }
+.btn.danger { border-color: var(--line); color: var(--bad); }
+.btn.onpanel { border-color: rgba(255,255,255,.28); color: var(--on-panel); }
+.tbtn { min-height: 48px; display: inline-flex; align-items: center; font-weight: 600; color: var(--accent); padding: 0 4px; }
+.panel .tbtn { color: var(--on-panel); }
+
+.field { display: flex; flex-direction: column; gap: 4px; }
+.input { min-height: 48px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); padding: 0 12px; display: flex; align-items: center; gap: 8px; }
+.input.err { border-color: var(--bad); }
+.ph { color: var(--dim); }
+.caret { width: 2px; height: 22px; background: var(--accent); display: inline-block; margin-left: 1px; vertical-align: middle; }
+
+.seg { display: flex; background: var(--sunken); border-radius: 8px; padding: 4px; gap: 4px; }
+.seg span { flex: 1; min-height: 40px; border-radius: 6px; display: grid; place-items: center; font-weight: 600; color: var(--dim); text-align: center; padding: 0 4px; }
+.seg span.on { background: var(--surface); color: var(--text); }
+.seg .lock { display: inline-flex; gap: 4px; align-items: center; }
+.seg .lock .ic { width: 14px; height: 14px; }
+
+.chip { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 2px 8px; font: 600 14px/19px var(--sans); white-space: nowrap; }
+.c-food { background: #ffd6cf; color: #9e2f22; } .c-transport { background: #e1e7fb; color: #1f3fd8; } .c-treat { background: #eeff5a; color: #4a5000; }
+.c-groceries { background: #c4efdd; color: #155a44; } .c-sub { background: #ece6ff; color: #5b3fb8; } .c-other { background: #e6e8f0; color: #3d4256; }
+.chip.big { min-height: 48px; padding: 0 14px; font-size: 15px; }
+.chip.sel { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
+.pick { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; min-width: 48px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); font: 600 15px/1 var(--sans); color: var(--dim); }
+.pick.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+.track { height: 10px; border-radius: 999px; background: var(--sunken); overflow: hidden; }
+.track > i { display: block; height: 100%; border-radius: 999px; background: var(--good-fill); }
+.track > i.close { background: var(--warn-fill); } .track > i.over { background: var(--bad-fill); }
+.panel .track { background: rgba(255, 255, 255, 0.22); }
+.panel .track > i.over { background: var(--panel-bad-fill); }
+
+.undo { background: var(--text); color: var(--bg); border-radius: 8px; padding: 0 8px 0 16px; display: flex; align-items: center; gap: 8px; min-height: 48px; }
+.undo b { color: var(--undo-act); font-weight: 600; padding: 0 8px; min-height: 48px; display: inline-flex; align-items: center; }
+.capture { flex: none; display: flex; align-items: center; gap: 4px; padding: 8px 8px 8px 8px; background: var(--surface); border-top: .5px solid var(--line); }
+.capture .input { flex: 1; background: var(--bg); border-color: transparent; border-radius: 24px; }
+.floater { position: absolute; left: 16px; right: 16px; z-index: 5; }
+
+.list { background: var(--surface); border-radius: 16px; overflow: hidden; flex: none; }
+.li { min-height: 52px; padding: 10px 16px; display: flex; align-items: center; gap: 12px; position: relative; }
+.li + .li::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; border-top: .5px solid var(--line); }
+.li .ic.chev { width: 18px; height: 18px; color: var(--dim); }
+.li .val { color: var(--dim); }
+.glab { padding: 0 16px; margin-bottom: -10px; }
+.foot { padding: 0 16px; margin-top: -10px; }
+
+.avatar { width: 40px; height: 40px; border-radius: 20px; background: var(--sunken); display: grid; place-items: center; font-weight: 700; font-size: 15px; flex: none; }
+.switch { width: 51px; height: 31px; border-radius: 16px; background: var(--sunken); position: relative; flex: none; }
+.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: var(--surface); box-shadow: 0 2px 4px rgba(0,0,0,.2); }
+.switch.on { background: var(--accent); }
+.switch.on::after { left: 22px; }
+
+.bud { display: block; flex: none; }
+.fab .bud { margin-top: 2px; }
+.fab { position: absolute; right: 16px; bottom: 99px; width: 56px; height: 56px; border-radius: 28px; background: var(--panel); color: var(--on-panel); display: grid; place-items: center; box-shadow: var(--float), 0 0 0 1.5px var(--fab-ring); z-index: 6; }
+.scrim { position: absolute; inset: 0; background: var(--scrim); z-index: 7; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 8; background: var(--surface); border-radius: 24px 24px 0 0; box-shadow: var(--float); padding: 8px 16px 34px; display: flex; flex-direction: column; gap: 12px; }
+.grab { width: 36px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 4px; flex: none; }
+.sheet .sunk { background: var(--bg); }
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.keypad span { min-height: 50px; display: grid; place-items: center; font: 500 24px/1 var(--display); border-radius: 8px; background: var(--bg); }
+
+.alert { position: absolute; z-index: 8; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 270px; border-radius: 14px; background: var(--surface); text-align: center; overflow: hidden; box-shadow: var(--float); }
+.alert .body { padding: 18px 16px 16px; display: grid; gap: 4px; font-size: 13px; line-height: 17px; }
+.alert .body b { font-size: 17px; line-height: 22px; }
+.alert .acts { display: grid; grid-template-columns: 1fr 1fr; border-top: .5px solid var(--line); }
+.alert .acts span { min-height: 44px; display: grid; place-items: center; color: #0a84ff; }
+.alert .acts span + span { border-left: .5px solid var(--line); }
+
+.bubble { max-width: 82%; padding: 10px 14px; border-radius: 18px; font-size: 16px; line-height: 22px; }
+.bubble.me { align-self: flex-end; background: var(--panel); color: var(--on-panel); border-bottom-right-radius: 6px; }
+.bubble.bot { align-self: flex-start; background: var(--bg); border-bottom-left-radius: 6px; }
+
+.receipt { background: var(--receipt); color: var(--receipt-ink); --tooth: 10px;
+  -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 90deg, #0000 91deg) bottom / var(--tooth) 51% repeat-x, conic-gradient(from 135deg at top, #0000, #000 1deg 90deg, #0000 91deg) top / var(--tooth) 51% repeat-x;
+  mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 90deg, #0000 91deg) bottom / var(--tooth) 51% repeat-x, conic-gradient(from 135deg at top, #0000, #000 1deg 90deg, #0000 91deg) top / var(--tooth) 51% repeat-x; }
+.receipt .rdim { color: var(--receipt-dim); }
+.leader { flex: 1; border-bottom: 1px dotted currentColor; opacity: .35; transform: translateY(-5px); min-width: 12px; }
+.mono { font-family: var(--mono); }
+.note-pin { position: absolute; z-index: 9; font: 600 12px/16px var(--sans); background: var(--text); color: var(--bg); padding: 4px 8px; border-radius: 6px; }
+
+/* ---------- component specs + questions ---------- */
+.specs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 16px; padding-block: 24px; }
+.spec { background: var(--surface); border-radius: 16px; padding: 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.spec h3 { margin: 0; font: 700 18px/24px var(--display); }
+.spec h3 code { font: 600 15px/1 var(--mono); color: var(--accent); }
+.spec p, .spec ul { margin: 0; font-size: 14px; line-height: 20px; color: var(--dim); }
+.spec ul { padding-left: 18px; display: grid; gap: 3px; }
+.spec .demo { background: var(--bg); border-radius: 12px; padding: 12px; display: grid; gap: 8px; }
+.qs { counter-reset: q; display: grid; gap: 12px; padding: 24px 0 0; margin: 0; list-style: none; max-width: 860px; }
+.qs li { counter-increment: q; background: var(--surface); border-radius: 16px; padding: 14px 16px 14px 56px; position: relative; font-size: 15px; line-height: 21px; }
+.qs li::before { content: counter(q); position: absolute; left: 16px; top: 13px; width: 26px; height: 26px; border-radius: 13px; background: var(--hl); color: var(--on-hl); font: 700 14px/26px var(--sans); text-align: center; }
+.qs b { display: block; font-size: 16px; }
+.btn.apple { background: var(--text); color: var(--bg); }
+.ptabs { display: flex; gap: 6px; }
+.ptab { flex: 1; min-height: 52px; border-radius: 12px; border: 1px solid var(--line); display: grid; place-items: center; align-content: center; gap: 0; font-size: 13px; line-height: 17px; color: var(--dim); background: var(--surface); }
+.ptab b { font-size: 15px; color: var(--text); }
+.ptab.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.ptab.on b { color: var(--on-accent); }
+.claim { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 4px; border-bottom: 1px dashed rgba(26,28,46,.18); }
+.claim:last-child { border-bottom: 0; }
+.claim.todo { background: repeating-linear-gradient(135deg, transparent 0 6px, rgba(245,197,66,.18) 6px 9px); border-radius: 6px; }
+.claimbox { width: 28px; height: 28px; border-radius: 8px; border: 2px solid rgba(26,28,46,.3); display: grid; place-items: center; flex: none; }
+.claimbox.on { background: #1f3fd8; border-color: #1f3fd8; color: #f4f6ff; }
+.radio.sel { border: 7px solid var(--accent); }
+.notebook { background-color: var(--bg); background-image: radial-gradient(var(--dot) 1px, transparent 1.4px); background-size: 18px 18px; }
+.note-me { align-self: flex-end; max-width: 78%; background: var(--panel); color: var(--on-panel); padding: 8px 12px; border-radius: 14px 14px 4px 14px; font-size: 15px; line-height: 20px; }
+.bud-msg { display: flex; gap: 8px; align-items: flex-start; }
+.bud-msg > .bud { margin-top: 2px; }
+.slip-wrap { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.slip { --tooth: 8px; padding: 12px 12px 14px; display: grid; gap: 4px; font-size: 13px; line-height: 18px; }
+.slip-h { font: 700 11px/14px var(--mono); letter-spacing: 1.2px; text-transform: uppercase; color: var(--receipt-dim); }
+.slip-rule { border-top: 1px dashed rgba(26,28,46,.3); margin: 4px 0; }
+.slip-big { font: 700 17px/24px var(--sans); }
+.slip-acts { display: flex; gap: 14px; padding-left: 4px; }
+.slip.printing i { display: block; height: 10px; border-radius: 3px; background: linear-gradient(90deg, #e6e8f0, #f5f6fa, #e6e8f0); margin-top: 4px; }
+.starters { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.starter { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; min-height: 64px; }
+.starter b { font-size: 15px; line-height: 20px; }
+.composer { display: flex; align-items: center; gap: 4px; }
+.bud-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; padding-block: 24px; }
+.bud-tile { background: var(--surface); border-radius: 16px; padding: 20px; display: grid; justify-items: center; align-content: center; gap: 8px; min-height: 220px; }
+.bud-tile.panel { background: var(--panel); }
+.alert .acts span.destructive { color: #ff3b30; }
+.alert .acts span.cancel { font-weight: 600; }
+.phone.story { background: var(--panel); color: var(--on-panel); border-color: var(--bezel); }
+.segs { display: flex; gap: 4px; padding: 6px 16px 0; }
+.segs i { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,.3); }
+.segs i.on { background: var(--on-panel); }
+.story .ibtn { color: var(--on-panel); }
+.bars { display: grid; gap: 10px; }
+.bar { display: grid; grid-template-columns: 96px 1fr 40px; align-items: center; gap: 8px; font-size: 14px; line-height: 19px; }
+.bar > i { height: 12px; border-radius: 3px; display: block; }
+.who { width: 48px; height: 48px; border-radius: 24px; border: 1px solid var(--line); display: grid; place-items: center; font: 700 15px/1 var(--sans); color: var(--dim); flex: none; }
+.who.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.receipt .who { border-color: rgba(26,28,46,.18); color: #565b75; }
+.receipt .who.on { background: #1f3fd8; border-color: #1f3fd8; color: #f4f6ff; }
+.li > .money, .li > .stack > .money, .pick { white-space: nowrap; }
+.story .lab { color: var(--on-panel-dim); }
+.rc-row { display: flex; align-items: center; gap: 8px; }
+.sunkbox { background: var(--bg); border-radius: 12px; padding: 12px 14px; }
+.chat { display: flex; flex-direction: column; gap: 10px; flex: 1; overflow: hidden; justify-content: flex-end; }
+.plan { flex-direction: row; align-items: center; gap: 12px; min-height: 64px; padding: 12px 16px; border: 1px solid var(--line); }
+.plan.panel { border-color: var(--panel); }
+.radio { width: 22px; height: 22px; border-radius: 11px; border: 2px solid var(--dim); flex: none; }
+.panel .radio.on { border: 7px solid var(--on-panel); }
+.spin { width: 18px; height: 18px; border-radius: 9px; border: 2px solid currentColor; border-right-color: transparent; }
+.ledger { display: grid; gap: 12px; }
+.lg-row { display: grid; gap: 6px; }
+.stamps { display: inline-flex; gap: 3px; flex: none; }
+.stamps i, .stamps b { width: 14px; height: 14px; border-radius: 4px; border: 1.5px dotted rgba(26,28,46,.35); display: block; }
+.stamps i.f { background: var(--c); border: 1.5px solid var(--c); }
+.stamps b { background: #ff6b5b; border: 1.5px solid #9e2f22; margin-left: 5px; }
+.ledger .rc-row .cap { margin-left: auto; white-space: nowrap; }
+@media (prefers-reduced-motion: no-preference) { .shots { scroll-behavior: smooth; } }
+
+/* ---------- onboarding ---------- */
+:root { --primary: #1f3fd8; --on-primary: #f4f6ff; --ease: cubic-bezier(.22,.68,.14,1); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --primary: #c9d2ff; --on-primary: #1a1c2e; } }
+:root[data-theme="dark"] { --primary: #c9d2ff; --on-primary: #1a1c2e; }
+button { font: inherit; color: inherit; }
+.btn.primary { background: var(--primary); color: var(--on-primary); }
+.ob-phone .btn { min-height: 52px; border: 0; cursor: pointer; font-size: 17px; }
+.ob-phone .btn.secondary { border: 1px solid var(--line); background: transparent; }
+.ob-phone .tbtn { background: none; border: 0; cursor: pointer; justify-content: center; }
+.ob { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; padding: 6px 20px 34px; position: relative; }
+.ob-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+.ob-title { font: 700 28px/34px var(--display); letter-spacing: -.6px; margin: 0; text-wrap: balance; }
+.ob-q { display: grid; gap: 6px; }
+.ob-q p { margin: 0; }
+
+/* welcome */
+.w-brand { display: flex; justify-content: center; padding-top: 18px; }
+.w-word { font: 800 30px/1 var(--display); letter-spacing: -1px; }
+.w-mk { background: var(--hl); color: #1a1c2e; border-radius: 6px; padding: 0 5px; margin-left: 1px; }
+.w-hero { display: grid; justify-items: center; margin-top: 18px; }
+.w-bud { position: relative; z-index: 2; filter: drop-shadow(0 10px 18px rgba(11,16,51,.25)); }
+.feed { position: relative; z-index: 1; margin-top: -6px; clip-path: inset(0 -60px -80px -60px); }
+.w-slip { transform-origin: 50% 0;  --tooth: 8px; width: 250px; margin-top: 0; padding: 18px 16px 18px; display: grid; gap: 4px; font-size: 13px; transform: rotate(-1.5deg); box-shadow: 0 18px 40px rgba(11,16,51,.18); }
+.w-num { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 2px; }
+.w-num span { color: #565b75; font-size: 12px; }
+.w-num b { font: 800 22px/1 var(--display); letter-spacing: -.4px; }
+.w-title { font: 800 34px/40px var(--display); letter-spacing: -1px; text-align: center; margin: 22px 0 0; }
+.w-sub { text-align: center; color: var(--dim); margin: -4px 12px 0; }
+.w-pills { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.w-pills span { font: 600 13px/1 var(--sans); padding: 8px 11px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); }
+.w-cta { margin-top: auto; display: grid; gap: 4px; }
+
+/* step header */
+.ob-head { display: flex; align-items: center; gap: 6px; min-height: 48px; margin: 0 -8px; }
+.ob-head .ibtn { background: none; border: 0; cursor: pointer; }
+.ob-prog { flex: 1; display: flex; gap: 6px; }
+.ob-prog i { flex: 1; height: 6px; border-radius: 999px; background: var(--sunken); overflow: hidden; position: relative; }
+.ob-prog i.on::after { content: ""; position: absolute; inset: 0; background: var(--primary); border-radius: inherit; }
+.ob-skip { min-width: 48px; min-height: 48px; padding: 0 8px; }
+
+/* budget */
+.per { background: none; border: 0; padding: 4px 2px; margin: -4px -2px; color: var(--accent); border-bottom: 2px dashed currentColor; cursor: pointer; font: inherit; line-height: inherit; }
+.amt { display: flex; justify-content: center; align-items: center; gap: 2px; margin-top: 4px; }
+.amt-n { font: 800 52px/58px var(--display); letter-spacing: -1.4px; }
+.amt .caret { height: 44px; }
+.cur { align-self: center; display: inline-flex; gap: 8px; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: none; font-size: 14px; color: var(--dim); cursor: pointer; }
+.picks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.picks.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ob .pick { min-height: 48px; min-width: 0; padding: 0 4px; font-size: 14px; background: transparent; cursor: pointer; }
+.ob .pick.on { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: auto; }
+.pad button { min-height: 52px; border: 0; border-radius: 12px; background: var(--surface); font: 500 24px/1 var(--display); display: grid; place-items: center; cursor: pointer; }
+.pad button:active { background: var(--sunken); }
+
+/* rent */
+.yn { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.yn-c { min-height: 72px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--surface); padding: 12px 14px; display: grid; gap: 2px; text-align: left; align-content: center; cursor: pointer; }
+.yn-c b { font-size: 18px; }
+.yn-c.on { border-color: var(--primary); box-shadow: inset 0 0 0 1.5px var(--primary); }
+.rent-more { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+.rent-more > *, .ob-body > * { min-width: 0; }
+.ob.norent .rent-more { display: none; }
+.input.big { min-height: 56px; font: 700 24px var(--display); }
+.days { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: none; }
+.day { flex: none; width: 48px; height: 48px; border-radius: 24px; border: 1px solid var(--line); background: var(--surface); font: 600 16px/1 var(--sans); cursor: pointer; }
+.day.on { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+
+/* ready */
+.ready { gap: 12px; }
+.r-title { text-align: center; margin-top: 18px; }
+.r-top { display: grid; justify-items: center; position: relative; z-index: 2; }
+.ready .feed { margin-top: -10px; }
+.r-slip { transform-origin: 50% 0; transform: rotate(1deg); box-shadow: 0 18px 40px rgba(11,16,51,.18); }
+.r-slip { --tooth: 9px; padding: 20px 18px 22px; display: grid; gap: 6px; font-size: 14px; }
+.r-big { display: grid; justify-items: center; gap: 4px; margin-top: 4px; }
+.r-big span { font-size: 12px; color: #565b75; text-transform: uppercase; letter-spacing: 1px; }
+.r-big b { font: 800 38px/44px var(--display); letter-spacing: -1px; }
+.r-cap { margin: 0 8px; }
+
+/* sheet + prototype */
+.ob-sheet { transform: translateY(105%); transition: transform .3s var(--ease); top: auto !important; }
+.ob-sheet.on { transform: none; }
+.ob-phone .scrim { opacity: 0; pointer-events: none; transition: opacity .3s var(--ease); }
+.ob-phone .scrim.on { opacity: 1; pointer-events: auto; }
+.proto .ob { display: none; }
+.proto .ob.active { display: flex; }
+.try-wrap { display: flex; justify-content: center; padding-block: 24px; }
+.proto { box-shadow: 0 30px 80px rgba(11,16,51,.25); }
+.note-p { font-size: 14px; color: var(--dim); margin: 12px 0 0; }
+.notes-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding-block: 24px; }
+@media (max-width: 960px) { .notes-grid { grid-template-columns: 1fr; } }
+.note { background: var(--surface); border-radius: 16px; padding: 18px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.note h3 { margin: 0; font: 700 18px/24px var(--display); }
+.note ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; line-height: 20px; color: var(--dim); }
+.note b { color: var(--text); font-weight: 650; }
+.note code, .mtable code, .decide code, .job code { font: 12.5px var(--mono); color: var(--accent); }
+.mtable td:first-child { white-space: nowrap; }
+.tbl-wrap { margin-top: 20px; }
+
+/* motion: every animation below is off under Reduce Motion */
+@keyframes pop { 0% { transform: scale(.7); opacity: 0; } 60% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); } }
+/* Thermal printer feed: the paper advances in three pushes with short pauses, then swings and settles. */
+@keyframes feed { 0% { transform: translateY(-100%) rotate(0); } 28% { transform: translateY(-62%) rotate(0); } 36% { transform: translateY(-62%) rotate(0); } 62% { transform: translateY(-26%) rotate(0); } 70% { transform: translateY(-26%) rotate(0); } 88% { transform: translateY(0) rotate(0); } 94% { transform: translateY(0) rotate(var(--tilt, -1.5deg)) scale(1.01); } 100% { transform: translateY(0) rotate(var(--tilt, -1.5deg)); } }
+@keyframes buzz { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-1.5px); } 75% { transform: translateX(1.5px); } }
+@keyframes riseup { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes slideR { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes slideL { from { transform: translateX(-24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes tick { 0% { transform: translateY(-4px); } 100% { transform: none; } }
+@keyframes hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-14px) rotate(-4deg); } 70% { transform: translateY(0) rotate(2deg); } }
+@keyframes linein { from { clip-path: inset(0 0 100% 0); opacity: .2; } to { clip-path: inset(0 0 -10px 0); opacity: 1; } }
+@media (prefers-reduced-motion: no-preference) {
+  .welcome .w-slip { --tilt: -1.5deg; animation: feed 1.3s var(--ease) .45s both; }
+  .welcome .printer { animation: pop .45s var(--ease) both, buzz .09s linear .45s 9; }
+  .welcome .anim-rise { animation: riseup .35s var(--ease) var(--d, 0s) both; }
+  .proto .ob.enter-r { animation: slideR .25s var(--ease) both; }
+  .proto .ob.enter-l { animation: slideL .25s var(--ease) both; }
+  .amt-n.tick, [data-rent-out].tick { display: inline-block; animation: tick .15s var(--ease); }
+  .ready .r-slip { --tilt: 1deg; animation: feed 1.3s var(--ease) .3s both; }
+  .ready .printer { animation: buzz .09s linear .3s 9, hop .4s var(--ease) 1.7s both; }
+}
+
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-budgets" viewBox="0 0 24 24"><path d="M5 20v-8M10 20V5M15 20v-6M20 20V9"/></symbol>
+  <symbol id="i-friends" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16.5 14.6c2.6.2 4.4 1.9 5 4.9"/></symbol>
+  <symbol id="i-jar" viewBox="0 0 24 24"><path d="M7 3h10M8.5 3v3.2A5 5 0 0 0 5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a5 5 0 0 0-3.5-4.8V3"/><path d="M8.5 13.5h7"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8l-5 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M8 10.5h8"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="bud-body" viewBox="0 0 64 64"><path d="M14 6h36a5 5 0 0 1 5 5v41l-5.75 5-5.75-5-5.75 5-5.75-5-5.75 5-5.75-5-5.75 5-5.75-5V11a5 5 0 0 1 5-5z" fill="#fff" stroke="#1a1c2e" stroke-width="2.5" stroke-linejoin="round"/><path d="M18 15h20M18 20h13" stroke="#1a1c2e" stroke-opacity=".22" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="19.5" cy="39" rx="3.6" ry="2.2" fill="#ff6b5b" fill-opacity=".45"/><ellipse cx="44.5" cy="39" rx="3.6" ry="2.2" fill="#ff6b5b" fill-opacity=".45"/></symbol>
+  <symbol id="bud" viewBox="0 0 64 64"><use href="#bud-body"/><ellipse cx="25" cy="32" rx="3" ry="3.6" fill="#1a1c2e"/><ellipse cx="39" cy="32" rx="3" ry="3.6" fill="#1a1c2e"/><circle cx="26" cy="30.6" r="1" fill="#fff"/><circle cx="40" cy="30.6" r="1" fill="#fff"/><path d="M28.5 38.5q3.5 3.5 7 0" fill="none" stroke="#1a1c2e" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="bud-think" viewBox="0 0 64 64"><use href="#bud-body"/><ellipse cx="24" cy="30" rx="3" ry="3.6" fill="#1a1c2e"/><ellipse cx="38" cy="30" rx="3" ry="3.6" fill="#1a1c2e"/><circle cx="24.6" cy="28.5" r="1" fill="#fff"/><circle cx="38.6" cy="28.5" r="1" fill="#fff"/><path d="M29 40h6" stroke="#1a1c2e" stroke-width="2.2" stroke-linecap="round"/><circle cx="44" cy="44" r="1.6" fill="#1a1c2e" fill-opacity=".5"/><circle cx="48" cy="44" r="1.6" fill="#1a1c2e" fill-opacity=".5"/><circle cx="52" cy="44" r="1.6" fill="#1a1c2e" fill-opacity=".5"/></symbol>
+  <symbol id="bud-oops" viewBox="0 0 64 64"><use href="#bud-body"/><path d="M21.5 32.5q3.5 2.5 7 0M35.5 32.5q3.5 2.5 7 0" fill="none" stroke="#1a1c2e" stroke-width="2.4" stroke-linecap="round"/><path d="M28 40.5q1.33-1.6 2.66 0t2.66 0t2.66 0" fill="none" stroke="#1a1c2e" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="bud-yay" viewBox="0 0 64 64"><use href="#bud-body"/><path d="M21.5 33q3.5-4.5 7 0M35.5 33q3.5-4.5 7 0" fill="none" stroke="#1a1c2e" stroke-width="2.4" stroke-linecap="round"/><path d="M27 36.5h10q0 6.5-5 6.5t-5-6.5z" fill="#1a1c2e"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+</svg>
+<div class="top">
+  <div class="wrap">
+    <nav class="jump" aria-label="Sections"><a href="#flow">Flow</a><a href="#story">Storyboard</a><a href="#try">Try it</a><a href="#motion">Motion</a><a href="#build">Build notes</a><a href="#questions">Questions</a></nav>
+    <div class="seg-page" role="group" aria-label="Theme">
+      <button type="button" data-t="light" aria-pressed="false">Light</button>
+      <button type="button" data-t="dark" aria-pressed="false">Dark</button>
+      <button type="button" data-t="system" aria-pressed="true">System</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <section class="intro">
+    <span class="eyebrow">Senbud app · onboarding redesign · 16 Oct 2026</span>
+    <h1>First launch in <span class="mk">three taps</span></h1>
+    <p>Today, Welcome leads to a Setup page with five fields at once (period, budget, rent, due day, currency). This concept keeps Welcome, rebrands it around the one number Senbud gives you, and splits Setup into two one-question steps and a reveal. Currency fills itself in from the phone, and rent can be skipped.</p>
+    <ul class="rules">
+      <li><b>One question per screen</b>Budget, then rent. Nothing else is asked before Home.</li>
+      <li><b>Defaults over fields</b>Currency from the phone, month as the period, common amounts as one-tap chips.</li>
+      <li><b>Show the payoff</b>Bud prints a sample of the number on Welcome and prints yours at the end, like a receipt printer.</li>
+      <li><b>Motion explains</b>Printing means Bud is working things out; sliding means you moved on. Nothing loops.</li>
+    </ul>
+  </section>
+
+  <section class="sec" id="flow">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">What changes</span>
+        <h2>The flow</h2>
+        <p class="job">Welcome → (Welcome back) → Budget → Rent → You’re set → Home.</p>
+      </div>
+      <ul class="decide">
+        <li><b>Welcome, rebranded:</b> the wordmark, Bud holding a printed sample (“Safe to spend RM 59.37”), one headline, one line, three promise pills and one button. About half the words of today’s screen.</li>
+        <li><b>“I’ve used Senbud before”</b> opens a real bottom sheet. Today it expands a card below the fold, so tapping it looks like nothing happens.</li>
+        <li><b>Setup becomes two steps.</b> Step 1 is the budget only: the period is a tap-to-switch word in the question (“each <u>month</u>”), the amount comes from chips or a keypad, and currency is pre-filled with a Change link. Step 2 is rent, with a Skip, Yes or No cards, chips and a strip of due dates.</li>
+        <li><b>The copy says rent is included</b> in the budget, because safe-to-spend subtracts rent from it. Without that line a student types spending money only and gets a wrong number on day one.</li>
+        <li><b>You’re set</b> shows the sum as a receipt: budget, minus rent, days left, then today’s number in highlighter. With RM 1,400, rent RM 450 on the 28th and 16 days left, that’s RM 59.37 (RM 87.50 with no rent), the same floor-to-the-sen maths as <code>safeToSpend</code>.</li>
+        <li><b>Hourly rate, bills and categories wait</b> until they’re useful, as cards on Home and rows in Settings.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sec" id="story">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Five frames · light and dark</span>
+        <h2>Storyboard</h2>
+        <p class="job">Each frame is drawn at 375 pt with the app’s tokens. Use the theme switch at the top to check dark mode.</p>
+      </div>
+      <ul class="decide">
+        <li>One cobalt or highlighter moment per screen: the sample number on Welcome, the printed total on You’re set. Budget and Rent are calm on purpose.</li>
+        <li>Every tap target is at least 48 pt: amount chips, keypad keys, the due-day strip, Yes/No cards.</li>
+        <li>The keypad is the app’s own, so the system keyboard never covers Next.</li>
+      </ul>
+    </div>
+    <div class="shots"><figure class="shot"><figcaption><b>Welcome.</b> Bud feeds out a sample receipt with the one number you’ll get. Three promises, one button.</figcaption><div class="phone ob-phone"><div class="sb"><span>9:41</span><i></i></div><section class="ob welcome" data-s="welcome">
+  <div class="w-brand"><span class="w-word">Sen<span class="w-mk">bud</span></span></div>
+  <div class="w-hero">
+    <svg class="bud w-bud printer" width="128" height="128" aria-hidden="true"><use href="#bud"/></svg>
+    <div class="feed"><div class="receipt w-slip mono"><div class="slip-h">For example · today</div><div class="rc-row "><span>Rent on the 28th</span><span class="leader"></span><span>covered</span></div><div class="slip-rule"></div><div class="w-num"><span>Safe to spend</span><b class="mk" data-count="59.37">RM 59.37</b></div></div></div>
+  </div>
+  <h2 class="w-title anim-rise" style="--d:.55s">Your money buddy.</h2>
+  <p class="w-sub anim-rise" style="--d:.65s">Know what’s safe to spend today. No bank login, ever.</p>
+  <div class="w-pills anim-rise" style="--d:.75s"><span>No bank login</span><span>No account</span><span>Stays on your phone</span></div>
+  <div class="w-cta anim-rise" style="--d:.85s"><button type="button" class="btn primary" data-go="budget">Get started</button><button type="button" class="tbtn" data-sheet="open">I’ve used Senbud before</button></div>
+</section></div></figure><figure class="shot"><figcaption><b>Welcome back.</b> A real sheet that slides up over Welcome, so nothing opens off-screen.</figcaption><div class="phone ob-phone"><div class="sb"><span>9:41</span><i></i></div><section class="ob welcome" data-s="welcome">
+  <div class="w-brand"><span class="w-word">Sen<span class="w-mk">bud</span></span></div>
+  <div class="w-hero">
+    <svg class="bud w-bud printer" width="128" height="128" aria-hidden="true"><use href="#bud"/></svg>
+    <div class="feed"><div class="receipt w-slip mono"><div class="slip-h">For example · today</div><div class="rc-row "><span>Rent on the 28th</span><span class="leader"></span><span>covered</span></div><div class="slip-rule"></div><div class="w-num"><span>Safe to spend</span><b class="mk" data-count="59.37">RM 59.37</b></div></div></div>
+  </div>
+  <h2 class="w-title anim-rise" style="--d:.55s">Your money buddy.</h2>
+  <p class="w-sub anim-rise" style="--d:.65s">Know what’s safe to spend today. No bank login, ever.</p>
+  <div class="w-pills anim-rise" style="--d:.75s"><span>No bank login</span><span>No account</span><span>Stays on your phone</span></div>
+  <div class="w-cta anim-rise" style="--d:.85s"><button type="button" class="btn primary" data-go="budget">Get started</button><button type="button" class="tbtn" data-sheet="open">I’ve used Senbud before</button></div>
+</section><div class="scrim on" data-sheet="close"></div>
+<div class="sheet ob-sheet on" role="dialog" aria-label="Welcome back">
+  <div class="grab"></div>
+  <div class="row start" style="gap:12px;flex-wrap:nowrap"><svg class="bud " width="44" height="44" aria-hidden="true"><use href="#bud-yay"/></svg><h3 class="heading grow">Welcome back</h3></div>
+  <span class="dim">There’s no account to log in to. Bring your things back here:</span>
+  <div class="list" style="background:var(--bg)">
+    <div class="li"><span class="ibtn" style="width:40px;height:40px;background:var(--surface)"><svg class="ic"><use href="#i-share"/></svg></span><span class="grow stack" style="gap:0"><span class="strong">Restore from a backup</span><span class="cap dim">Pick the file from Files or Google Drive</span></span><svg class="ic chev"><use href="#i-chev"/></svg></div>
+    <div class="li"><span class="ibtn" style="width:40px;height:40px;background:var(--surface)"><svg class="ic"><use href="#i-lock"/></svg></span><span class="grow stack" style="gap:0"><span class="strong">Restore Senbud Pro</span><span class="cap dim">From your Apple or Google account</span></span><svg class="ic chev"><use href="#i-chev"/></svg></div>
+  </div>
+  <span class="cap dim">Make a backup any time in Settings → Back up everything.</span>
+  <button type="button" class="tbtn" style="align-self:center" data-sheet="close">Not now</button>
+</div></div></figure><figure class="shot"><figcaption><b>Step 1 of 2 · Budget.</b> One question. Tap a common amount or type it on the keypad. Currency is already set from the phone.</figcaption><div class="phone ob-phone"><div class="sb"><span>9:41</span><i></i></div><section class="ob step" data-s="budget">
+  <div class="ob-head"><button type="button" class="ibtn" aria-label="Back" data-go="welcome"><svg class="ic"><use href="#i-back"/></svg></button><div class="ob-prog" role="progressbar" aria-valuemin="1" aria-valuemax="2" aria-valuenow="1" aria-label="Step 1 of 2"><i class="on"></i><i class=""></i></div><span class="ob-skip"></span></div>
+  <div class="ob-body">
+    <div class="ob-q"><h2 class="ob-title">How much do you have each <button type="button" class="per" data-per aria-label="Change period">month</button>?</h2><p class="cap dim">Everything you have, rent included. Senbud sets rent aside first.</p></div>
+    <div class="amt"><span class="amt-n money" data-amt-out>RM 1,400</span><span class="caret"></span></div>
+    <button type="button" class="cur">RM · Malaysian ringgit <span class="acc">Change</span></button>
+    <div class="picks"><button type="button" class="pick" data-amt="800">RM 800</button><button type="button" class="pick" data-amt="1000">RM 1,000</button><button type="button" class="pick on" data-amt="1400">RM 1,400</button><button type="button" class="pick" data-amt="2000">RM 2,000</button></div>
+    <div class="pad"><button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button><button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button><button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button><button type="button" data-key="00">00</button><button type="button" data-key="0">0</button><button type="button" data-key="del" aria-label="Delete"><svg class="ic"><use href="#i-back"/></svg></button></div>
+    <button type="button" class="btn primary" data-go="rent">Next</button>
+  </div>
+</section></div></figure><figure class="shot"><figcaption><b>Step 2 of 2 · Rent.</b> Optional, with Skip. Due day is a strip of dates, not a typed number.</figcaption><div class="phone ob-phone"><div class="sb"><span>9:41</span><i></i></div><section class="ob step" data-s="rent">
+  <div class="ob-head"><button type="button" class="ibtn" aria-label="Back" data-go="budget"><svg class="ic"><use href="#i-back"/></svg></button><div class="ob-prog" role="progressbar" aria-valuemin="1" aria-valuemax="2" aria-valuenow="2" aria-label="Step 2 of 2"><i class="on"></i><i class="on"></i></div><button type="button" class="tbtn ob-skip" data-go="ready-norent">Skip</button></div>
+  <div class="ob-body">
+    <div class="ob-q"><h2 class="ob-title">Do you pay rent?</h2><p class="cap dim">Senbud puts it aside first, so it never counts as spending money.</p></div>
+    <div class="yn" role="radiogroup"><button type="button" class="yn-c on" data-yn="yes" role="radio" aria-checked="true"><b>Yes</b><span class="cap dim">I pay rent</span></button><button type="button" class="yn-c" data-yn="no" role="radio" aria-checked="false"><b>No rent</b><span class="cap dim">Family, hostel or free</span></button></div>
+    <div class="rent-more">
+      <div class="field"><span class="lab">How much a month?</span><div class="input big"><span class="money" data-rent-out>RM 450</span></div></div>
+      <div class="picks three"><button type="button" class="pick" data-rent="350">RM 350</button><button type="button" class="pick on" data-rent="450">RM 450</button><button type="button" class="pick" data-rent="600">RM 600</button></div>
+      <div class="field"><span class="lab">Due on day</span><div class="days" role="radiogroup" aria-label="Rent due day"><button type="button" class="day" data-day="24" role="radio" aria-checked="false">24</button><button type="button" class="day" data-day="25" role="radio" aria-checked="false">25</button><button type="button" class="day" data-day="26" role="radio" aria-checked="false">26</button><button type="button" class="day" data-day="27" role="radio" aria-checked="false">27</button><button type="button" class="day on" data-day="28" role="radio" aria-checked="true">28</button><button type="button" class="day" data-day="29" role="radio" aria-checked="false">29</button><button type="button" class="day" data-day="30" role="radio" aria-checked="false">30</button><button type="button" class="day" data-day="31" role="radio" aria-checked="false">31</button><button type="button" class="day" data-day="1" role="radio" aria-checked="false">1</button><button type="button" class="day" data-day="2" role="radio" aria-checked="false">2</button><button type="button" class="day" data-day="3" role="radio" aria-checked="false">3</button><button type="button" class="day" data-day="4" role="radio" aria-checked="false">4</button><button type="button" class="day" data-day="5" role="radio" aria-checked="false">5</button></div></div>
+    </div>
+    <p class="cap dim">Bills like your phone plan can go in later, in Budgets.</p>
+    <div style="flex:1"></div>
+    <button type="button" class="btn primary" data-go="ready">Next</button>
+  </div>
+</section></div></figure><figure class="shot"><figcaption><b>You’re set.</b> Bud feeds your receipt out like a thermal printer, then the total counts up to today’s number.</figcaption><div class="phone ob-phone"><div class="sb"><span>9:41</span><i></i></div><section class="ob ready" data-s="ready">
+  <h2 class="ob-title r-title">You’re set.</h2>
+  <div class="r-top"><svg class="bud r-bud printer" width="92" height="92" aria-hidden="true"><use href="#bud-yay"/></svg></div>
+  <div class="feed"><div class="receipt r-slip mono">
+    <div class="slip-h" style="text-align:center">Senbud · Thursday 16 Oct</div>
+    <div class="slip-rule"></div>
+    <div class="rc-row r1"><span>Budget this month</span><span class="leader"></span><span><span data-r-budget>RM 1,400.00</span></span></div>
+    <div class="rc-row r2 r-rentline"><span>Rent on the <span data-r-day>28th</span></span><span class="leader"></span><span><span data-r-rent>−RM 450.00</span></span></div>
+    <div class="rc-row r3"><span>Days left</span><span class="leader"></span><span>16</span></div>
+    <div class="slip-rule r4"></div>
+    <div class="r-big r5"><span>Safe to spend today</span><b class="mk money" data-r-safe>RM 59.37</b></div>
+  </div></div>
+  <p class="cap dim r-cap" style="text-align:center">That’s your number. It updates every time you add something.</p>
+  <div style="flex:1"></div>
+  <button type="button" class="btn primary" data-go="home">Go to Home</button>
+  <span class="cap dim" style="text-align:center">Hourly rate and bills can wait. Add them any time in Settings.</span>
+</section></div></figure></div>
+  </section>
+
+  <section class="sec" id="try">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Clickable</span>
+        <h2>Try it</h2>
+        <p class="job">Tap through the real flow. Chips, keypad, the month/week word, Yes/No and the date strip all work, and the last screen does the maths.</p>
+      </div>
+      <ul class="decide">
+        <li>Try <b>Skip</b> on the rent step: the receipt drops the rent line and the number becomes budget ÷ days left.</li>
+        <li>Switch to <b>week</b>: the chips change to weekly amounts and days left becomes the days left in this week.</li>
+        <li>“I’ve used Senbud before” opens the sheet; tap outside or Not now to close it.</li>
+      </ul>
+    </div>
+    <div class="try-wrap"><div class="phone ob-phone proto" id="proto" data-step="welcome" aria-live="polite">
+  <div class="sb"><span>9:41</span><i></i></div>
+  <section class="ob welcome" data-s="welcome">
+  <div class="w-brand"><span class="w-word">Sen<span class="w-mk">bud</span></span></div>
+  <div class="w-hero">
+    <svg class="bud w-bud printer" width="128" height="128" aria-hidden="true"><use href="#bud"/></svg>
+    <div class="feed"><div class="receipt w-slip mono"><div class="slip-h">For example · today</div><div class="rc-row "><span>Rent on the 28th</span><span class="leader"></span><span>covered</span></div><div class="slip-rule"></div><div class="w-num"><span>Safe to spend</span><b class="mk" data-count="59.37">RM 59.37</b></div></div></div>
+  </div>
+  <h2 class="w-title anim-rise" style="--d:.55s">Your money buddy.</h2>
+  <p class="w-sub anim-rise" style="--d:.65s">Know what’s safe to spend today. No bank login, ever.</p>
+  <div class="w-pills anim-rise" style="--d:.75s"><span>No bank login</span><span>No account</span><span>Stays on your phone</span></div>
+  <div class="w-cta anim-rise" style="--d:.85s"><button type="button" class="btn primary" data-go="budget">Get started</button><button type="button" class="tbtn" data-sheet="open">I’ve used Senbud before</button></div>
+</section><section class="ob step" data-s="budget">
+  <div class="ob-head"><button type="button" class="ibtn" aria-label="Back" data-go="welcome"><svg class="ic"><use href="#i-back"/></svg></button><div class="ob-prog" role="progressbar" aria-valuemin="1" aria-valuemax="2" aria-valuenow="1" aria-label="Step 1 of 2"><i class="on"></i><i class=""></i></div><span class="ob-skip"></span></div>
+  <div class="ob-body">
+    <div class="ob-q"><h2 class="ob-title">How much do you have each <button type="button" class="per" data-per aria-label="Change period">month</button>?</h2><p class="cap dim">Everything you have, rent included. Senbud sets rent aside first.</p></div>
+    <div class="amt"><span class="amt-n money" data-amt-out>RM 1,400</span><span class="caret"></span></div>
+    <button type="button" class="cur">RM · Malaysian ringgit <span class="acc">Change</span></button>
+    <div class="picks"><button type="button" class="pick" data-amt="800">RM 800</button><button type="button" class="pick" data-amt="1000">RM 1,000</button><button type="button" class="pick on" data-amt="1400">RM 1,400</button><button type="button" class="pick" data-amt="2000">RM 2,000</button></div>
+    <div class="pad"><button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button><button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button><button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button><button type="button" data-key="00">00</button><button type="button" data-key="0">0</button><button type="button" data-key="del" aria-label="Delete"><svg class="ic"><use href="#i-back"/></svg></button></div>
+    <button type="button" class="btn primary" data-go="rent">Next</button>
+  </div>
+</section><section class="ob step" data-s="rent">
+  <div class="ob-head"><button type="button" class="ibtn" aria-label="Back" data-go="budget"><svg class="ic"><use href="#i-back"/></svg></button><div class="ob-prog" role="progressbar" aria-valuemin="1" aria-valuemax="2" aria-valuenow="2" aria-label="Step 2 of 2"><i class="on"></i><i class="on"></i></div><button type="button" class="tbtn ob-skip" data-go="ready-norent">Skip</button></div>
+  <div class="ob-body">
+    <div class="ob-q"><h2 class="ob-title">Do you pay rent?</h2><p class="cap dim">Senbud puts it aside first, so it never counts as spending money.</p></div>
+    <div class="yn" role="radiogroup"><button type="button" class="yn-c on" data-yn="yes" role="radio" aria-checked="true"><b>Yes</b><span class="cap dim">I pay rent</span></button><button type="button" class="yn-c" data-yn="no" role="radio" aria-checked="false"><b>No rent</b><span class="cap dim">Family, hostel or free</span></button></div>
+    <div class="rent-more">
+      <div class="field"><span class="lab">How much a month?</span><div class="input big"><span class="money" data-rent-out>RM 450</span></div></div>
+      <div class="picks three"><button type="button" class="pick" data-rent="350">RM 350</button><button type="button" class="pick on" data-rent="450">RM 450</button><button type="button" class="pick" data-rent="600">RM 600</button></div>
+      <div class="field"><span class="lab">Due on day</span><div class="days" role="radiogroup" aria-label="Rent due day"><button type="button" class="day" data-day="24" role="radio" aria-checked="false">24</button><button type="button" class="day" data-day="25" role="radio" aria-checked="false">25</button><button type="button" class="day" data-day="26" role="radio" aria-checked="false">26</button><button type="button" class="day" data-day="27" role="radio" aria-checked="false">27</button><button type="button" class="day on" data-day="28" role="radio" aria-checked="true">28</button><button type="button" class="day" data-day="29" role="radio" aria-checked="false">29</button><button type="button" class="day" data-day="30" role="radio" aria-checked="false">30</button><button type="button" class="day" data-day="31" role="radio" aria-checked="false">31</button><button type="button" class="day" data-day="1" role="radio" aria-checked="false">1</button><button type="button" class="day" data-day="2" role="radio" aria-checked="false">2</button><button type="button" class="day" data-day="3" role="radio" aria-checked="false">3</button><button type="button" class="day" data-day="4" role="radio" aria-checked="false">4</button><button type="button" class="day" data-day="5" role="radio" aria-checked="false">5</button></div></div>
+    </div>
+    <p class="cap dim">Bills like your phone plan can go in later, in Budgets.</p>
+    <div style="flex:1"></div>
+    <button type="button" class="btn primary" data-go="ready">Next</button>
+  </div>
+</section><section class="ob ready" data-s="ready">
+  <h2 class="ob-title r-title">You’re set.</h2>
+  <div class="r-top"><svg class="bud r-bud printer" width="92" height="92" aria-hidden="true"><use href="#bud-yay"/></svg></div>
+  <div class="feed"><div class="receipt r-slip mono">
+    <div class="slip-h" style="text-align:center">Senbud · Thursday 16 Oct</div>
+    <div class="slip-rule"></div>
+    <div class="rc-row r1"><span>Budget this month</span><span class="leader"></span><span><span data-r-budget>RM 1,400.00</span></span></div>
+    <div class="rc-row r2 r-rentline"><span>Rent on the <span data-r-day>28th</span></span><span class="leader"></span><span><span data-r-rent>−RM 450.00</span></span></div>
+    <div class="rc-row r3"><span>Days left</span><span class="leader"></span><span>16</span></div>
+    <div class="slip-rule r4"></div>
+    <div class="r-big r5"><span>Safe to spend today</span><b class="mk money" data-r-safe>RM 59.37</b></div>
+  </div></div>
+  <p class="cap dim r-cap" style="text-align:center">That’s your number. It updates every time you add something.</p>
+  <div style="flex:1"></div>
+  <button type="button" class="btn primary" data-go="home">Go to Home</button>
+  <span class="cap dim" style="text-align:center">Hourly rate and bills can wait. Add them any time in Settings.</span>
+</section>
+  <section class="ob home" data-s="home"><div class="ob-body" style="justify-content:center;align-items:center;text-align:center;gap:12px"><svg class="bud " width="72" height="72" aria-hidden="true"><use href="#bud"/></svg><h2 class="ob-title">Home</h2><p class="dim">This is where the real Home screen opens.</p><button type="button" class="btn secondary" data-go="welcome">Replay onboarding</button></div></section>
+  <div class="scrim" data-sheet="close"></div>
+<div class="sheet ob-sheet" role="dialog" aria-label="Welcome back">
+  <div class="grab"></div>
+  <div class="row start" style="gap:12px;flex-wrap:nowrap"><svg class="bud " width="44" height="44" aria-hidden="true"><use href="#bud-yay"/></svg><h3 class="heading grow">Welcome back</h3></div>
+  <span class="dim">There’s no account to log in to. Bring your things back here:</span>
+  <div class="list" style="background:var(--bg)">
+    <div class="li"><span class="ibtn" style="width:40px;height:40px;background:var(--surface)"><svg class="ic"><use href="#i-share"/></svg></span><span class="grow stack" style="gap:0"><span class="strong">Restore from a backup</span><span class="cap dim">Pick the file from Files or Google Drive</span></span><svg class="ic chev"><use href="#i-chev"/></svg></div>
+    <div class="li"><span class="ibtn" style="width:40px;height:40px;background:var(--surface)"><svg class="ic"><use href="#i-lock"/></svg></span><span class="grow stack" style="gap:0"><span class="strong">Restore Senbud Pro</span><span class="cap dim">From your Apple or Google account</span></span><svg class="ic chev"><use href="#i-chev"/></svg></div>
+  </div>
+  <span class="cap dim">Make a backup any time in Settings → Back up everything.</span>
+  <button type="button" class="tbtn" style="align-self:center" data-sheet="close">Not now</button>
+</div>
+</div></div>
+  </section>
+
+  <section class="sec" id="motion">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Animation spec</span>
+        <h2>Motion</h2>
+        <p class="job">Every movement explains a change (design system 2.5). One easing, <code>cubic-bezier(.22,.68,.14,1)</code>. Reduce Motion turns all of it into plain cuts and static text.</p>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table class="mtable">
+      <thead><tr><th>Moment</th><th>What moves</th><th>Timing</th><th>Why</th><th>Reanimated</th><th>Reduce Motion</th></tr></thead>
+      <tbody>
+        <tr><td>Welcome opens</td><td>Bud pops in, then buzzes lightly while the receipt feeds out from under it like a thermal printer: three pushes with short pauses, then the paper swings and settles at a slight tilt</td><td>Pop 450 ms; feed 1.3 s (pushes at 0–28%, 36–62%, 70–88%), settle 12%</td><td>Bud is the printer and the receipt is its answer, so the paper comes out of Bud instead of appearing in place</td><td><code>ZoomIn.springify()</code>; the receipt in a top-clipped view, <code>translateY</code> with <code>withSequence</code> of three <code>withTiming</code> pushes and <code>withDelay</code> pauses, then <code>withSpring</code> on rotation</td><td>Bud and the receipt just appear, already tilted</td></tr>
+        <tr><td>Welcome text</td><td>Headline, line, pills and buttons rise 12 pt and fade in, 100 ms apart</td><td>350 ms each</td><td>Reading order matches what appears</td><td><code>FadeInDown.delay(n)</code></td><td>All visible at once</td></tr>
+        <tr><td>Sample number</td><td>Counts up from RM 0 to RM 59.37 once the paper has stopped</td><td>Starts at 1.6 s, 800 ms, ease-out</td><td>Shows it’s a live number, not a label</td><td><code>useDerivedValue</code> + <code>withTiming</code></td><td>Final value only</td></tr>
+        <tr><td>Welcome back</td><td>Sheet slides up, scrim fades</td><td>Native sheet</td><td>Standard sheet; nothing custom</td><td>Expo Router <code>formSheet</code></td><td>OS handles it</td></tr>
+        <tr><td>Next / Back</td><td>Screens slide 24 pt and fade; the progress segment fills</td><td>250 ms</td><td>You moved forward or back</td><td><code>SlideInRight</code> / <code>SlideInLeft</code>, width <code>withTiming</code></td><td>Cut; segment fills instantly</td></tr>
+        <tr><td>Chip or key tap</td><td>Amount ticks up 4 pt and settles</td><td>150 ms</td><td>Confirms the number changed</td><td><code>withSequence</code> on <code>translateY</code></td><td>No movement</td></tr>
+        <tr><td>Rent Yes / No</td><td>The amount and date fields expand or collapse</td><td>250 ms</td><td>Fields appear because you said yes</td><td><code>Layout.springify()</code> on the group</td><td>Instant</td></tr>
+        <tr><td>You’re set</td><td>Bud buzzes and feeds your receipt out the same way, the total counts up, then Bud hops once</td><td>Feed 1.3 s; count from 1.5 s, 800 ms; hop at 1.7 s, 400 ms</td><td>Same printer gesture, now with your own numbers</td><td>Same feed sequence as Welcome, <code>withTiming</code> count</td><td>Full receipt, final number</td></tr>
+        <tr><td>Haptics</td><td>Light tick on chips and keys; success tap on You’re set</td><td>On press</td><td>Physical confirmation</td><td><code>expo-haptics</code></td><td>Kept (not motion)</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note-p">No ambient loops in onboarding: Bud doesn’t bob or blink here, so 2.5 holds without an exception.</p>
+  </section>
+
+  <section class="sec" id="build">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">For whoever builds it</span>
+        <h2>Build notes</h2>
+        <p class="job">Following the ui-styling skill’s principles (tokens, mobile first, focus order, dark mode everywhere) in React Native terms, and its canvas rule of letting the visual carry the message with few words.</p>
+      </div>
+    </div>
+    <div class="notes-grid">
+      <div class="note"><h3>Layout and routes</h3><ul>
+        <li><b>One route,</b> <code>/onboarding</code>, with a step state (<code>budget</code> → <code>rent</code> → <code>ready</code>), so Back works and nothing is saved until You’re set.</li>
+        <li><b>Welcome stays</b> at <code>/welcome</code>; Get started pushes <code>/onboarding</code>; Go to Home <code>replace</code>s to <code>/</code>.</li>
+        <li><b>Currency</b> from <code>expo-localization</code> (<code>getLocales()[0].currencyCode</code>), falling back to USD; Change opens a picker sheet.</li>
+        <li><b>Period default is month</b> (today’s Setup defaults to week). Chips: 800/1,000/1,400/2,000 a month, 150/250/350/500 a week, in the local currency.</li>
+        <li><b>Settings → Budget and rent</b> becomes two rows that open the same steps as sheets, instead of the five-field page.</li>
+      </ul></div>
+      <div class="note"><h3>Components</h3><ul>
+        <li><code>AmountPad</code> (already specced in 4.10) for the budget keypad; rent uses the system decimal pad because it’s optional.</li>
+        <li><code>QuickPicks</code>: a row of 48 pt chips, role radio, the selected one in <code>accent</code>.</li>
+        <li><code>DayStrip</code>: a horizontal list of 48 pt day circles centred on the most likely day, role radiogroup, label “Rent due on the 28th”.</li>
+        <li><code>ChoiceCard</code>: the big Yes/No cards, role radio, 64 pt tall.</li>
+        <li><code>ReceiptCard</code> plus <code>Bud</code> for Welcome and You’re set; both already exist or are specced.</li>
+        <li><code>StepHeader</code>: Back, a two-segment progress bar (role progressbar, “Step 1 of 2”) and Skip when the step is optional.</li>
+      </ul></div>
+      <div class="note"><h3>Accessibility</h3><ul>
+        <li>VoiceOver reads the question first, then the amount (“RM 1,400, adjustable”), then the chips.</li>
+        <li>The period word in the title is a button labelled “Period: month. Double-tap to switch to week.”</li>
+        <li>The sample number on Welcome is labelled “For example, safe to spend RM 59.37”, so nobody thinks it’s their own.</li>
+        <li>At 200% text the keypad keys stay 48 pt and the title wraps; the chips row scrolls sideways instead of shrinking.</li>
+        <li>Light and dark both use the tokens: periwinkle primary on night, cobalt on paper, receipts white in both.</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section class="sec" id="questions">
+    <div class="sec-head"><div><span class="eyebrow">Before it’s built</span><h2>Open questions</h2></div></div>
+    <ol class="qs">
+      <li><b>Two steps, or none?</b> The alternative is no questions at all: land on Home and ask for budget and rent as two cards there. That’s fastest, but Home would open with no number, which is the whole point of the app. This concept keeps two quick steps.</li>
+      <li><b>Default period: month or week?</b> Today’s Setup defaults to week; the spec examples and these concepts use month.</li>
+      <li><b>Editing later.</b> OK for Settings → Budget and rent to reuse these two steps as sheets, instead of the five-field page?</li>
+      <li><b>Sample number on Welcome.</b> Keep the “For example” receipt, or show Bud on its own?</li>
+    </ol>
+  </section>
+</main>
+
+<script>
+// Theme toggle: Light / Dark / System. Remembered per viewer when storage works.
+const root = document.documentElement;
+const buttons = document.querySelectorAll('.seg-page button');
+function setTheme(t) {
+  if (t === 'system') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', t);
+  buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.t === t)));
+  try { localStorage.setItem('senbud-concepts-theme', t); } catch (e) {}
+}
+buttons.forEach((b) => b.addEventListener('click', () => setTheme(b.dataset.t)));
+try { const saved = localStorage.getItem('senbud-concepts-theme'); if (saved) setTheme(saved); } catch (e) {}
+
+// Clickable prototype: everything is scoped to #proto; the storyboard frames are static.
+(() => {
+  const P = document.getElementById('proto'); if (!P) return;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ORDER = ['welcome', 'budget', 'rent', 'ready', 'home'];
+  const CHIPS = { month: [800, 1000, 1400, 2000], week: [150, 250, 350, 500] };
+  const s = { step: 'welcome', per: 'month', entry: '1400', rent: 450, hasRent: true, day: 28 };
+  const $ = (q) => P.querySelector(q), $$ = (q) => [...P.querySelectorAll(q)];
+  const fmt = (n, d = 0) => 'RM ' + n.toLocaleString('en-MY', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const ord = (d) => d + (d % 10 === 1 && d !== 11 ? 'st' : d % 10 === 2 && d !== 12 ? 'nd' : d % 10 === 3 && d !== 13 ? 'rd' : 'th');
+  const budget = () => parseInt(s.entry || '0', 10);
+  const tick = (el) => { el.classList.remove('tick'); void el.offsetWidth; el.classList.add('tick'); };
+  function count(el, end, ms = 800) {
+    if (reduce) { el.textContent = fmt(end, 2); return; }
+    const t0 = performance.now() + (el.dataset.delay ? +el.dataset.delay : 250);
+    const f = (t) => { const k = Math.min(1, Math.max(0, (t - t0) / ms)); el.textContent = fmt(end * (1 - Math.pow(1 - k, 3)), 2); if (k < 1) requestAnimationFrame(f); };
+    requestAnimationFrame(f);
+  }
+  function renderBudget() {
+    $('[data-amt-out]').textContent = fmt(budget());
+    $('[data-per]').textContent = s.per;
+    $$('[data-amt]').forEach((b, i) => { const v = CHIPS[s.per][i]; b.dataset.amt = v; b.textContent = fmt(v); b.classList.toggle('on', v === budget()); });
+    $('[data-s="budget"] .btn.primary').disabled = budget() === 0;
+    $('[data-s="budget"] .btn.primary').style.opacity = budget() === 0 ? .4 : 1;
+  }
+  function renderRent() {
+    $('[data-s="rent"]').classList.toggle('norent', !s.hasRent);
+    $$('[data-yn]').forEach((b) => { const on = (b.dataset.yn === 'yes') === s.hasRent; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+    $('[data-rent-out]').textContent = fmt(s.rent);
+    $$('[data-rent]').forEach((b) => b.classList.toggle('on', +b.dataset.rent === s.rent));
+    $$('[data-day]').forEach((b) => { const on = +b.dataset.day === s.day; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+  }
+  function renderReady() {
+    // Thursday 16 Oct: 16 days left in October, 4 in a Monday-to-Sunday week. Rent only counts if it falls due this period.
+    const days = s.per === 'month' ? 16 : 4;
+    const inPeriod = s.hasRent && s.per === 'month' && s.day >= 16;
+    const rentLine = $('.r-rentline');
+    rentLine.style.display = s.hasRent ? '' : 'none';
+    $('[data-r-day]').textContent = ord(s.day);
+    $('[data-r-rent]').textContent = inPeriod ? '−' + fmt(s.rent, 2) : 'next ' + s.per;
+    $('[data-r-budget]').textContent = fmt(budget(), 2);
+    $('.r1 span:first-child').textContent = 'Budget this ' + s.per;
+    $('.r3 span:last-child').textContent = days;
+    const safe = Math.max(0, Math.floor(((budget() - (inPeriod ? s.rent : 0)) * 100) / days) / 100);
+    const n = $('[data-r-safe]'); n.dataset.delay = 1500; count(n, safe);
+  }
+  function show(step) {
+    const dir = ORDER.indexOf(step) >= ORDER.indexOf(s.step) ? 'enter-r' : 'enter-l';
+    s.step = step; P.dataset.step = step;
+    $$('.ob').forEach((el) => { el.classList.remove('active', 'enter-r', 'enter-l'); });
+    const el = $(`.ob[data-s="${step}"]`); void el.offsetWidth; el.classList.add('active', dir);
+    if (step === 'welcome') { const n = $('[data-count]'); n.dataset.delay = 1600; count(n, 59.37); }
+    if (step === 'budget') renderBudget();
+    if (step === 'rent') renderRent();
+    if (step === 'ready') renderReady();
+  }
+  P.addEventListener('click', (e) => {
+    const b = e.target.closest('button, .scrim'); if (!b || !P.contains(b)) return;
+    const d = b.dataset;
+    if (d.sheet) { const on = d.sheet === 'open'; $('.ob-sheet').classList.toggle('on', on); $('.scrim').classList.toggle('on', on); return; }
+    if (d.go) { if (d.go === 'ready-norent') { s.hasRent = false; show('ready'); } else show(d.go); return; }
+    if ('per' in d) { s.per = s.per === 'month' ? 'week' : 'month'; s.entry = String(CHIPS[s.per][2]); renderBudget(); tick($('[data-amt-out]')); return; }
+    if (d.amt) { s.entry = d.amt; renderBudget(); tick($('[data-amt-out]')); return; }
+    if (d.key) { s.entry = d.key === 'del' ? s.entry.slice(0, -1) : (s.entry + d.key).replace(/^0+/, '').slice(0, 6); renderBudget(); tick($('[data-amt-out]')); return; }
+    if (d.yn) { s.hasRent = d.yn === 'yes'; renderRent(); return; }
+    if (d.rent) { s.rent = +d.rent; renderRent(); tick($('[data-rent-out]')); return; }
+    if (d.day) { s.day = +d.day; renderRent(); return; }
+  });
+  show('welcome');
+})();
+
+</script>
