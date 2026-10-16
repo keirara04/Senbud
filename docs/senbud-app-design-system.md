@@ -213,6 +213,10 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
   - One `List` with a row per category: chip, "RM 248 of 400", and a bar.
   - A words line only when the category is close or over ("RM 24 left for 15 days." / "RM 12 over, no stress. Borrow from Treat?").
   - Categories with no limit show the amount only.
+- **By category: alternatives under review.** The chip-and-bar list reads as generic. The concept page ("By category") draws three other options; pick one before building:
+  - **A. Stamp card ledger (recommended):** a `ReceiptCard` with dotted leaders and 10 stamps per limit. Filled stamps are the category ink (the receipt is white in both themes). Over budget adds a coral stamp outside the card.
+  - **B. Where it went:** one tape for the whole budget, with category segments, hatched rent and bills, and blank paper for what's left. A short legend ledger with the limits sits under it.
+  - **C. Pace ruler:** a thin bar per category with a pen tick at today's even-spending point, and words for "ahead of" or "on" pace.
 - **Rent and bills:**
   - A `List` with due day and countdown, then `+ Add a bill`.
   - The caption under it says how much is set aside: "RM 492.90 is set aside and never counts as spendable."
