@@ -240,18 +240,6 @@ body {
 .stamps i.f { background: var(--c); border: 1.5px solid var(--c); }
 .stamps b { background: #ff6b5b; border: 1.5px solid #9e2f22; margin-left: 5px; }
 .ledger .rc-row .cap { margin-left: auto; white-space: nowrap; }
-.tape { display: flex; height: 28px; border-radius: 4px; overflow: hidden; gap: 2px; }
-.tape i { display: block; min-width: 3px; }
-.tape .hatch { background: repeating-linear-gradient(135deg, var(--sunken) 0 5px, var(--line) 5px 7px); }
-.tape .blank { background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); }
-.key { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 32px; }
-.key > span:first-child { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
-.key i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
-.pr { display: grid; gap: 6px; padding: 12px 0; border-bottom: 1px dashed var(--line); min-height: 48px; }
-.pr:last-child { border-bottom: 0; }
-.rule { position: relative; height: 8px; border-radius: 2px; background: var(--sunken); }
-.rule i { display: block; height: 100%; border-radius: 2px; }
-.rule b { position: absolute; top: -5px; width: 2px; height: 18px; background: var(--text); border-radius: 1px; }
 @media (prefers-reduced-motion: no-preference) { .shots { scroll-behavior: smooth; } }
 </style>
 
@@ -279,7 +267,7 @@ body {
 <div class="top">
   <div class="wrap">
     <nav class="jump" aria-label="Screens">
-      <a href="#nav">Navigation</a><a href="#home">Home</a><a href="#budgets">Budgets</a><a href="#by-category">By category</a><a href="#afford">Can I afford it?</a><a href="#friends">Friends</a><a href="#treats">Treats</a><a href="#wrapped">Wrapped</a><a href="#settings">Settings</a><a href="#paywall">Paywall</a><a href="#assistant">Assistant</a><a href="#components">New components</a><a href="#questions">Questions</a>
+      <a href="#nav">Navigation</a><a href="#home">Home</a><a href="#budgets">Budgets</a><a href="#afford">Can I afford it?</a><a href="#friends">Friends</a><a href="#treats">Treats</a><a href="#wrapped">Wrapped</a><a href="#settings">Settings</a><a href="#paywall">Paywall</a><a href="#assistant">Assistant</a><a href="#components">New components</a><a href="#questions">Questions</a>
     </nav>
     <div class="seg-page" role="group" aria-label="Theme">
       <button type="button" id="th-light" data-t="light" aria-pressed="false">Light</button>
@@ -467,7 +455,7 @@ body {
       </div>
       <ul class="decide">
         <li><b>Hero:</b> cobalt panel with what’s left this month in highlighter, and the overall bar on the panel (new <code>Progress tone="panel"</code>: white 22% track; mint, amber or coralLight fill, since plain coral fails on cobalt).</li>
-        <li><b>Categories</b> as rows in one card: chip, “RM 248 of RM 400”, bar, and a words line only when it isn’t on track. Rows with no limit show the amount only.</li>
+        <li><b>Categories as a stamp card ledger</b> on a thermal receipt: name, dotted leader, “248 / 400”, then 10 stamps (one per 10% of the limit) in the category’s ink, and how much is left. Close turns the words amber; over adds a coral stamp outside the card and “12 over”. Rows with no limit show the amount and “No limit”.</li>
         <li><b>Rent and bills</b> as a grouped list with due dates. Detected subscriptions ask first (“Is Spotify a subscription?”), as spec 4.10 says. Detection is Pro.</li>
         <li><b>Edit</b> sits in the nav bar; tapping a row opens a small sheet with one <code>Field</code>. “Until payday” and more than one budget show a Pro lock.</li>
       </ul>
@@ -486,13 +474,13 @@ body {
               <div class="track"><i style="width:36%"></i></div>
               <span class="cap pdim money">RM 498 of RM 1,400 spent. On track, 16 days to go.</span>
             </div>
-            <span class="lab glab">By category</span>
-            <div class="list">
-              <div class="li"><div class="grow stack"><div class="row"><span class="chip c-food">Food</span><span class="strong money">RM 248 <span class="dim" style="font-weight:400">of 400</span></span></div><div class="track"><i style="width:62%"></i></div></div></div>
-              <div class="li"><div class="grow stack"><div class="row"><span class="chip c-transport">Transport</span><span class="strong money">RM 96 <span class="dim" style="font-weight:400">of 120</span></span></div><div class="track"><i class="close" style="width:80%"></i></div><span class="cap warn">RM 24 left for 15 days.</span></div></div>
-              <div class="li"><div class="grow stack"><div class="row"><span class="chip c-treat">Treat</span><span class="strong money">RM 62 <span class="dim" style="font-weight:400">of 80</span></span></div><div class="track"><i style="width:77%"></i></div></div></div>
-              <div class="li"><div class="grow stack"><div class="row"><span class="chip c-groceries">Groceries</span><span class="strong money">RM 54 <span class="dim" style="font-weight:400">of 150</span></span></div><div class="track"><i style="width:36%"></i></div></div></div>
-              <div class="li"><div class="row grow"><span class="chip c-other">Other</span><span class="strong money">RM 38</span></div></div>
+            <div class="receipt ledger" style="padding:20px 16px 22px">
+              <div class="mono rdim" style="text-align:center;font-size:12px;letter-spacing:1.5px">OCTOBER · BY CATEGORY</div>
+              <div class="lg-row"><div class="rc-row"><span class="strong">Food</span><span class="leader"></span><span class="mono">248 / 400</span></div><div class="rc-row"><span class="stamps" style="--c:#9e2f22"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i></span><span class="cap rdim">152 left</span></div></div>
+              <div class="lg-row"><div class="rc-row"><span class="strong">Transport</span><span class="leader"></span><span class="mono">96 / 120</span></div><div class="rc-row"><span class="stamps" style="--c:#1f3fd8"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i></span><span class="cap" style="color:#8a5a00;font-weight:600">24 left, go easy</span></div></div>
+              <div class="lg-row"><div class="rc-row"><span class="strong">Treat</span><span class="leader"></span><span class="mono">62 / 80</span></div><div class="rc-row"><span class="stamps" style="--c:#4a5000"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i></span><span class="cap rdim">18 left</span></div></div>
+              <div class="lg-row"><div class="rc-row"><span class="strong">Groceries</span><span class="leader"></span><span class="mono">54 / 150</span></div><div class="rc-row"><span class="stamps" style="--c:#155a44"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="cap rdim">96 left</span></div></div>
+              <div class="lg-row"><div class="rc-row"><span class="strong">Other</span><span class="leader"></span><span class="mono">38</span></div><span class="cap rdim">No limit</span></div>
             </div>
           </div>
           <nav class="tabs" data-on="budgets"></nav>
@@ -532,7 +520,7 @@ body {
       </figure>
 
       <figure class="shot">
-        <figcaption><b>Over.</b> Food went over and the month is close. Coral fill plus words; the panel stays cobalt.</figcaption>
+        <figcaption><b>Over.</b> Food went past 10 stamps, so a coral one sits outside the card, with words. The panel stays cobalt.</figcaption>
         <div class="phone">
           <div class="sb"><span>9:41</span><i></i></div>
           <div class="navbar" style="justify-content:flex-end"><span class="tbtn" style="padding-right:8px">Edit</span></div>
@@ -544,12 +532,12 @@ body {
               <div class="track"><i class="close" style="width:92%"></i></div>
               <span class="cap pdim money">RM 1,288 of RM 1,400 spent. 8 days to go.</span>
             </div>
-            <span class="lab glab">By category</span>
-            <div class="list">
-              <div class="li"><div class="grow stack"><div class="row"><span class="chip c-food">Food</span><span class="strong money">RM 412 <span class="dim" style="font-weight:400">of 400</span></span></div><div class="track"><i class="over" style="width:100%"></i></div><span class="cap bad">RM 12 over, no stress. Borrow from Treat?</span></div></div>
-              <div class="li"><div class="grow stack"><div class="row"><span class="chip c-transport">Transport</span><span class="strong money">RM 108 <span class="dim" style="font-weight:400">of 120</span></span></div><div class="track"><i class="close" style="width:90%"></i></div><span class="cap warn">RM 12 left. Bus or walk?</span></div></div>
-              <div class="li"><div class="grow stack"><div class="row"><span class="chip c-treat">Treat</span><span class="strong money">RM 41 <span class="dim" style="font-weight:400">of 80</span></span></div><div class="track"><i style="width:51%"></i></div></div></div>
-              <div class="li"><div class="grow stack"><div class="row"><span class="chip c-groceries">Groceries</span><span class="strong money">RM 96 <span class="dim" style="font-weight:400">of 150</span></span></div><div class="track"><i style="width:64%"></i></div></div></div>
+            <div class="receipt ledger" style="padding:20px 16px 22px">
+              <div class="mono rdim" style="text-align:center;font-size:12px;letter-spacing:1.5px">OCTOBER · BY CATEGORY</div>
+              <div class="lg-row"><div class="rc-row"><span class="strong">Food</span><span class="leader"></span><span class="mono">412 / 400</span></div><div class="rc-row"><span class="stamps" style="--c:#9e2f22"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><b></b></span><span class="cap" style="color:#9e2f22;font-weight:600">12 over</span></div></div>
+              <div class="lg-row"><div class="rc-row"><span class="strong">Transport</span><span class="leader"></span><span class="mono">108 / 120</span></div><div class="rc-row"><span class="stamps" style="--c:#1f3fd8"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i></span><span class="cap" style="color:#8a5a00;font-weight:600">12 left</span></div></div>
+              <div class="lg-row"><div class="rc-row"><span class="strong">Treat</span><span class="leader"></span><span class="mono">41 / 80</span></div><div class="rc-row"><span class="stamps" style="--c:#4a5000"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i></span><span class="cap rdim">39 left</span></div></div>
+              <div class="lg-row"><div class="rc-row"><span class="strong">Groceries</span><span class="leader"></span><span class="mono">96 / 150</span></div><div class="rc-row"><span class="stamps" style="--c:#155a44"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i></span><span class="cap rdim">54 left</span></div></div>
             </div>
           </div>
           <nav class="tabs" data-on="budgets"></nav>
@@ -580,124 +568,6 @@ body {
               <div class="li"><span class="grow stack"><span class="strong">Rent</span><span class="cap dim">Due 28th · in 27 days</span></span><span class="strong money">RM 450</span></div>
               <div class="li acc strong"><svg class="ic"><use href="#i-plus"/></svg>Add a bill</div>
             </div>
-          </div>
-          <nav class="tabs" data-on="budgets"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="ic"><use href="#i-chat"/></svg></span>
-        </div>
-      </figure>
-    </div>
-  </section>
-
-  <!-- ================= BUDGETS: BY CATEGORY OPTIONS ================= -->
-  <section class="sec" id="by-category">
-    <div class="sec-head">
-      <div>
-        <span class="eyebrow">Screen 2 · pick one</span>
-        <h2>By category: three other ways</h2>
-        <p class="job">The chip-and-bar list above looks like every budgeting app. These use the notebook and the receipt instead. Same data: 16 Oct, day 16 of 31.</p>
-      </div>
-      <ul class="decide">
-        <li><b>A · Stamp card ledger (recommended).</b> A thermal receipt with dotted leaders, like the web’s receipts. Each limit is a row of 10 stamps, like a kopi loyalty card, so “6 of 10 stamped” reads at a glance with no bars. Over budget adds a coral stamp outside the card.</li>
-        <li><b>B · Where it went.</b> One strip of tape for the whole RM 1,400: each category’s spending in its colour, rent and bills hatched as set aside, and what’s left as blank paper. A short ledger under it gives the limits.</li>
-        <li><b>C · Pace ruler.</b> Rows on notebook lines with a pen tick showing where you should be by today. The words say “ahead of pace” or “on pace”, which is what the bar alone never told you.</li>
-        <li>All three keep words for status, category colours from 2.3 (inks on white and receipts, tints on dark surfaces), and 48 pt rows that open the category.</li>
-      </ul>
-    </div>
-    <div class="shots">
-      <figure class="shot">
-        <figcaption><b>A · Stamp card ledger.</b> Receipt stays white in both themes.</figcaption>
-        <div class="phone">
-          <div class="sb"><span>9:41</span><i></i></div>
-          <div class="navbar" style="justify-content:flex-end"><span class="tbtn" style="padding-right:8px">Edit</span></div>
-          <h3 class="lt">Budgets</h3>
-          <div class="scroll">
-            <div class="card panel" style="gap:4px">
-              <span class="lab">October · monthly</span>
-              <span class="hero">RM&nbsp;902</span>
-              <span class="cap pdim money">RM 498 of RM 1,400 spent. On track, 16 days to go.</span>
-            </div>
-            <div class="receipt ledger" style="padding:20px 16px 22px">
-              <div class="mono rdim" style="text-align:center;font-size:12px;letter-spacing:1.5px">OCTOBER · BY CATEGORY</div>
-              <div class="lg-row"><div class="rc-row"><span class="strong">Food</span><span class="leader"></span><span class="mono">248 / 400</span></div><div class="rc-row"><span class="stamps" style="--c:#9e2f22"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i></span><span class="cap rdim">152 left</span></div></div>
-              <div class="lg-row"><div class="rc-row"><span class="strong">Transport</span><span class="leader"></span><span class="mono">96 / 120</span></div><div class="rc-row"><span class="stamps" style="--c:#1f3fd8"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i></span><span class="cap" style="color:#8a5a00;font-weight:600">24 left, go easy</span></div></div>
-              <div class="lg-row"><div class="rc-row"><span class="strong">Treat</span><span class="leader"></span><span class="mono">62 / 80</span></div><div class="rc-row"><span class="stamps" style="--c:#4a5000"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i></span><span class="cap rdim">18 left</span></div></div>
-              <div class="lg-row"><div class="rc-row"><span class="strong">Groceries</span><span class="leader"></span><span class="mono">54 / 150</span></div><div class="rc-row"><span class="stamps" style="--c:#155a44"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="cap rdim">96 left</span></div></div>
-              <div class="lg-row"><div class="rc-row"><span class="strong">Other</span><span class="leader"></span><span class="mono">38</span></div><span class="cap rdim">No limit</span></div>
-            </div>
-          </div>
-          <nav class="tabs" data-on="budgets"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="ic"><use href="#i-chat"/></svg></span>
-        </div>
-      </figure>
-
-      <figure class="shot">
-        <figcaption><b>A · Over.</b> Food went past 10 stamps; the extra one is coral, outside the card, with words.</figcaption>
-        <div class="phone">
-          <div class="sb"><span>9:41</span><i></i></div>
-          <div class="navbar center"><span>Budgets</span></div>
-          <div class="scroll">
-            <div class="receipt ledger" style="padding:20px 16px 22px">
-              <div class="mono rdim" style="text-align:center;font-size:12px;letter-spacing:1.5px">OCTOBER · BY CATEGORY</div>
-              <div class="lg-row"><div class="rc-row"><span class="strong">Food</span><span class="leader"></span><span class="mono">412 / 400</span></div><div class="rc-row"><span class="stamps" style="--c:#9e2f22"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><b></b></span><span class="cap" style="color:#9e2f22;font-weight:600">12 over</span></div></div>
-              <div class="lg-row"><div class="rc-row"><span class="strong">Transport</span><span class="leader"></span><span class="mono">108 / 120</span></div><div class="rc-row"><span class="stamps" style="--c:#1f3fd8"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i></span><span class="cap" style="color:#8a5a00;font-weight:600">12 left</span></div></div>
-              <div class="lg-row"><div class="rc-row"><span class="strong">Treat</span><span class="leader"></span><span class="mono">41 / 80</span></div><div class="rc-row"><span class="stamps" style="--c:#4a5000"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i></span><span class="cap rdim">39 left</span></div></div>
-              <div class="lg-row"><div class="rc-row"><span class="strong">Groceries</span><span class="leader"></span><span class="mono">96 / 150</span></div><div class="rc-row"><span class="stamps" style="--c:#155a44"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i></span><span class="cap rdim">54 left</span></div></div>
-            </div>
-            <div class="card"><span>Food is <span class="money">RM&nbsp;12</span> over. Move it from Treat, which has <span class="money">RM&nbsp;39</span> left?</span><div class="btn secondary">Move RM 12 from Treat</div></div>
-          </div>
-          <nav class="tabs" data-on="budgets"></nav>
-        </div>
-      </figure>
-
-      <figure class="shot">
-        <figcaption><b>B · Where it went.</b> One tape for the month, then a short ledger for limits.</figcaption>
-        <div class="phone">
-          <div class="sb"><span>9:41</span><i></i></div>
-          <div class="navbar" style="justify-content:flex-end"><span class="tbtn" style="padding-right:8px">Edit</span></div>
-          <h3 class="lt">Budgets</h3>
-          <div class="scroll">
-            <div class="card panel" style="gap:4px">
-              <span class="lab">October · monthly</span>
-              <span class="hero">RM&nbsp;902</span>
-              <span class="cap pdim money">RM 498 of RM 1,400 spent. On track, 16 days to go.</span>
-            </div>
-            <div class="card" style="gap:12px">
-              <span class="lab">Where RM 1,400 is going</span>
-              <div class="tape" role="img" aria-label="Food RM 248, Transport RM 96, Treat RM 62, Groceries RM 54, Other RM 38, rent and bills RM 493 set aside, RM 409 left">
-                <i style="flex:248;background:var(--chart-food)"></i><i style="flex:96;background:var(--chart-transport)"></i><i style="flex:62;background:var(--chart-treat)"></i><i style="flex:54;background:var(--chart-groceries)"></i><i style="flex:38;background:var(--chart-other)"></i><i class="hatch" style="flex:493"></i><i class="blank" style="flex:409"></i>
-              </div>
-              <div class="cap dim money" style="margin-top:-6px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px"><span>Spent<br><b style="color:var(--text)">RM 498</b></span><span style="text-align:center">Set aside<br><b style="color:var(--text)">RM 493</b></span><span style="text-align:right">Left<br><b style="color:var(--text)">RM 409</b></span></div>
-              <div class="key"><span><i style="background:var(--chart-food)"></i>Food</span><span class="money">248 <span class="dim">/ 400</span></span></div>
-              <div class="key"><span><i style="background:var(--chart-transport)"></i>Transport</span><span class="money">96 <span class="dim">/ 120</span> <span class="warn cap strong">24 left</span></span></div>
-              <div class="key"><span><i style="background:var(--chart-treat)"></i>Treat</span><span class="money">62 <span class="dim">/ 80</span></span></div>
-              <div class="key"><span><i style="background:var(--chart-groceries)"></i>Groceries</span><span class="money">54 <span class="dim">/ 150</span></span></div>
-              <div class="key"><span><i style="background:var(--chart-other)"></i>Other</span><span class="money">38</span></div>
-            </div>
-          </div>
-          <nav class="tabs" data-on="budgets"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="ic"><use href="#i-chat"/></svg></span>
-        </div>
-      </figure>
-
-      <figure class="shot">
-        <figcaption><b>C · Pace ruler.</b> The pen tick is where you’d be if you spent evenly. Words say ahead or on pace.</figcaption>
-        <div class="phone">
-          <div class="sb"><span>9:41</span><i></i></div>
-          <div class="navbar" style="justify-content:flex-end"><span class="tbtn" style="padding-right:8px">Edit</span></div>
-          <h3 class="lt">Budgets</h3>
-          <div class="scroll">
-            <div class="card panel" style="gap:4px">
-              <span class="lab">October · monthly</span>
-              <span class="hero">RM&nbsp;902</span>
-              <span class="cap pdim money">RM 498 of RM 1,400 spent. On track, 16 days to go.</span>
-            </div>
-            <div class="card ruled" style="gap:0;padding-top:8px">
-              <div class="pr"><div class="row"><span class="strong">Food</span><span class="money">RM 248 <span class="dim">of 400</span></span></div><div class="rule"><i style="width:62%;background:var(--chart-food)"></i><b style="left:52%"></b></div><span class="cap dim">A little ahead of pace. RM 152 left.</span></div>
-              <div class="pr"><div class="row"><span class="strong">Transport</span><span class="money">RM 96 <span class="dim">of 120</span></span></div><div class="rule"><i style="width:80%;background:var(--chart-transport)"></i><b style="left:52%"></b></div><span class="cap warn strong">Ahead of pace. RM 24 for 16 days.</span></div>
-              <div class="pr"><div class="row"><span class="strong">Treat</span><span class="money">RM 62 <span class="dim">of 80</span></span></div><div class="rule"><i style="width:77%;background:var(--chart-treat)"></i><b style="left:52%"></b></div><span class="cap dim">Ahead of pace. RM 18 left.</span></div>
-              <div class="pr"><div class="row"><span class="strong">Groceries</span><span class="money">RM 54 <span class="dim">of 150</span></span></div><div class="rule"><i style="width:36%;background:var(--chart-groceries)"></i><b style="left:52%"></b></div><span class="cap dim">Under pace. RM 96 left.</span></div>
-            </div>
-            <span class="cap dim foot">The tick is day 16 of 31: where you’d be spending evenly.</span>
           </div>
           <nav class="tabs" data-on="budgets"></nav>
           <span class="fab" aria-label="Ask Senbud"><svg class="ic"><use href="#i-chat"/></svg></span>
@@ -1514,6 +1384,11 @@ body {
         <h3><code>BarChart</code></h3>
         <p>Horizontal bars, max 6, sorted, one per category, with the % as text on every bar (never colour alone). Fills: category ink on white or receipt; category tint on dark <code>surface</code> (12–15:1 vs 2:1 for inks).</p>
         <div class="demo"><div class="bars money" style="color:var(--text)"><div class="bar"><span>Food</span><i style="width:100%;background:var(--chart-food)"></i><span>41%</span></div><div class="bar"><span>Transport</span><i style="width:44%;background:var(--chart-transport)"></i><span>18%</span></div><div class="bar"><span>Treat</span><i style="width:29%;background:var(--chart-treat)"></i><span>12%</span></div></div></div>
+      </div>
+      <div class="spec">
+        <h3><code>StampLedger</code></h3>
+        <p>Budgets by category. A <code>ReceiptCard</code> with one row per category: name, dotted leader, “spent / limit” in mono, then 10 stamps (each 10% of the limit, rounded) in the category ink, and what’s left. Close: amber words. Over: all 10 stamped plus a coral stamp outside the card and “12 over”. No limit: amount and “No limit”. Each row is one 48 pt button read as “Food, RM 248 of 400, RM 152 left”.</p>
+        <div class="demo"><div class="receipt ledger" style="padding:16px 12px 18px"><div class="lg-row"><div class="rc-row"><span class="strong">Food</span><span class="leader"></span><span class="mono">248 / 400</span></div><div class="rc-row"><span class="stamps" style="--c:#9e2f22"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i></span><span class="cap rdim">152 left</span></div></div></div></div>
       </div>
       <div class="spec">
         <h3><code>ReceiptCard</code></h3>

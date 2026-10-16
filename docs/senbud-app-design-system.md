@@ -149,7 +149,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 | **Setup** (first run, later "Budget and rent") | `title`: "How much can you spend?" | Period `Segmented`, budget `Field`, rent amount and due day, currency, `Save`, `danger` "Erase all data" | Built |
 | **Home** | `panel` with `hero` safe-to-spend in highlighter | Rent card, pace card, today's nudge, pinned `CaptureBar` (see 4.2) | Built; v2 concept |
 | **Activity** | none; it's a list | Cards with label, `CategoryChip`, date, amount, delete. Later: filter chips, including "added by assistant". | Built |
-| **Budgets** | `panel` with what's left in highlighter and `Progress tone="panel"` | Category rows with `Progress` and amounts; rent and bills list with due days; detected subscriptions | Concept |
+| **Budgets** | `panel` with what's left in highlighter and `Progress tone="panel"` | `StampLedger` by category; rent and bills list with due days; detected subscriptions | Concept |
 | **Can I afford it?** | `panel`: verdict in words, key number in highlighter | Price `Field`, optional "What is it?", treat price picks, hours of work under a hairline | Concept |
 | **Friends** | Net balance `hero` in highlighter, direction in words | Per-friend rows; friend sheet with copy-a-reminder and "Mark paid"; split flow with `Segmented` and `PersonToggle` | Concept |
 | **Treats** | Jar balance `hero` with `highlight` "Add to jar" inside the panel | Treat list with "every N days" and status, short history, month-end leftover sheet | Concept |
@@ -209,20 +209,18 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 ### 4.3 Budgets
 
 - **Hero:** `panel` with the period label ("October · monthly"), what's left in highlighter, `Progress tone="panel"`, and "RM 498 of RM 1,400 spent. On track, 16 days to go."
-- **By category:**
-  - One `List` with a row per category: chip, "RM 248 of 400", and a bar.
-  - A words line only when the category is close or over ("RM 24 left for 15 days." / "RM 12 over, no stress. Borrow from Treat?").
-  - Categories with no limit show the amount only.
-- **By category: alternatives under review.** The chip-and-bar list reads as generic. The concept page ("By category") draws three other options; pick one before building:
-  - **A. Stamp card ledger (recommended):** a `ReceiptCard` with dotted leaders and 10 stamps per limit. Filled stamps are the category ink (the receipt is white in both themes). Over budget adds a coral stamp outside the card.
-  - **B. Where it went:** one tape for the whole budget, with category segments, hatched rent and bills, and blank paper for what's left. A short legend ledger with the limits sits under it.
-  - **C. Pace ruler:** a thin bar per category with a pen tick at today's even-spending point, and words for "ahead of" or "on" pace.
+- **By category: `StampLedger`** (chosen over a chip-and-bar list, which read as generic):
+  - A `ReceiptCard` headed "OCTOBER · BY CATEGORY", one row per category: name, dotted leader, "248 / 400" in mono.
+  - Under it, 10 stamps, each 10% of the limit (rounded), filled with the category ink. The receipt is white in both themes, so the inks pass there in dark mode too.
+  - What's left sits at the end of the stamps: "152 left" in dim ink; amber "24 left, go easy" when close; coral "12 over" plus one coral stamp outside the ten when over.
+  - Categories with no limit show the amount and "No limit".
+  - Over budget also offers a fix in a card under the receipt: "Food is RM 12 over. Move it from Treat, which has RM 39 left?"
 - **Rent and bills:**
   - A `List` with due day and countdown, then `+ Add a bill`.
   - The caption under it says how much is set aside: "RM 492.90 is set aside and never counts as spendable."
 - **Detected subscription (Pro):** a card that asks first: "Netflix charged RM 17 on 3 Sep and 3 Oct. Is it a subscription?" with "Not really" / "Yes, track it".
 - **Budget settings rows:** Period, Until payday (`ProLock`), Past recaps.
-- **Over:** the category bar goes coral and its line says so in `bad` ink. The panel never turns red.
+- **Over:** the category gets a coral stamp past its ten and "12 over" in `bad` ink. The panel never turns red.
 - **Empty:** "Give a category its own limit, like Food at RM 400 a month." with `secondary` "Add a category limit".
 
 ### 4.4 Can I afford it?
@@ -395,6 +393,7 @@ These are additions to `ui.tsx` for the screens above. Each takes colours from `
 | `Avatar` | `name` | 40 pt initials circle on `surfaceSunken`. Never a photo; no contacts access. |
 | `AssistantFab` | `onPress` | 56 pt `panel` circle, chat glyph in `onPanel`, shadow. Dark mode adds a 1.5 pt `onPanelDim` ring. Label "Ask Senbud". Hidden where 4.1 says. |
 | `StoryPager` | `pages`, `onClose` | Full-bleed `panel` pages with segment bars. Tap the halves to move, swipe down to close, no autoplay, cuts under Reduce Motion. Each page is one accessibility element read as a sentence. |
+| `StampLedger` | `rows: {category, spentCents, limitCents?}[]` | Budgets by category (4.3). `ReceiptCard`, dotted leaders, 10 stamps per limit in category ink, words for left/close/over, a coral stamp outside the ten when over. Each row is one 48 pt button labelled "Food, RM 248 of 400, RM 152 left". |
 | `BarChart` | `data: {category, share}[]` (≤ 6) | Horizontal, sorted, with the % as text on every bar. Fill is the category **ink** on white or a receipt, and the category **tint** on a dark `surface`. |
 | `ReceiptCard` | `children` | White in both schemes with zig-zag torn edges (the web's `.receipt`), via `react-native-svg`. The share image is captured with `react-native-view-shot` and sent to the native share sheet. |
 | `ProLock` | `onPress` | Grey `Other`-style chip with a lock and "Pro" next to a locked option. Opens the paywall (`pro.tsx`). It never hides the option. |
