@@ -57,6 +57,13 @@ return [
     // The landing page origin: CORS allows it (config/cors.php) and email confirmations redirect to it.
     'web_origin' => env('WEB_ORIGIN', 'http://localhost:3000'),
 
+    // The web app origin (app.senbud.com). CORS allows it for the AI endpoints, and requests from it get
+    // the small free daily allowance in AppServiceProvider, since Pro can't be bought on the web yet.
+    'app_origin' => env('APP_ORIGIN', 'http://localhost:8081'),
+
+    // Comma-separated device ids (Settings → Support ID in the app) with no AI limits: the owner's own.
+    'unlimited_devices' => env('UNLIMITED_DEVICES', ''),
+
     // Comma-separated IPs/CIDRs of the reverse proxy in front of the API (see AppServiceProvider).
     'trusted_proxies' => env('TRUSTED_PROXIES'),
 

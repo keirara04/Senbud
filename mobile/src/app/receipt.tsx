@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 import Purchases from 'react-native-purchases';
 
-import { type Receipt, readReceipt } from '@/api';
+import { type Receipt, readReceipt, WEB, WEB_FREE } from '@/api';
 import { addTransactions, type AppState, deleteTransactions, giveAiConsent, loadApp, loadSetup, type Profile, setPro, today } from '@/db';
 import { hasPro, purchasesReady } from '@/purchases';
 import { Button, Card, CategoryChip, Row, Screen, T, UndoBar, useTheme } from '@/ui';
@@ -58,7 +58,8 @@ export default function ReceiptScreen() {
         } catch {}
       }
       setApp(a);
-      setStep(!a.pro ? { kind: 'pro' } : !a.aiEnabled ? { kind: 'aiOff' } : a.aiConsentAt ? { kind: 'pick' } : { kind: 'consent' });
+      // The web app can't sell Pro yet; it gets a few free receipts a day instead (the API counts them).
+      setStep(!a.pro && !WEB ? { kind: 'pro' } : !a.aiEnabled ? { kind: 'aiOff' } : a.aiConsentAt ? { kind: 'pick' } : { kind: 'consent' });
       })();
     }, [db, step.kind]),
   );
@@ -257,6 +258,11 @@ export default function ReceiptScreen() {
       ) : null}
       <Button title="Take a photo" onPress={() => pick('camera')} />
       <Button title="Choose from photos" variant="secondary" onPress={() => pick('library')} />
+      {WEB && !app?.pro ? (
+        <T variant="caption" tone="textDim" style={{ textAlign: 'center' }}>
+          On the web you get {WEB_FREE.receipts} free receipts a day.
+        </T>
+      ) : null}
     </Screen>
   );
 }
