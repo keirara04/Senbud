@@ -371,7 +371,8 @@ export function AiSwitch({ value, onChange, first = true }: { value: boolean; on
 }
 
 // Light / Dark / System from Settings. 'unspecified' hands the choice back to the OS.
-export const applyTheme = (theme: 'system' | 'light' | 'dark') => Appearance.setColorScheme(theme === 'system' ? 'unspecified' : theme);
+// Optional call: react-native-web has no setColorScheme, and a release build's server export runs _layout on web.
+export const applyTheme = (theme: 'system' | 'light' | 'dark') => Appearance.setColorScheme?.(theme === 'system' ? 'unspecified' : theme);
 
 // Centre of the tab bar: Bud on a raised cobalt circle (56 pt). Opens the assistant; never switches tabs.
 // In dark mode a periwinkle ring keeps the circle visible (cobalt on night is 2.4:1).
