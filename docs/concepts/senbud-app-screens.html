@@ -228,6 +228,11 @@ body {
 .rc-row { display: flex; align-items: center; gap: 8px; }
 .sunkbox { background: var(--bg); border-radius: 12px; padding: 12px 14px; }
 .chat { display: flex; flex-direction: column; gap: 10px; flex: 1; overflow: hidden; justify-content: flex-end; }
+.plan { flex-direction: row; align-items: center; gap: 12px; min-height: 64px; padding: 12px 16px; border: 1px solid var(--line); }
+.plan.panel { border-color: var(--panel); }
+.radio { width: 22px; height: 22px; border-radius: 11px; border: 2px solid var(--dim); flex: none; }
+.panel .radio.on { border: 7px solid var(--on-panel); }
+.spin { width: 18px; height: 18px; border-radius: 9px; border: 2px solid currentColor; border-right-color: transparent; }
 @media (prefers-reduced-motion: no-preference) { .shots { scroll-behavior: smooth; } }
 </style>
 
@@ -248,13 +253,14 @@ body {
   <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
 </svg>
 
 <div class="top">
   <div class="wrap">
     <nav class="jump" aria-label="Screens">
-      <a href="#nav">Navigation</a><a href="#home">Home</a><a href="#budgets">Budgets</a><a href="#afford">Can I afford it?</a><a href="#friends">Friends</a><a href="#treats">Treats</a><a href="#wrapped">Wrapped</a><a href="#settings">Settings</a><a href="#assistant">Assistant</a><a href="#components">New components</a><a href="#questions">Questions</a>
+      <a href="#nav">Navigation</a><a href="#home">Home</a><a href="#budgets">Budgets</a><a href="#afford">Can I afford it?</a><a href="#friends">Friends</a><a href="#treats">Treats</a><a href="#wrapped">Wrapped</a><a href="#settings">Settings</a><a href="#paywall">Paywall</a><a href="#assistant">Assistant</a><a href="#components">New components</a><a href="#questions">Questions</a>
     </nav>
     <div class="seg-page" role="group" aria-label="Theme">
       <button type="button" id="th-light" data-t="light" aria-pressed="false">Light</button>
@@ -985,7 +991,7 @@ body {
         <li><b>No hero.</b> iOS-style inset grouped rows (new <code>ListRow</code>), in this order: Money, AI, Look, Your data, Senbud Pro, then Erase on its own at the bottom.</li>
         <li><b>AI</b> is one native <code>Switch</code> with a plain line under it, and a “What gets sent” row that pushes the full explanation, reusing the receipt consent text word for word.</li>
         <li><b>Theme</b> is a <code>Segmented</code> Light / Dark / System (closes the open item in section 7).</li>
-        <li><b>Pro</b> is a card with one line of what you get, “See plans”, which opens the real paywall (<code>pro.tsx</code>, built on the Pro branch, not redesigned here) and “Restore purchases” as a <code>TextButton</code>. Pro members see “Senbud Pro · Active” and “Manage”.</li>
+        <li><b>Pro</b> is a card with one line of what you get, “See plans”, which opens the paywall (concept in 7b; code in <code>pro.tsx</code> on the Pro branch) and “Restore purchases” as a <code>TextButton</code>. Pro members see “Senbud Pro · Active” and “Manage”.</li>
         <li><b>Erase all data</b> is a <code>danger</code> button with the native alert; the red button says “Erase” and the body says what’s lost.</li>
       </ul>
     </div>
@@ -1077,6 +1083,111 @@ body {
           <div class="alert">
             <div class="body"><b>Erase all data?</b><span>This deletes every expense, budget, IOU and treat on this phone. Export first if you want a copy. It can’t be undone.</span></div>
             <div class="acts"><span class="cancel">Cancel</span><span class="destructive">Erase</span></div>
+          </div>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ================= PAYWALL ================= -->
+  <section class="sec" id="paywall">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Screen 7b · full-screen modal</span>
+        <h2>Senbud Pro paywall</h2>
+        <p class="job">Show what Pro does, pick a plan, pay. Nothing pushy.</p>
+      </div>
+      <ul class="decide">
+        <li><b>Opened from</b> Settings → “See plans”, any <code>ProLock</code> chip, and the camera button for free users. A modal with Close at the top right, no tab bar, no assistant button.</li>
+        <li><b>Copy is the one you chose:</b> “Senbud Pro does the typing for you”, three benefits (snap receipts, unlimited assistant, subscription reminders), yearly preselected with its monthly price, and small print with Terms, Privacy and Restore. No trial wording, no ratings, no countdowns.</li>
+        <li><b>The selected plan is the cobalt panel.</b> Plans are a radio group; tapping the other one moves the panel there. The price on the panel is white, not highlighter, because the <b>one yellow thing is the buy button</b> (<code>highlight</code>), and that stays true in dark mode.</li>
+        <li><b>The button says what you pay:</b> “Subscribe for $39 a year”. While the store sheet is up it shows a spinner and “Waiting for the App Store”.</li>
+        <li><b>Prices come from RevenueCat</b> in the person’s own store currency. Shown here in USD as configured ($4.99 a month, $39 a year = $3.25 a month).</li>
+      </ul>
+    </div>
+    <div class="shots">
+      <figure class="shot">
+        <figcaption><b>Default.</b> Yearly preselected, with its monthly price.</figcaption>
+        <div class="phone">
+          <div class="sb"><span>9:41</span><i></i></div>
+          <div class="navbar" style="justify-content:flex-end"><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
+          <div class="scroll" style="gap:14px">
+            <h3 class="title" style="text-wrap:balance">Senbud Pro does the typing for you</h3>
+            <div class="stack" style="gap:12px">
+              <div class="row start" style="flex-wrap:nowrap;gap:12px;align-items:flex-start"><span class="ibtn" style="background:var(--surface);width:40px;height:40px"><svg class="ic"><use href="#i-camera"/></svg></span><span class="stack" style="gap:0"><span class="strong">Snap receipts</span><span class="cap dim">Take a photo. Senbud reads the shop, items and prices.</span></span></div>
+              <div class="row start" style="flex-wrap:nowrap;gap:12px;align-items:flex-start"><span class="ibtn" style="background:var(--surface);width:40px;height:40px"><svg class="ic"><use href="#i-chat"/></svg></span><span class="stack" style="gap:0"><span class="strong">Unlimited assistant</span><span class="cap dim">Ask or add as much as you like.</span></span></div>
+              <div class="row start" style="flex-wrap:nowrap;gap:12px;align-items:flex-start"><span class="ibtn" style="background:var(--surface);width:40px;height:40px"><svg class="ic"><use href="#i-bell"/></svg></span><span class="stack" style="gap:0"><span class="strong">Subscription reminders</span><span class="cap dim">A heads-up the day before Spotify or Netflix renews.</span></span></div>
+            </div>
+            <div class="stack" style="gap:8px" role="radiogroup">
+              <div class="card panel plan"><span class="radio on"></span><span class="grow stack" style="gap:0"><span class="strong">Yearly</span><span class="cap pdim">$39 a year</span></span><span class="stack" style="gap:0;align-items:flex-end"><span class="heading money">$3.25</span><span class="cap pdim">a month</span></span></div>
+              <div class="card plan"><span class="radio"></span><span class="grow strong">Monthly</span><span class="stack" style="gap:0;align-items:flex-end"><span class="heading money">$4.99</span><span class="cap dim">a month</span></span></div>
+            </div>
+            <div class="btn hl">Subscribe for $39 a year</div>
+            <span class="cap dim" style="text-align:center">Renews automatically until you cancel. Cancel any time in your App Store settings, at least a day before it renews.</span>
+            <div class="row" style="justify-content:center;gap:4px 16px"><span class="tbtn cap" style="font-size:14px">Terms</span><span class="tbtn cap" style="font-size:14px">Privacy</span><span class="tbtn cap" style="font-size:14px">Restore purchases</span></div>
+          </div>
+        </div>
+      </figure>
+
+      <figure class="shot">
+        <figcaption><b>Monthly, buying.</b> The panel follows the selection. The App Store sheet is up, so the button waits.</figcaption>
+        <div class="phone">
+          <div class="sb"><span>9:41</span><i></i></div>
+          <div class="navbar" style="justify-content:flex-end"><span class="ibtn" aria-label="Close" style="color:var(--dim);opacity:.4"><svg class="ic"><use href="#i-x"/></svg></span></div>
+          <div class="scroll" style="gap:14px">
+            <h3 class="title" style="text-wrap:balance">Senbud Pro does the typing for you</h3>
+            <div class="stack" style="gap:12px">
+              <div class="row start" style="flex-wrap:nowrap;gap:12px;align-items:flex-start"><span class="ibtn" style="background:var(--surface);width:40px;height:40px"><svg class="ic"><use href="#i-camera"/></svg></span><span class="stack" style="gap:0"><span class="strong">Snap receipts</span><span class="cap dim">Take a photo. Senbud reads the shop, items and prices.</span></span></div>
+              <div class="row start" style="flex-wrap:nowrap;gap:12px;align-items:flex-start"><span class="ibtn" style="background:var(--surface);width:40px;height:40px"><svg class="ic"><use href="#i-chat"/></svg></span><span class="stack" style="gap:0"><span class="strong">Unlimited assistant</span><span class="cap dim">Ask or add as much as you like.</span></span></div>
+              <div class="row start" style="flex-wrap:nowrap;gap:12px;align-items:flex-start"><span class="ibtn" style="background:var(--surface);width:40px;height:40px"><svg class="ic"><use href="#i-bell"/></svg></span><span class="stack" style="gap:0"><span class="strong">Subscription reminders</span><span class="cap dim">A heads-up the day before Spotify or Netflix renews.</span></span></div>
+            </div>
+            <div class="stack" style="gap:8px" role="radiogroup">
+              <div class="card plan"><span class="radio"></span><span class="grow stack" style="gap:0"><span class="strong">Yearly</span><span class="cap dim">$39 a year</span></span><span class="stack" style="gap:0;align-items:flex-end"><span class="heading money">$3.25</span><span class="cap dim">a month</span></span></div>
+              <div class="card panel plan"><span class="radio on"></span><span class="grow strong">Monthly</span><span class="stack" style="gap:0;align-items:flex-end"><span class="heading money">$4.99</span><span class="cap pdim">a month</span></span></div>
+            </div>
+            <div class="btn hl" style="opacity:.6"><span class="spin"></span>Waiting for the App Store</div>
+            <span class="cap dim" style="text-align:center">Renews automatically until you cancel. Cancel any time in your App Store settings, at least a day before it renews.</span>
+            <div class="row" style="justify-content:center;gap:4px 16px"><span class="tbtn cap" style="font-size:14px">Terms</span><span class="tbtn cap" style="font-size:14px">Privacy</span><span class="tbtn cap" style="font-size:14px">Restore purchases</span></div>
+          </div>
+        </div>
+      </figure>
+
+      <figure class="shot">
+        <figcaption><b>Can’t load prices.</b> Offline or the store is down. Say so, offer a retry, keep Restore.</figcaption>
+        <div class="phone">
+          <div class="sb"><span>9:41</span><i></i></div>
+          <div class="navbar" style="justify-content:flex-end"><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
+          <div class="scroll" style="gap:14px">
+            <h3 class="title" style="text-wrap:balance">Senbud Pro does the typing for you</h3>
+            <div class="stack" style="gap:12px">
+              <div class="row start" style="flex-wrap:nowrap;gap:12px;align-items:flex-start"><span class="ibtn" style="background:var(--surface);width:40px;height:40px"><svg class="ic"><use href="#i-camera"/></svg></span><span class="stack" style="gap:0"><span class="strong">Snap receipts</span><span class="cap dim">Take a photo. Senbud reads the shop, items and prices.</span></span></div>
+              <div class="row start" style="flex-wrap:nowrap;gap:12px;align-items:flex-start"><span class="ibtn" style="background:var(--surface);width:40px;height:40px"><svg class="ic"><use href="#i-chat"/></svg></span><span class="stack" style="gap:0"><span class="strong">Unlimited assistant</span><span class="cap dim">Ask or add as much as you like.</span></span></div>
+              <div class="row start" style="flex-wrap:nowrap;gap:12px;align-items:flex-start"><span class="ibtn" style="background:var(--surface);width:40px;height:40px"><svg class="ic"><use href="#i-bell"/></svg></span><span class="stack" style="gap:0"><span class="strong">Subscription reminders</span><span class="cap dim">A heads-up the day before Spotify or Netflix renews.</span></span></div>
+            </div>
+            <div class="card">
+              <span class="strong">Couldn’t load prices.</span>
+              <span class="cap dim">Check your connection and try again. Senbud keeps working without Pro.</span>
+              <div class="btn secondary">Try again</div>
+            </div>
+            <div class="row" style="justify-content:center;gap:4px 16px"><span class="tbtn cap" style="font-size:14px">Terms</span><span class="tbtn cap" style="font-size:14px">Privacy</span><span class="tbtn cap" style="font-size:14px">Restore purchases</span></div>
+          </div>
+        </div>
+      </figure>
+
+      <figure class="shot">
+        <figcaption><b>Done.</b> Pro is on. Point straight at the first thing it unlocks.</figcaption>
+        <div class="phone">
+          <div class="sb"><span>9:41</span><i></i></div>
+          <div class="navbar" style="justify-content:flex-end"><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
+          <div class="scroll" style="gap:16px;justify-content:center">
+            <div class="card panel" style="gap:10px">
+              <span class="lab">Senbud Pro</span>
+              <span class="hero" style="font-size:44px;line-height:50px">You’re in.</span>
+              <span class="cap pdim">Yearly, renews 16 Oct 2027. Manage it any time in your App Store settings.</span>
+            </div>
+            <span>Try it now: snap a receipt and Senbud fills in the items for you.</span>
+            <div class="btn secondary"><svg class="ic"><use href="#i-camera"/></svg>Snap a receipt</div>
+            <span class="tbtn" style="align-self:center">Done</span>
           </div>
         </div>
       </figure>
@@ -1273,7 +1384,7 @@ body {
       </div>
       <div class="spec">
         <h3><code>ProLock</code></h3>
-        <p>Small grey chip with a lock and “Pro”, next to a locked option. Tapping it opens the paywall (<code>pro.tsx</code>). Never hides the option; you see what Pro adds.</p>
+        <p>Small grey chip with a lock and “Pro”, next to a locked option. Tapping it opens the paywall (7b). Never hides the option; you see what Pro adds.</p>
         <div class="demo"><span class="chip c-other" style="justify-self:start"><svg class="ic" style="width:14px;height:14px"><use href="#i-lock"/></svg>Pro</span></div>
       </div>
       <div class="spec">

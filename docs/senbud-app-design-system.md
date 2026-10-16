@@ -155,6 +155,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 | **Treats** | Jar balance `hero` with `highlight` "Add to jar" inside the panel | Treat list with "every N days" and status, short history, month-end leftover sheet | Concept |
 | **Wrapped** | One stat per page, full-bleed `panel` | `StoryPager`, `BarChart` on a `ReceiptCard`, share image | Concept (later phase) |
 | **Settings** | none | Grouped `ListRow`s: Money, AI, Look, Your data, Senbud Pro, then `danger` Erase | Concept |
+| **Senbud Pro paywall** | selected plan as `panel`; the buy button is the one `highlight` | Title, three benefits, plan radio group, buy button, small print with Terms, Privacy, Restore (see 4.8b) | Concept; code in `pro.tsx` on `claude/senbud-pro` |
 | **Assistant** | – | `AssistantFab` opens a native form sheet with chat | Concept (Phase 2) |
 
 **Empty states:**
@@ -319,7 +320,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
   - **Look:** `Segmented` Light / Dark / System. This closes the open item in section 7.
   - **Your data:** "Export spending (CSV)", "Back up everything".
   - **Senbud Pro:**
-    - A card with one line of what you get and `primary` "See plans", which opens the paywall in `mobile/src/app/pro.tsx` (built on `claude/senbud-pro`; not redesigned here). Card copy follows the paywall: "Senbud Pro does the typing for you: snap receipts, unlimited assistant, subscription reminders."
+    - A card with one line of what you get and `primary` "See plans", which opens the paywall (4.8b; code in `mobile/src/app/pro.tsx` on `claude/senbud-pro`). Card copy follows the paywall: "Senbud Pro does the typing for you: snap receipts, unlimited assistant, subscription reminders."
     - A "Restore purchases" `TextButton`.
     - Pro members see "Senbud Pro · Active" and "Manage".
   - Then `danger` "Erase all data" with "Privacy · Terms" under it.
@@ -331,6 +332,32 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 - **Erase:**
   - Native alert: "Erase all data?" / "This deletes every expense, budget, IOU and treat on this phone. Export first if you want a copy. It can't be undone."
   - Buttons: Cancel and a destructive "Erase".
+
+### 4.8b Senbud Pro paywall
+
+- **Opened from:** Settings → "See plans", any `ProLock`, and the camera for free users. A full-screen modal with Close (48 pt) at the top right. There's no tab bar and no assistant button.
+- **Copy (chosen by the user):**
+  - Title (`title`): "Senbud Pro does the typing for you".
+  - Three benefit rows, each with a system icon on a `surface` circle, a `bodyStrong` name and a `caption` line:
+    - Snap receipts: "Take a photo. Senbud reads the shop, items and prices."
+    - Unlimited assistant: "Ask or add as much as you like."
+    - Subscription reminders: "A heads-up the day before Spotify or Netflix renews."
+  - No trial wording, ratings or countdowns.
+- **Plans:**
+  - A radio group of two cards, at least 64 pt tall: Yearly ("$39 a year", shown as "$3.25 a month") and Monthly ("$4.99 a month").
+  - Yearly is preselected.
+  - The selected card is the cobalt `panel`, and it moves when you pick the other plan.
+- **Prices come from RevenueCat** in the store's currency, never typed into the app. The monthly equivalent is the yearly price ÷ 12, formatted with `money`.
+- **One yellow thing:** the buy button is `highlight`, labelled with what you pay ("Subscribe for $39 a year"). Prices on the panel stay `onPanel` white. This holds in dark mode too, because the screen has no `primary` button.
+- **Small print:** "Renews automatically until you cancel. Cancel any time in your App Store settings, at least a day before it renews." Then Terms, Privacy and "Restore purchases" as `TextButton`s.
+- **States:**
+  - **Buying:** the button dims and shows a spinner with "Waiting for the App Store". Close is disabled until the store sheet returns.
+  - **Prices can't load** (offline, store down): a card says "Couldn't load prices. Check your connection and try again. Senbud keeps working without Pro." with `secondary` "Try again". Terms, Privacy and Restore stay.
+  - **Restore finds nothing:** an inline caption under the links: "No Senbud Pro purchase found on this Apple or Google account." (the copy already in `receipt.tsx`).
+  - **Done:**
+    - `panel` with the label "Senbud Pro", "You're in." in highlighter, and the renewal date.
+    - "Try it now: snap a receipt and Senbud fills in the items for you."
+    - `secondary` "Snap a receipt" and a "Done" `TextButton`.
 
 ### 4.9 Assistant
 
