@@ -2,11 +2,12 @@
 // and Restore works through the person's Apple or Google account. The `pro` column in SQLite is a cache
 // of the entitlement, so Pro keeps working offline.
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import Purchases, { type CustomerInfo, LOG_LEVEL } from 'react-native-purchases';
 
-import { setPro } from '@/db';
+import { loadApp, setPro } from '@/db';
 
 // The entitlement identifier as set in the RevenueCat dashboard.
 export const ENTITLEMENT = 'senbud_pro';
@@ -52,4 +53,16 @@ export function ProSync() {
     };
   }, [db]);
   return null;
+}
+
+/** The cached Pro flag (kept fresh by ProSync), re-read whenever the screen gains focus. */
+export function usePro() {
+  const db = useSQLiteContext();
+  const [pro, setProState] = useState(false);
+  useFocusEffect(
+    useCallback(() => {
+      loadApp(db).then((a) => setProState(a.pro));
+    }, [db]),
+  );
+  return pro;
 }

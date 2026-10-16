@@ -194,19 +194,71 @@ export function CategoryChip({ category }: { category: Category }) {
   );
 }
 
-// Budget pace: fill colour carries the status, the label next to it says it in words (never colour alone).
-export function Progress({ value, status }: { value: number; status: 'ok' | 'close' | 'over' }) {
+export const CATEGORIES: Category[] = ['Food', 'Transport', 'Treat', 'Groceries', 'Subscription', 'Other'];
+
+// Category chips as a radio group; the selected chip gets a 2 pt ring in text colour (spec 4.1).
+export function CategoryPicker({ value, onChange }: { value: Category; onChange: (c: Category) => void }) {
   const t = useTheme();
-  const fill = { ok: t.goodFill, close: t.warnFill, over: t.badFill }[status];
+  return (
+    <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+      {CATEGORIES.map((c) => {
+        const on = c === value;
+        return (
+          <Pressable
+            key={c}
+            onPress={() => onChange(c)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: on }}
+            style={{
+              minHeight: touch.min - 8,
+              justifyContent: 'center',
+              paddingHorizontal: space.md,
+              borderRadius: radius.pill,
+              backgroundColor: categoryColors[c].bg,
+              borderWidth: 2,
+              borderColor: on ? t.text : 'transparent',
+            }}
+          >
+            <T variant="bodyStrong" style={{ color: categoryColors[c].fg }}>
+              {c}
+            </T>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+// Budget pace: fill colour carries the status, the label next to it says it in words (never colour alone).
+// tone="panel" sits on cobalt: a white 22% track, and coralLight for over (plain coral is 2.7:1 there).
+export function Progress({ value, status, tone }: { value: number; status: 'ok' | 'close' | 'over'; tone?: 'panel' }) {
+  const t = useTheme();
+  const onPanel = tone === 'panel';
+  const fill = { ok: t.goodFill, close: t.warnFill, over: onPanel ? palette.coralLight : t.badFill }[status];
   return (
     <View
       accessible
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: 100, now: Math.round(Math.min(1, value) * 100) }}
-      style={[s.track, { backgroundColor: t.surfaceSunken }]}
+      style={[s.track, { backgroundColor: onPanel ? 'rgba(255, 255, 255, 0.22)' : t.surfaceSunken }]}
     >
       <View style={[s.fill, { width: `${Math.min(100, Math.max(0, value * 100))}%`, backgroundColor: fill }]} />
     </View>
+  );
+}
+
+// A locked Pro option: grey chip with a lock. Opens the paywall; never hides the option it marks.
+export function ProLock({ onPress }: { onPress: () => void }) {
+  const c = categoryColors.Other;
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Senbud Pro, see plans" hitSlop={12}>
+      <View style={[s.chip, { backgroundColor: c.bg, flexDirection: 'row', alignItems: 'center', gap: space.xxs }]}>
+        <Icon name={{ ios: 'lock.fill', android: 'lock' }} size={12} color={c.fg} />
+        <T variant="caption" style={{ color: c.fg, fontWeight: '600' }}>
+          Pro
+        </T>
+      </View>
+    </Pressable>
   );
 }
 

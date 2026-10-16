@@ -1,15 +1,13 @@
 // "Add by hand" sheet (spec 4.1): the amount pad first, then category, then an optional name.
 import { type Category, money } from '@senbud/core';
-import { categoryColors, radius, space, touch } from '@senbud/core/tokens';
+import { radius, space, touch } from '@senbud/core/tokens';
 import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { addTransactions, listTransactions, loadSetup, type Profile, today } from '@/db';
-import { Button, Field, Icon, Row, Screen, T, useTheme } from '@/ui';
-
-const CATEGORIES: Category[] = ['Food', 'Transport', 'Treat', 'Groceries', 'Subscription', 'Other'];
+import { Button, CategoryPicker, Field, Icon, Row, Screen, T, useTheme } from '@/ui';
 
 // Minor digits of a currency, from Intl (0 for KRW/JPY, 2 for most).
 const digitsOf = (currency: string, locale: string) =>
@@ -83,32 +81,7 @@ export default function AddByHand() {
         )}
       </View>
 
-      <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
-        {CATEGORIES.map((c) => {
-          const on = c === category;
-          return (
-            <Pressable
-              key={c}
-              onPress={() => setCategory(c)}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: on }}
-              style={{
-                minHeight: touch.min - 8,
-                justifyContent: 'center',
-                paddingHorizontal: space.md,
-                borderRadius: radius.pill,
-                backgroundColor: categoryColors[c].bg,
-                borderWidth: 2,
-                borderColor: on ? t.text : 'transparent',
-              }}
-            >
-              <T variant="bodyStrong" style={{ color: categoryColors[c].fg }}>
-                {c}
-              </T>
-            </Pressable>
-          );
-        })}
-      </View>
+      <CategoryPicker value={category} onChange={setCategory} />
 
       <Field label="What was it? (optional)" value={label} onChangeText={setLabel} placeholder={category} returnKeyType="done" />
       <Row>
