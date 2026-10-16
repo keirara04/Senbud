@@ -129,3 +129,15 @@ export function readIntent(text: string): Intent {
   const items = parseSpending(line);
   return items.length ? { kind: "add", items } : { kind: "ask" };
 }
+
+// Receipts print service charge, SST and rounding under the items, and the reader returns only the
+// items. The gap to the printed total becomes one line, so what's saved matches what was paid. It takes
+// the category of the biggest item (service on a meal is Food). A total below the items (a discount)
+// is left alone: the items are what was bought.
+export function withCharges(items: Item[], total: number | null | undefined): Item[] {
+  if (!total || !items.length) return items;
+  const gap = Math.round(total * 100) - items.reduce((s, i) => s + Math.round(i.amount * 100), 0);
+  if (gap <= 0) return items;
+  const biggest = items.reduce((a, b) => (b.amount > a.amount ? b : a));
+  return [...items, { label: "Service charge and tax", amount: gap / 100, category: biggest.category }];
+}

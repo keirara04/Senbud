@@ -148,6 +148,12 @@ Dynamic Type and font scaling stay on (React Native's default). Layouts must sur
 | `BarChart` | `data: {category, share}[]`, `font` | Horizontal bars sorted by share, % as text on each, on a white `ReceiptCard` with category **ink** fills. Not drawn on a dark surface yet (that needs the tints). |
 | `Button variant="onPanel"` | – | Outline button on the cobalt panel (`onPanel` text, `onPanelDim` border). Wrapped's Share. |
 | `Bud`, `TreatJar`, `ReceiptCard` (`art.tsx`) | `face` / `share` / children | SVG art. `ReceiptCard` is the torn-edge white slip used by Budgets' StampLedger, Split and the assistant's slips. |
+| `AmountPad` | `value`, `onChange`, `digits` | 3×4 keys at 56 pt; the decimal key is hidden for zero-decimal currencies; ⌫ is "Delete"; light haptic per key. Used by Add by hand and the Budget step. |
+| `QuickPicks` | `options`, `value`, `onChange`, `label` | 48 pt chips, radio; scrolls sideways at large text. Shown only for currencies on a student scale (`SMALL_UNIT` in `currencies.ts`). |
+| `DayStrip` | `value`, `onChange`, `ordinal` | Days 1–31 as 48 pt circles, radiogroup "Rent due on the 28th", scrolled to the chosen day. |
+| `ChoiceCard` | `title`, `hint`, `selected`, `onPress` | 64 pt or taller, radio. |
+| `StepHeader` | `step`, `total`, `onBack`, `onSkip` | Back, segmented progress (role progressbar, "Step 1 of 2") that fills with a 250 ms layout transition, Skip when optional. |
+| `PrintingBud`, `useCountUp` (`art.tsx`) | `face`, `budSize`, `width`, children, `onPrinted` | Bud as a thermal printer: the `ReceiptCard` feeds out from under Bud in three pushes (1.3 s) while Bud buzzes ±1.5 pt, then springs to a −2° tilt. The number counts up 800 ms after. Reduce Motion: already printed, final value. |
 | `applyTheme(theme)` | `'system' \| 'light' \| 'dark'` | `Appearance.setColorScheme`; System passes `'unspecified'`. Dark is the default (16 Oct 2026). |
 | `useNavigationTheme()` | – | React Navigation theme built from ours, passed to `ThemeProvider` in `_layout.tsx`. Headers, back buttons and screen backgrounds follow the system scheme live. |
 
@@ -161,8 +167,8 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 
 | Screen | Hero (one per screen) | Content, top to bottom | Status |
 |---|---|---|---|
-| **Welcome** (first launch) | Bud and one line: "Your money buddy" | Logo, Bud, one sentence, three promises (no bank login, no account, stays on your phone), `primary` "Get started", "I've used Senbud before" | Built (`welcome.tsx`) |
-| **Setup** (first run, later "Budget and rent") | `title`: "How much can you spend?" | Period `Segmented`, budget `Field`, rent amount and due day, currency (with a "relabels, doesn't convert" note after first run), `Save`. Erase moved to Settings. | Built |
+| **Welcome** (first launch) | Bud and one line: "Your money buddy" | Wordmark, Bud holding a sample receipt, headline, one line, three promise pills, `primary` "Get started", "I've used Senbud before" (sheet) | Built v2 (`welcome.tsx`, `welcome-back.tsx` sheet) |
+| **Onboarding** (first run) | One question per step: the budget amount, then rent | Two steps (budget, rent) and a "You're set" receipt Bud prints; currency from the phone. Settings opens the same steps as the Budget and Rent sheets. | Built v2 (`onboarding.tsx`, steps in `src/onboarding.tsx`, sheets `edit-budget` / `edit-rent`); the five-field Setup page is gone |
 | **Home** | `panel` with `hero` safe-to-spend in highlighter | Rent card, pace card, today's nudge, pinned `CaptureBar` (see 4.2) | Built; v2 concept |
 | **Activity** | none; it's a list | Cards with label, `CategoryChip`, date, amount, delete. Later: filter chips, including "added by assistant". | Built |
 | **Budgets** | `panel` with what's left in highlighter and `Progress tone="panel"` | `StampLedger` by category; rent and bills list with due days; detected subscriptions | Built |
@@ -200,19 +206,68 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 
 - **Decided 16 Oct 2026:** Senbud stays account-free. Data lives in SQLite on the phone; a backup file covers moving phones. Optional Sign in with Apple or Google comes later, only for encrypted sync, as a Pro feature.
 - **No sign-in wall.** The spec promises no bank login and no accounts, and Pro uses an anonymous RevenueCat id, so "Get started" goes straight to Setup.
-- **Top to bottom:**
-  1. Logo.
-  2. Bud.
-  3. `title` "Your money buddy".
-  4. One sentence: "Snap or type what you spend. Senbud tells you what's safe to spend today and when rent is coming."
-  5. Three checkmarked promises: "No bank login", "No account", "Stays on your phone".
-  6. `primary` "Get started".
-  7. `TextButton` "I've used Senbud before".
-- **"I've used Senbud before"** opens a sheet: "Senbud keeps everything on your phone, so there's no account to log in to." It offers "Restore from a backup" (Files or Google Drive) and "Restore Senbud Pro" (Apple or Google account).
+- **Concept v2** (`docs/concepts/senbud-onboarding.html`, 16 Oct 2026). Top to bottom:
+  1. The `Sen[bud]` wordmark.
+  2. Bud standing on a small printed receipt: "For example · today", "Rent on the 28th: covered", and "Safe to spend RM 59.37" in highlighter. VoiceOver reads "For example", so nobody takes the number as theirs.
+  3. The headline "Your money buddy.", then one line: "Know what's safe to spend today. No bank login, ever."
+  4. Three promise pills: "No bank login", "No account", "Stays on your phone".
+  5. `primary` "Get started".
+  6. `TextButton` "I've used Senbud before".
+- **"I've used Senbud before"** opens a native form sheet. In the build today it expands a card below the fold, so the tap looks like it does nothing. The sheet says "There's no account to log in to. Bring your things back here:", then lists "Restore from a backup" (Files or Google Drive) and "Restore Senbud Pro" (Apple or Google account), a note about Settings → Back up everything, and "Not now".
+- **Motion** (once, and off under Reduce Motion):
+  - Bud pops in (450 ms), then buzzes lightly while the receipt feeds out from under it like a thermal printer.
+  - The feed is three pushes with short pauses (1.3 s); then the paper swings and settles at a slight tilt.
+  - The sample number counts up once the paper stops (from 1.6 s, 800 ms).
+  - The text rises in reading order, 100 ms apart.
+  - Nothing loops. Bud doesn't bob or blink during onboarding, so 2.5 holds.
 - **Sign in (later, Pro, for encrypted sync only):**
   - An optional sheet: "Use Senbud on more than one phone". It explains that spending is encrypted on the phone before it's sent.
   - Buttons: Sign in with Apple first, then "Continue with Google", then "Not now".
   - If Google sign-in is offered on iOS, Sign in with Apple is required (App Review 4.8).
+
+### 4.1c Setup flow (concept v2)
+
+Today's Setup asks five things on one page: period, budget, rent, due day and currency. The concept asks two questions, one per screen, then shows the result.
+
+- **Route:** `/onboarding` with a step state (`budget` → `rent` → `ready`). Nothing is saved until "You're set". Back steps backwards. "Go to Home" `replace`s to `/`.
+- **Step header:** Back, a two-segment progress bar (role progressbar, "Step 1 of 2") and "Skip" when the step is optional.
+- **Step 1, Budget (required):**
+  - The question is "How much do you have each month?". The period word is a button that switches between month and week; month is the default (today's Setup defaults to week).
+  - The helper line says rent is included: "Everything you have, rent included. Senbud sets rent aside first." This matters because `safeToSpend` subtracts rent from the limit.
+  - Below that:
+    - The amount in `hero` size.
+    - The currency chip ("RM · Malaysian ringgit", with Change). It's filled from `expo-localization` and falls back to USD.
+    - Four `QuickPicks` chips (800/1,000/1,400/2,000 a month, or 150/250/350/500 a week).
+    - The `AmountPad` keypad, so the system keyboard never covers Next.
+    - `primary` "Next", disabled at 0.
+- **Step 2, Rent (optional, with Skip):**
+  - "Do you pay rent?" with two `ChoiceCard`s: "Yes" or "No rent" (family, hostel or free).
+  - If Yes:
+    - Amount chips (350/450/600) and a field.
+    - A `DayStrip` of 48 pt day circles, centred near the likely day.
+    - A note: "Bills like your phone plan can go in later, in Budgets."
+- **"You're set":**
+  - Bud (yay face) prints a receipt out of its bottom edge, like a thermal printer: budget this month, rent on the 28th (−RM 450), days left (16).
+  - Then "Safe to spend today" counts up to the number in highlighter: RM 59.37, or RM 87.50 with no rent.
+  - The number uses the same floor-to-the-sen maths as `safeToSpend`. Rent that falls due after this period shows "next month" and isn't subtracted.
+  - "Go to Home". Hourly rate and bills wait for Settings or Home cards.
+- **Settings → Budget and rent:** two rows that open the same two steps as sheets, replacing the five-field page.
+- **New components:**
+  - `QuickPicks`: 48 pt chips, role radio.
+  - `DayStrip`: horizontal radiogroup, label "Rent due on the 28th".
+  - `ChoiceCard`: 64 pt or taller, role radio.
+  - `StepHeader`.
+  - Plus the existing `AmountPad`, `ReceiptCard` and `Bud`.
+- **Motion:**
+  - Steps slide 24 pt with a fade (250 ms) and the progress segment fills.
+  - Chip and key taps tick the amount 4 pt (150 ms), with a light haptic.
+  - The rent fields expand with a layout spring.
+  - On "You're set", Bud feeds your receipt out the same way as on Welcome; the total counts up once the paper stops, then Bud hops once.
+  - Reduce Motion turns all of these into cuts and final values.
+- **Open questions:**
+  - Should there be zero onboarding questions (ask on Home instead)? This concept keeps two, because Home without a number misses the point.
+  - Month or week as the default period?
+  - Keep the sample receipt on Welcome?
 
 ### 4.1 Navigation (all screens)
 
