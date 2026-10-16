@@ -542,6 +542,61 @@ td:first-child { font-weight: 650; white-space: nowrap; }
   .pro-bud { animation: bob 5s ease-in-out infinite; }
 }
 
+/* ---------- comparison v2: the Pro column is a raised cobalt card ---------- */
+.compare2 { margin-top: 56px; }
+.compare2 table { min-width: 0; width: 100%; border-collapse: separate; border-spacing: 0; font-size: 15px; line-height: 21px; }
+.compare2 th { font: inherit; text-transform: none; letter-spacing: 0; color: var(--text); }
+.compare2 td:first-child { white-space: normal; }
+.compare2 th, .compare2 td { border: 0; padding: 16px 20px; vertical-align: middle; text-align: left; }
+.compare2 tbody tr > * { border-top: 1px solid var(--line); }
+.compare2 tbody tr:hover > th, .compare2 tbody tr:hover > td:not(.pc) { background: var(--sunken); }
+.compare2 thead th { padding-top: 26px; padding-bottom: 18px; vertical-align: bottom; }
+.compare2 th[scope="row"] { width: 30%; font-weight: 650; }
+.feat { display: inline-flex; align-items: center; gap: 12px; }
+.feat .ic { width: 22px; height: 22px; color: var(--accent); padding: 8px; box-sizing: content-box; border-radius: 12px; background: var(--sunken); }
+.compare2 td { color: var(--dim); }
+.compare2 td > span:last-child { vertical-align: middle; }
+.ch { display: block; font: 700 13px/16px var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+.cp { display: block; font: 800 34px/40px var(--display); letter-spacing: -.02em; color: var(--text); margin-top: 4px; }
+.cp small { font: 500 15px var(--sans); color: var(--dim); letter-spacing: 0; }
+.compare2 .pc { background: var(--panel); color: var(--on-panel); font-weight: 600; width: 38%; position: relative; }
+.compare2 tbody .pc { border-top-color: rgba(255,255,255,.14); }
+.compare2 .pc .ch, .compare2 .pc .cp small { color: var(--on-panel-dim); }
+.compare2 .pc .cp { color: var(--on-panel); }
+.compare2 th.pc.top { border-radius: 22px 22px 0 0; }
+.compare2 td.pc.bottom { border-radius: 0 0 22px 22px; padding-bottom: 26px; }
+.compare2 thead .pc, .compare2 tbody .pc, .compare2 tfoot .pc { box-shadow: 14px 0 40px -18px rgba(31,63,216,.6), -14px 0 40px -18px rgba(31,63,216,.6); }
+.compare2 tfoot td { padding-top: 22px; }
+.compare2 tfoot .pill { min-height: 48px; }
+.best { position: absolute; top: 22px; right: 18px; font: 700 12px/1 var(--sans); background: var(--hl); color: #1a1c2e; padding: 6px 10px; border-radius: 999px; }
+.ck { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 11px; margin-right: 10px; vertical-align: middle; flex: none; }
+.ck .ic { width: 14px; height: 14px; stroke-width: 3; }
+.ck.yes { background: var(--good-fill); color: #155a44; }
+.pc .ck.yes { background: var(--hl); color: #1a1c2e; }
+.ck.part { border: 2px solid var(--good-fill); background: linear-gradient(90deg, var(--good-fill) 50%, transparent 50%); }
+.ck.no { border: 2px solid var(--line); position: relative; }
+.ck.no::after { content: ""; width: 10px; height: 2px; background: var(--dim); border-radius: 1px; }
+.legend { margin: 14px 0 0; font-size: 13px; color: var(--dim); display: flex; align-items: center; flex-wrap: wrap; gap: 4px 2px; }
+.legend .ck { width: 18px; height: 18px; margin-right: 4px; }
+/* phones: each feature becomes a small card with Free and Pro side by side */
+@media (max-width: 700px) {
+  .compare2 thead { display: none; }
+  .compare2 table, .compare2 tbody, .compare2 tfoot, .compare2 tr { display: block; }
+  .compare2 tbody tr { display: grid; grid-template-columns: 1fr 1fr; background: var(--bg); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; margin-bottom: 12px; }
+  .compare2 tbody tr > * { border-top: 0; }
+  .compare2 th[scope="row"] { grid-column: 1 / -1; width: auto; padding: 14px 16px 6px; }
+  .compare2 td, .compare2 .pc { display: block; width: auto; padding: 10px 16px 14px; box-shadow: none !important; font-size: 14px; line-height: 19px; }
+  .compare2 td::before { content: attr(data-label); display: block; font: 700 11px/14px var(--sans); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; color: var(--dim); }
+  .compare2 .pc::before { color: var(--hl); }
+  .compare2 .ck { margin-right: 6px; }
+  .compare2 tfoot tr { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .compare2 tfoot td:first-child { display: none; }
+  .compare2 tfoot td { padding: 0; background: none !important; }
+  .compare2 tfoot td.pc.bottom { grid-column: 1 / -1; order: -1; }
+  .compare2 tfoot .pill { width: 100%; }
+  .compare2 tfoot tr { grid-template-columns: 1fr; }
+}
+
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -850,19 +905,22 @@ td:first-child { font-weight: 650; white-space: nowrap; }
       </div>
     </div>
 
-    <div class="compare-wrap">
-      <table class="compare">
-        <thead><tr><th>What you get</th><th>Free</th><th class="pro-col">Pro</th></tr></thead>
+    <div class="compare2">
+      <table>
+        <caption class="sr">Free and Pro compared</caption>
+        <thead><tr><th scope="col"><span class="eyebrow-p">Compare plans</span></th><th scope="col"><span class="ch">Free</span><span class="cp">$0</span></th><th scope="col" class="pc top"><span class="ch">Pro</span><span class="cp">$3.25<small> / month, billed yearly</small></span><span class="best">Best value</span></th></tr></thead>
         <tbody>
-          <tr><td>Add spending</td><td>Type or tap</td><td class="pro-col">Plus snap receipts and screenshots</td></tr>
-          <tr><td>Bud, the assistant</td><td>10 questions a day</td><td class="pro-col">No limit</td></tr>
-          <tr><td>Budgets</td><td>One overall budget</td><td class="pro-col">Several, category limits, until payday</td></tr>
-          <tr><td>Splitting with friends</td><td>By hand, with IOUs</td><td class="pro-col">Item by item from the receipt</td></tr>
-          <tr><td>Subscriptions</td><td class="dimcell">Not included</td><td class="pro-col">Spotted for you, reminders before renewal</td></tr>
-          <tr><td>Wrapped</td><td>Monthly basics</td><td class="pro-col">Full story, share cards, year-end edition</td></tr>
-          <tr><td>Export and privacy</td><td>Everything, any time</td><td class="pro-col">Same. Never behind a paywall</td></tr>
+          <tr><th scope="row"><span class="feat"><svg class="ic"><use href="#i-camera"/></svg>Add spending</span></th><td data-label="Free"><span class="ck part" aria-hidden="true"></span><span>Type or tap</span></td><td class="pc" data-label="Pro"><span class="ck yes" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></span><span>Plus snap receipts and screenshots</span></td></tr>
+          <tr><th scope="row"><span class="feat"><svg class="ic"><use href="#i-chat"/></svg>Bud, the assistant</span></th><td data-label="Free"><span class="ck part" aria-hidden="true"></span><span>10 questions a day</span></td><td class="pc" data-label="Pro"><span class="ck yes" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></span><span>Ask as much as you like</span></td></tr>
+          <tr><th scope="row"><span class="feat"><svg class="ic"><use href="#i-budgets"/></svg>Budgets</span></th><td data-label="Free"><span class="ck part" aria-hidden="true"></span><span>One overall budget</span></td><td class="pc" data-label="Pro"><span class="ck yes" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></span><span>Several, category limits, until payday</span></td></tr>
+          <tr><th scope="row"><span class="feat"><svg class="ic"><use href="#i-friends"/></svg>Splitting with friends</span></th><td data-label="Free"><span class="ck part" aria-hidden="true"></span><span>By hand, with IOUs</span></td><td class="pc" data-label="Pro"><span class="ck yes" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></span><span>Item by item from the receipt</span></td></tr>
+          <tr><th scope="row"><span class="feat"><svg class="ic"><use href="#i-bell"/></svg>Subscriptions</span></th><td data-label="Free"><span class="ck no" aria-hidden="true"></span><span>Not included</span></td><td class="pc" data-label="Pro"><span class="ck yes" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></span><span>Spotted for you, reminded before renewal</span></td></tr>
+          <tr><th scope="row"><span class="feat"><svg class="ic"><use href="#i-share"/></svg>Wrapped</span></th><td data-label="Free"><span class="ck part" aria-hidden="true"></span><span>Monthly basics</span></td><td class="pc" data-label="Pro"><span class="ck yes" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></span><span>Full story, share cards, year-end edition</span></td></tr>
+          <tr><th scope="row"><span class="feat"><svg class="ic"><use href="#i-lock"/></svg>Export and privacy</span></th><td data-label="Free"><span class="ck yes" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></span><span>Everything, any time</span></td><td class="pc" data-label="Pro"><span class="ck yes" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></span><span>Same. Never behind a paywall</span></td></tr>
         </tbody>
+        <tfoot><tr><td></td><td><a class="pill out" href="#join">Start free</a></td><td class="pc bottom"><a class="pill hl" href="#join">Join the Pro waitlist</a></td></tr></tfoot>
       </table>
+      <p class="legend"><span class="ck yes" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></span> Full &nbsp; <span class="ck part" aria-hidden="true"></span> Basic &nbsp; <span class="ck no" aria-hidden="true"></span> Not in Free</p>
     </div>
   </div>
 </section>
