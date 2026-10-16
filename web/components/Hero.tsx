@@ -15,12 +15,18 @@ export function Hero() {
             Snap a receipt or type “lunch 12, uber 8”. Senbud logs it, counts down to rent, and tells you when you
             can actually afford that burger.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <a
               href="#waitlist"
               className="plausible-event-name=CTA plausible-event-place=hero hl-sweep rounded-full bg-hl px-6 py-3.5 text-center font-semibold text-panel transition-transform hover:-translate-y-0.5"
             >
               Get early access
+            </a>
+            <a
+              href="https://app.senbud.app"
+              className="plausible-event-name=Web+app plausible-event-place=hero rounded-full border border-panel-line px-6 py-3.5 text-center font-semibold text-on-panel transition-colors hover:bg-white/5"
+            >
+              Try it in your browser
             </a>
             <a
               href="#how"
