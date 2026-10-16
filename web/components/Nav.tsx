@@ -79,7 +79,7 @@ export function Nav() {
             ))}
             <li>
               <a
-                href="https://senbud-app.vercel.app"
+                href="https://app.senbud.com"
                 className="plausible-event-name=Web+app plausible-event-place=nav inline-flex min-h-11 items-center px-3 text-sm text-on-panel-dim transition-colors hover:text-on-panel"
               >
                 Try it in your browser
@@ -126,7 +126,7 @@ export function Nav() {
               ))}
               <motion.li initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 + links.length * 0.05 }}>
                 <a
-                  href="https://senbud-app.vercel.app"
+                  href="https://app.senbud.com"
                   className="plausible-event-name=Web+app plausible-event-place=nav flex min-h-12 items-center rounded-xl px-3 text-lg font-semibold hover:bg-white/10"
                 >
                   Try it in your browser

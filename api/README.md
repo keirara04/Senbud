@@ -80,8 +80,8 @@ Laravel's usual variables (`APP_KEY`, `DB_*`, ...) plus:
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `APP_URL` | `http://localhost:8080` | Public base URL of this API. Confirm links in emails are built from it (never from the request's Host header). Production: `https://api.senbud.app`. |
-| `WEB_ORIGIN` | `http://localhost:3000` | The only browser origin allowed by CORS, and where confirm links redirect. Exact match: scheme, host and port, no trailing slash. Production: `https://senbud.app`. |
+| `APP_URL` | `http://localhost:8080` | Public base URL of this API. Confirm links in emails are built from it (never from the request's Host header). Production: `https://api.senbud.com`. |
+| `WEB_ORIGIN` | `http://localhost:3000` | The only browser origin allowed by CORS, and where confirm links redirect. Exact match: scheme, host and port, no trailing slash. Production: `https://senbud.com`. |
 | `MAIL_*` | `MAIL_MAILER=log` | See [Email](#email). |
 | `TRUSTED_PROXIES` | empty | Comma-separated IPs/CIDRs of the reverse proxy in front of the API. Without it, every request behind a proxy shares the proxy's IP and the per-IP rate limit becomes global. Never `*`: anyone could then fake their IP. |
 | `RUN_MIGRATIONS` | `true` | Docker only. Run `migrate --force` when the container starts. |

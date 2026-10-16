@@ -159,7 +159,7 @@ Endings are checked top to bottom, and the first match wins.
 | Tests | Vitest: win and lose paths, the Late-Fee Lich trigger, each class's perk, seeded replays. Plus a script that plays 10,000 runs with a "sensible player" strategy to tune the win rate to about 40% |
 | Screens | `web/app/play/page.tsx` (a server component with metadata) renders the client component `components/play/Game.tsx`. Motion handles the dice roll, damage numbers and monster transitions |
 | Sound | Off by default. Synthesized with WebAudio, so there are no sound files |
-| Share card | Canvas image made in the browser: hero sprite, title, stats and the `senbud.app/play` link |
+| Share card | Canvas image made in the browser: hero sprite, title, stats and the `senbud.com/play` link |
 | Accessibility | Every action has a keyboard shortcut (1–4). Story text is read out to screen readers. Reduced-motion skips animations. Never relies on colour alone |
 | Size budget | Under 150KB of code for `/play`, plus under 100KB of sprites. **Measured:** 9.7KB gzipped of game-only JS and 64KB of sprites. React, Next and Motion add 223KB gzipped, shared with `/` |
 | Analytics | Anonymous counts only: `dungeon_start`, `dungeon_end`, `dungeon_share` and `dungeon_cta`, sent through `lib/track.ts`. It does nothing until an analytics provider is added; none is installed |

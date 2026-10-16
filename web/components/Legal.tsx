@@ -3,7 +3,7 @@ import { Nav } from "./Nav";
 import { Footer, h2, wrap } from "./Sections";
 
 // TODO(owner): fill these in before launch. Every <Todo> on /privacy and /terms needs a decision too.
-export const CONTACT_EMAIL = "privacy@example.com";
+export const CONTACT_EMAIL = "privacy@senbud.com";
 export const UPDATED = "16 October 2026";
 
 // Shared shell for /privacy and /terms: plain reading column, same nav and footer as the rest of the site.

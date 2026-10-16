@@ -1,9 +1,9 @@
 // The Senbud API (api/, Laravel). Only receipt reading talks to it; everything else stays on the phone.
 import type { Category } from '@senbud/core';
 
-// Simulators reach the dev machine on localhost (Android through `adb reverse tcp:8000 tcp:8000`).
-// Real devices and release builds set EXPO_PUBLIC_API_URL.
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000';
+// Development: the dev machine on localhost (Android through `adb reverse tcp:8000 tcp:8000`), or
+// EXPO_PUBLIC_API_URL for a phone on Wi-Fi. Release builds default to the production API.
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? (__DEV__ ? 'http://localhost:8000' : 'https://api.senbud.com');
 
 export type Receipt = {
   merchant: string | null;
