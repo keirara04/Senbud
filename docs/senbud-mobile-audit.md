@@ -149,7 +149,7 @@ Senbud/
 ### Phase 0 results (16 October 2026)
 Branch `claude/nifty-kalam-3076ea`.
 
-**Status:** done on iOS. Android is built but not run (see the Android row below).
+**Status:** done. Phase 0 ran on both an iOS simulator and an Android emulator.
 
 **What exists now**
 - **Workspaces.** The root `package.json` sets workspaces `["web", "mobile", "packages/*"]` and overrides `react`/`react-dom` to 19.3.0. There is one root `package-lock.json`, and `web/package-lock.json` is deleted. After merging, every checkout needs a fresh `npm install` at the repo root, because `web/node_modules` is no longer used.
@@ -165,18 +165,18 @@ Branch `claude/nifty-kalam-3076ea`.
   - One Stack screen parses "lunch 12, uber 8" with `@senbud/core` and shows Lunch · Food $12, Uber · Transport $8, Total $20.
   - It also renders a temporary engine probe, the JSON that the Hermes table below comes from. Delete it in Phase 1.
 
-**Hermes vs Node** (Node 24.13; Hermes from RN 0.88 in an iOS 27 simulator dev build)
+**Hermes vs Node** (Node 24.13; Hermes from RN 0.88 in dev builds on an iOS 27 simulator and an Android 17 (API 37) emulator)
 
 | Check | Node | Hermes iOS | Hermes Android |
 |---|---|---|---|
-| Lookbehind `(?<=a)b` | ✅ | ✅ | ✅ compiles (`hermesc`); runtime not run |
-| `\p{L}` with `u` flag | ✅ | ✅ | ✅ compiles (`hermesc` rejects a bad `\p{…}` name, so it really validates); runtime not run |
-| `Array.prototype.at` | ✅ | ✅ | not run |
-| `parseSpending("lunch 12, grab 8 and $4.50 kopi; 1,200 rent, café 3, -5 lunch")` | 5 items | **identical** | not run |
-| `money` `USD`/`en-US`: 12, 4.5, 1200, 11.999… | `$12` `$4.50` `$1,200` `$12` | identical | not run |
-| `money` `MYR`/`en-MY` | `RM 12` (NBSP) | identical | not run |
-| `money` `EUR`/`de-DE` | `12 €`, `1.200 €` (NBSP) | identical | not run |
-| `money` `MYR`/`ms-MY` | `RM 12` (NBSP) | **`RM12` (no space)** | not run |
+| Lookbehind `(?<=a)b` | ✅ | ✅ | ✅ |
+| `\p{L}` with `u` flag | ✅ | ✅ | ✅ |
+| `Array.prototype.at` | ✅ | ✅ | ✅ |
+| `parseSpending("lunch 12, grab 8 and $4.50 kopi; 1,200 rent, café 3, -5 lunch")` | 5 items | **identical** | **identical** |
+| `money` `USD`/`en-US`: 12, 4.5, 1200, 11.999… | `$12` `$4.50` `$1,200` `$12` | identical | identical |
+| `money` `MYR`/`en-MY` | `RM 12` (NBSP) | identical | identical |
+| `money` `EUR`/`de-DE` | `12 €`, `1.200 €` (NBSP) | identical | identical |
+| `money` `MYR`/`ms-MY` | `RM 12` (NBSP) | **`RM12` (no space)** | `RM 12` (NBSP), same as Node |
 
 **Conclusions**
 - **The parser needs no rewrite.** Lookbehind and `\p{L}` work in Hermes, and the output matches Node byte for byte.
@@ -184,7 +184,7 @@ Branch `claude/nifty-kalam-3076ea`.
   - Never compare formatted money strings across platforms in tests.
   - Keep `money` tests on `en-US` in Node.
   - If exact output ever matters (for example, CSV export), format from `formatToParts` or from cents yourself.
-- **Android runtime is still open.** Run the same probe on an emulator: open the app and read the `SENBUD_PROBE` line in Metro.
+- The regex compiler (`hermesc`) also accepts lookbehind and `\p{L}`, and rejects an invalid `\p{…}` name, so a regex Hermes can't handle fails the build rather than slipping through to runtime.
 
 **Styling: NativeWind v5 rc vs shared tokens plus StyleSheet**
 
@@ -210,7 +210,7 @@ The NativeWind trial is kept on branch `claude/nativewind-v5-trial` (not for mer
 | Platform | Result |
 |---|---|
 | iOS simulator (iPhone 17, iOS 27, Xcode 27) | ✅ `npx expo run:ios` built, installed and loaded the bundle from Metro. CocoaPods first run is slow because it downloads React Native core prebuilts. After install, `expo run:ios` exited on `osascript … "System Events"` (no Automation permission for the terminal) and took Metro down with it. Workaround: run `npx expo start --dev-client` separately and open `exp+senbud://expo-development-client/?url=http://localhost:8090`. |
-| Android | Pending: Gradle build was interrupted by the repo move; see below. |
+| Android | ✅ `npx expo prebuild -p android` + `./gradlew assembleDebug -PreactNativeArchitectures=arm64-v8a` → `BUILD SUCCESSFUL` (2 min 15 s incremental; a full four-ABI build is much slower, so pass the architecture flag for local builds). Gradle auto-installed Build-Tools 37 on first run. Built from `/Volumes/Ledgerly/...`, so the space in `~/VS CODE/` was never on the build path and wasn't tested. Emulator run: ✅ the APK installs on an API 37 `google_apis` arm64 emulator, loads from Metro over `adb reverse tcp:8090 tcp:8090`, and shows the screen. On first launch the dev client asks for the **Nearby devices** permission, used for LAN discovery of Metro. It isn't needed with `adb reverse`, so deny it. The machine had no system image installed; the existing AVDs point at an `android-37.1` beta image that Google's repository no longer serves. |
 
 **Other notes**
 - **`expo-doctor` false positive:** it reports `ios.icon` `./assets/expo.icon` as missing. It's an Icon Composer folder from the SDK 58 template. Leave it.
