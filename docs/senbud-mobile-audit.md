@@ -320,6 +320,7 @@ Branch `claude/senbud-phase2`.
     1. A launch reset the cached Pro from 1 to 0.
     2. A "Test valid purchase" succeeded.
     3. Restore then unlocked Pro and continued into the receipt flow.
+  - **Android emulator:** the paywall opens with the same offering. A device with no purchase gets the Pro gate. That needed one fix: the receipt screen now asks RevenueCat on open instead of trusting a not-yet-synced cache.
   - **Dashboard findings, for you to fix:**
     1. The entitlement identifier is **`senbud_pro`**, not `pro`. The code now matches the dashboard.
     2. The `default` offering still uses RevenueCat's **default test products** (`monthly` $9.99, yearly $79.99), not `senbud_pro_monthly` at $4.99 and `senbud_pro_yearly` at $39.
