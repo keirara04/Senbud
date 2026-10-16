@@ -158,8 +158,8 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 
 | Screen | Hero (one per screen) | Content, top to bottom | Status |
 |---|---|---|---|
-| **Welcome** (first launch) | Bud and one line: "Your money buddy" | Logo, Bud, one sentence, three promises (no bank login, no account, stays on your phone), `primary` "Get started", "I've used Senbud before" | Built (`welcome.tsx`) |
-| **Setup** (first run, later "Budget and rent") | `title`: "How much can you spend?" | Period `Segmented`, budget `Field`, rent amount and due day, currency (with a "relabels, doesn't convert" note after first run), `Save`. Erase moved to Settings. | Built |
+| **Welcome** (first launch) | Bud and one line: "Your money buddy" | Wordmark, Bud holding a sample receipt, headline, one line, three promise pills, `primary` "Get started", "I've used Senbud before" (sheet) | Built (`welcome.tsx`); v2 concept (4.1b) |
+| **Setup** (first run, later "Budget and rent") | One question per step: the budget amount, then rent | Built today as one five-field page. Concept 4.1c: two steps (budget, rent) and a "You're set" receipt; currency from the phone | Built; v2 concept (4.1c) |
 | **Home** | `panel` with `hero` safe-to-spend in highlighter | Rent card, pace card, today's nudge, pinned `CaptureBar` (see 4.2) | Built; v2 concept |
 | **Activity** | none; it's a list | Cards with label, `CategoryChip`, date, amount, delete. Later: filter chips, including "added by assistant". | Built |
 | **Budgets** | `panel` with what's left in highlighter and `Progress tone="panel"` | `StampLedger` by category; rent and bills list with due days; detected subscriptions | Built |
@@ -197,19 +197,69 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 
 - **Decided 16 Oct 2026:** Senbud stays account-free. Data lives in SQLite on the phone; a backup file covers moving phones. Optional Sign in with Apple or Google comes later, only for encrypted sync, as a Pro feature.
 - **No sign-in wall.** The spec promises no bank login and no accounts, and Pro uses an anonymous RevenueCat id, so "Get started" goes straight to Setup.
-- **Top to bottom:**
-  1. Logo.
-  2. Bud.
-  3. `title` "Your money buddy".
-  4. One sentence: "Snap or type what you spend. Senbud tells you what's safe to spend today and when rent is coming."
-  5. Three checkmarked promises: "No bank login", "No account", "Stays on your phone".
-  6. `primary` "Get started".
-  7. `TextButton` "I've used Senbud before".
-- **"I've used Senbud before"** opens a sheet: "Senbud keeps everything on your phone, so there's no account to log in to." It offers "Restore from a backup" (Files or Google Drive) and "Restore Senbud Pro" (Apple or Google account).
+- **Concept v2** (`docs/concepts/senbud-onboarding.html`, 16 Oct 2026). Top to bottom:
+  1. The `Sen[bud]` wordmark.
+  2. Bud standing on a small printed receipt: "For example · today", "Rent on the 28th: covered", and "Safe to spend RM 59.37" in highlighter. VoiceOver reads "For example", so nobody takes the number as theirs.
+  3. The headline "Your money buddy.", then one line: "Know what's safe to spend today. No bank login, ever."
+  4. Three promise pills: "No bank login", "No account", "Stays on your phone".
+  5. `primary` "Get started".
+  6. `TextButton` "I've used Senbud before".
+- **"I've used Senbud before"** opens a native form sheet. In the build today it expands a card below the fold, so the tap looks like it does nothing. The sheet says "There's no account to log in to. Bring your things back here:", then lists "Restore from a backup" (Files or Google Drive) and "Restore Senbud Pro" (Apple or Google account), a note about Settings → Back up everything, and "Not now".
+- **Motion** (once, and off under Reduce Motion):
+  - Bud pops in (450 ms).
+  - The receipt prints downward in 8 steps (900 ms).
+  - The sample number counts up (800 ms).
+  - The text rises in reading order, 100 ms apart.
+  - Nothing loops. Bud doesn't bob or blink during onboarding, so 2.5 holds.
 - **Sign in (later, Pro, for encrypted sync only):**
   - An optional sheet: "Use Senbud on more than one phone". It explains that spending is encrypted on the phone before it's sent.
   - Buttons: Sign in with Apple first, then "Continue with Google", then "Not now".
   - If Google sign-in is offered on iOS, Sign in with Apple is required (App Review 4.8).
+
+### 4.1c Setup flow (concept v2)
+
+Today's Setup asks five things on one page: period, budget, rent, due day and currency. The concept asks two questions, one per screen, then shows the result.
+
+- **Route:** `/onboarding` with a step state (`budget` → `rent` → `ready`). Nothing is saved until "You're set". Back steps backwards. "Go to Home" `replace`s to `/`.
+- **Step header:** Back, a two-segment progress bar (role progressbar, "Step 1 of 2") and "Skip" when the step is optional.
+- **Step 1, Budget (required):**
+  - The question is "How much do you have each month?". The period word is a button that switches between month and week; month is the default (today's Setup defaults to week).
+  - The helper line says rent is included: "Everything you have, rent included. Senbud sets rent aside first." This matters because `safeToSpend` subtracts rent from the limit.
+  - Below that:
+    - The amount in `hero` size.
+    - The currency chip ("RM · Malaysian ringgit", with Change). It's filled from `expo-localization` and falls back to USD.
+    - Four `QuickPicks` chips (800/1,000/1,400/2,000 a month, or 150/250/350/500 a week).
+    - The `AmountPad` keypad, so the system keyboard never covers Next.
+    - `primary` "Next", disabled at 0.
+- **Step 2, Rent (optional, with Skip):**
+  - "Do you pay rent?" with two `ChoiceCard`s: "Yes" or "No rent" (family, hostel or free).
+  - If Yes:
+    - Amount chips (350/450/600) and a field.
+    - A `DayStrip` of 48 pt day circles, centred near the likely day.
+    - A note: "Bills like your phone plan can go in later, in Budgets."
+- **"You're set":**
+  - Bud's yay face hops once.
+  - A receipt prints line by line: budget this month, rent on the 28th (−RM 450), days left (16).
+  - Then "Safe to spend today" counts up to the number in highlighter: RM 59.37, or RM 87.50 with no rent.
+  - The number uses the same floor-to-the-sen maths as `safeToSpend`. Rent that falls due after this period shows "next month" and isn't subtracted.
+  - "Go to Home". Hourly rate and bills wait for Settings or Home cards.
+- **Settings → Budget and rent:** two rows that open the same two steps as sheets, replacing the five-field page.
+- **New components:**
+  - `QuickPicks`: 48 pt chips, role radio.
+  - `DayStrip`: horizontal radiogroup, label "Rent due on the 28th".
+  - `ChoiceCard`: 64 pt or taller, role radio.
+  - `StepHeader`.
+  - Plus the existing `AmountPad`, `ReceiptCard` and `Bud`.
+- **Motion:**
+  - Steps slide 24 pt with a fade (250 ms) and the progress segment fills.
+  - Chip and key taps tick the amount 4 pt (150 ms), with a light haptic.
+  - The rent fields expand with a layout spring.
+  - Receipt lines print 120 ms apart and the total counts up in 800 ms.
+  - Reduce Motion turns all of these into cuts and final values.
+- **Open questions:**
+  - Should there be zero onboarding questions (ask on Home instead)? This concept keeps two, because Home without a number misses the point.
+  - Month or week as the default period?
+  - Keep the sample receipt on Welcome?
 
 ### 4.1 Navigation (all screens)
 
