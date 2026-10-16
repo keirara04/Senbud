@@ -467,6 +467,30 @@ td:first-child { font-weight: 650; white-space: nowrap; }
 .note b { color: var(--text); font-weight: 650; }
 .note code { font: 13px var(--mono); color: var(--accent); }
 
+/* ---------- looping demo: the three ways to add (6 s, in step) ---------- */
+.way-demo.snap { position: relative; }
+.typed .tx { display: inline-block; overflow: hidden; white-space: nowrap; vertical-align: bottom; max-width: 24ch; }
+@keyframes scanline { 0% { top: 0; opacity: 1; } 40% { top: 100%; opacity: 1; } 45%, 100% { top: 100%; opacity: 0; } }
+@keyframes rowin1 { 0%, 14% { clip-path: inset(0 0 100% 0); } 20%, 90% { clip-path: inset(0); } 96%, 100% { clip-path: inset(0 0 100% 0); } }
+@keyframes rowin2 { 0%, 30% { clip-path: inset(0 0 100% 0); } 36%, 90% { clip-path: inset(0); } 96%, 100% { clip-path: inset(0 0 100% 0); } }
+@keyframes typeit { 0% { width: 0; } 45%, 82% { width: 24ch; } 95%, 100% { width: 0; } }
+@keyframes printres { 0%, 50% { clip-path: inset(0 100% 0 0); } 58%, 82% { clip-path: inset(0); } 88%, 100% { clip-path: inset(0 100% 0 0); } }
+@keyframes caretblink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes tick { 0%, 10% { opacity: .25; transform: translateY(6px); } 22%, 90% { opacity: 1; transform: none; } 100% { opacity: .25; } }
+@keyframes stamp { 0%, 45% { transform: scale(0) rotate(-12deg); opacity: 0; } 52% { transform: scale(1.35) rotate(-6deg); opacity: 1; } 58%, 88% { transform: scale(1) rotate(-6deg); opacity: 1; } 96%, 100% { transform: scale(0); opacity: 0; } }
+.tap .saved { display: inline-block; background: #c4efdd; color: #155a44; padding: 0 6px; border-radius: 4px; font-weight: 700; }
+@media (prefers-reduced-motion: no-preference) {
+  .way-demo.snap::after { content: ""; position: absolute; left: -6px; right: -6px; height: 2px; background: #1f3fd8; box-shadow: 0 0 10px 2px rgba(31,63,216,.45); animation: scanline 6s var(--ease) infinite; }
+  .snap .r1 { animation: rowin1 6s steps(4, end) infinite; }
+  .snap .r2 { animation: rowin2 6s steps(4, end) infinite; }
+  .typed .tx { animation: typeit 6s steps(24) infinite; }
+  .typed .caret { animation: caretblink 1s steps(1) infinite; }
+  .way-demo .res { animation: printres 6s steps(6, end) infinite; }
+  .tap .amt { display: inline-block; animation: tick 6s var(--ease) infinite; }
+  .tap .saved { animation: stamp 6s var(--ease) infinite; }
+  .way:hover *, .way:hover .way-demo::after { animation-play-state: paused !important; }
+}
+
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -568,7 +592,7 @@ td:first-child { font-weight: 650; white-space: nowrap; }
         <svg class="ic way-ic"><use href="#i-camera"/></svg>
         <h3>Photo of the receipt</h3>
         <p>Senbud reads the shop, items and prices. You check them before anything is saved.</p>
-        <div class="mono way-demo"><div class="rc-row"><span>Corner Deli</span><span class="leader"></span><span>$8.40</span></div><div class="rc-row"><span>Iced coffee</span><span class="leader"></span><span>$4.25</span></div></div>
+        <div class="mono way-demo snap"><div class="rc-row r1"><span>Corner Deli</span><span class="leader"></span><span>$8.40</span></div><div class="rc-row r2"><span>Iced coffee</span><span class="leader"></span><span>$4.25</span></div></div>
         <span class="tag">Pro</span>
       </article>
       <article class="receipt way">
@@ -576,7 +600,7 @@ td:first-child { font-weight: 650; white-space: nowrap; }
         <svg class="ic way-ic"><use href="#i-chat"/></svg>
         <h3>Like a text to a friend</h3>
         <p>One line can hold a whole day. Commas split it, and Senbud picks the category.</p>
-        <div class="mono way-demo"><div class="typed">lunch 12, uber 8, boba 6<span class="caret"></span></div><div class="rc-row"><span>3 items added</span><span class="leader"></span><span>$26.00</span></div></div>
+        <div class="mono way-demo"><div class="typed"><span class="tx">lunch 12, uber 8, boba 6</span><span class="caret"></span></div><div class="rc-row res"><span>3 items added</span><span class="leader"></span><span>$26.00</span></div></div>
         <span class="tag free">Free</span>
       </article>
       <article class="receipt way">
@@ -584,7 +608,7 @@ td:first-child { font-weight: 650; white-space: nowrap; }
         <svg class="ic way-ic"><use href="#i-pen"/></svg>
         <h3>Amount, category, done</h3>
         <p>Two taps, no AI involved, and it works offline in a lecture hall basement.</p>
-        <div class="mono way-demo"><div class="rc-row"><span>Groceries</span><span class="leader"></span><span>$23.10</span></div><div class="rc-row"><span>Saved</span><span class="leader"></span><span>Today</span></div></div>
+        <div class="mono way-demo tap"><div class="rc-row"><span>Groceries</span><span class="leader"></span><span class="amt">$23.10</span></div><div class="rc-row"><span>Saved</span><span class="leader"></span><span class="saved">Today</span></div></div>
         <span class="tag free">Free</span>
       </article>
     </div>
@@ -811,6 +835,7 @@ td:first-child { font-weight: 650; white-space: nowrap; }
       <div class="note"><h3>Animation</h3><ul>
         <li><b>One easing everywhere:</b> <code>cubic-bezier(.22,.68,.14,1)</code>, the app’s highlighter curve from <code>tokens.ts</code>.</li>
         <li><b>On load, once:</b> highlighter swipes under “safe to spend” (0.9 s), the phone rises 40 px (0.9 s), then Bud’s slip prints out line by line (1.1 s, stepped like a thermal printer) and the number counts up to $19.18.</li>
+        <li><b>Looping demo:</b> in “Logging spending takes two seconds” the three receipts act out their method every 6 s, in step. Snap: a scan line reads the receipt and its lines print. Type: “lunch 12, uber 8, boba 6” types out, “3 items added · $26.00” prints, then it erases. Tap: the amount ticks in and “Saved” stamps. Hovering a card pauses its loop.</li>
         <li><b>Ambient, slow:</b> Bud bobs every 5 s and blinks every 5.5 s; the treat jar’s surface ripples. Nothing else moves on its own.</li>
         <li><b>On hover:</b> waitlist buttons lift 2 px with a highlighter shine; cards lift 4 px; app phones tilt 1° toward you.</li>
         <li><b>Pricing:</b> the Yearly/Monthly switch swaps the price in place.</li>
