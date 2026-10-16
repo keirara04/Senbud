@@ -319,7 +319,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
   - **Look:** `Segmented` Light / Dark / System. This closes the open item in section 7.
   - **Your data:** "Export spending (CSV)", "Back up everything".
   - **Senbud Pro:**
-    - A card with one line of what you get and `primary` "See plans" (the RevenueCat paywall).
+    - A card with one line of what you get and `primary` "See plans", which opens the paywall in `mobile/src/app/pro.tsx` (built on `claude/senbud-pro`; not redesigned here). Card copy follows the paywall: "Senbud Pro does the typing for you: snap receipts, unlimited assistant, subscription reminders."
     - A "Restore purchases" `TextButton`.
     - Pro members see "Senbud Pro · Active" and "Manage".
   - Then `danger` "Erase all data" with "Privacy · Terms" under it.
@@ -366,7 +366,7 @@ These are additions to `ui.tsx` for the screens above. Each takes colours from `
 | `StoryPager` | `pages`, `onClose` | Full-bleed `panel` pages with segment bars. Tap the halves to move, swipe down to close, no autoplay, cuts under Reduce Motion. Each page is one accessibility element read as a sentence. |
 | `BarChart` | `data: {category, share}[]` (≤ 6) | Horizontal, sorted, with the % as text on every bar. Fill is the category **ink** on white or a receipt, and the category **tint** on a dark `surface`. |
 | `ReceiptCard` | `children` | White in both schemes with zig-zag torn edges (the web's `.receipt`), via `react-native-svg`. The share image is captured with `react-native-view-shot` and sent to the native share sheet. |
-| `ProLock` | `onPress` | Grey `Other`-style chip with a lock and "Pro" next to a locked option. Opens the paywall. It never hides the option. |
+| `ProLock` | `onPress` | Grey `Other`-style chip with a lock and "Pro" next to a locked option. Opens the paywall (`pro.tsx`). It never hides the option. |
 | `ChatBubble` | `from: 'me' \| 'senbud'` | Yours: `panel` fill, `onPanel` text, right-aligned (cobalt in both schemes; `accent` would turn every bubble yellow in dark mode). Senbud's: `bg` fill, left-aligned. Inline actions are `TextButton`s; confirmations are a `Button` pair under the bubble. |
 
 **Contrast added by these components** (add to 2.2 when built):
@@ -392,6 +392,7 @@ These are additions to `ui.tsx` for the screens above. Each takes colours from `
 6. **What does a chat question send?** Only the proposed summary, or more? This decides the privacy copy and the store data forms.
 7. **Nudges inside their cards?** Should rent and pace nudges live inside their own cards on Home (4.2)?
 8. **Share image link:** does the share image get a URL or handle? The domain isn't settled (spec 11).
+9. **Are by-item splits and full Wrapped still Pro?** Spec 8 says yes, and the concepts lock them. The paywall the user chose lists only receipts, the unlimited assistant and subscription reminders.
 
 ## 5. Voice
 
