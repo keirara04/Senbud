@@ -1,0 +1,101 @@
+// The money brain: budget periods, bills, safe to spend today, category budgets and the treat jar.
+import { addDays, daysBetween, type IsoDate, nextDueDate, prevDueDate, weekday } from "./dates";
+import type { Category } from "./index";
+import { subscriptionsDue } from "./subscriptions";
+import type { Bill, BudgetPeriod, Subscription, Transaction, Treat } from "./types";
+
+// [start, nextStart): the period that contains `today`.
+export type Range = { start: IsoDate; nextStart: IsoDate };
+
+export function periodRange(period: BudgetPeriod, today: IsoDate): Range {
+  if (period.kind === "until") return { start: period.start, nextStart: period.payday };
+  if (period.kind === "week") {
+    const start = addDays(today, -((weekday(today) - period.startWeekday + 7) % 7));
+    return { start, nextStart: addDays(start, 7) };
+  }
+  const start = prevDueDate(period.startDay, today);
+  return { start, nextStart: nextDueDate(period.startDay, addDays(start, 1)) };
+}
+
+export const inRange = (date: IsoDate, { start, nextStart }: Range) => date >= start && date < nextStart;
+
+export const spentIn = (txns: Transaction[], range: Range) =>
+  txns.reduce((sum, t) => (inRange(t.date, range) ? sum + t.cents : sum), 0);
+
+// Next unpaid due date of a monthly bill, on or after today.
+export function billDue(bill: Bill, today: IsoDate): IsoDate {
+  const from = bill.paidThrough && bill.paidThrough >= today ? addDays(bill.paidThrough, 1) : today;
+  return nextDueDate(bill.dueDay, from);
+}
+
+// Rent countdown: "Rent $650 in 6 days". Due today = 0 days.
+export function billCountdown(bill: Bill, today: IsoDate) {
+  const due = billDue(bill, today);
+  return { due, days: daysBetween(today, due) };
+}
+
+// Unpaid bill occurrences from today up to `before` (exclusive). A long "until" period can hold two rents.
+export function billsDue(bills: Bill[], today: IsoDate, before: IsoDate): number {
+  let sum = 0;
+  for (const bill of bills) {
+    for (let d = billDue(bill, today); d < before; d = nextDueDate(bill.dueDay, addDays(d, 1))) sum += bill.cents;
+  }
+  return sum;
+}
+
+// safe_today = (budget_left − upcoming fixed bills in period) ÷ days left in period, today included.
+// perDay is floored and never negative; `covered` says whether the bills still fit in what's left.
+export function safeToSpend(opts: {
+  limit: number;
+  period: BudgetPeriod;
+  transactions: Transaction[];
+  bills: Bill[];
+  subscriptions?: Subscription[];
+  today: IsoDate;
+}) {
+  const { limit, period, transactions, bills, subscriptions = [], today } = opts;
+  const range = periodRange(period, today);
+  const spent = spentIn(transactions, range);
+  const upcoming =
+    billsDue(bills, today, range.nextStart) + subscriptionsDue(subscriptions, today, range.nextStart);
+  const left = limit - spent - upcoming;
+  const daysLeft = Math.max(1, daysBetween(today, range.nextStart));
+  return { ...range, spent, upcoming, left, daysLeft, perDay: Math.max(0, Math.floor(left / daysLeft)), covered: left >= 0 };
+}
+
+export type Status = "ok" | "close" | "over";
+
+// "close" from 90% used (spec 4.2); exactly at the limit is still close, not over.
+export function budgetStatus(spent: number, limit: number): Status {
+  if (spent > limit) return "over";
+  return limit > 0 && spent * 10 >= limit * 9 ? "close" : "ok";
+}
+
+// Spending runs ahead of time elapsed: "$70 of $100 gone and it's only Wednesday."
+export function aheadOfPace(spent: number, limit: number, range: Range, today: IsoDate) {
+  const total = daysBetween(range.start, range.nextStart);
+  const elapsed = Math.min(total, daysBetween(range.start, today) + 1);
+  return spent * total > limit * elapsed;
+}
+
+export function categoryBudgets(txns: Transaction[], limits: Partial<Record<Category, number>>, range: Range) {
+  return (Object.entries(limits) as [Category, number][]).map(([category, limit]) => {
+    const spent = spentIn(
+      txns.filter((t) => t.category === category),
+      range,
+    );
+    return { category, spent, limit, status: budgetStatus(spent, limit) };
+  });
+}
+
+// Treat jar (spec 4.8): leftover budget at the end of a period can roll in.
+export const leftover = (limit: number, spent: number) => Math.max(0, limit - spent);
+
+// "Treat jar: $23 = 4 Big Macs".
+export const treatsInJar = (balance: number, price: number) => (price > 0 ? Math.floor(Math.max(0, balance) / price) : 0);
+
+// Treat nudge: the treat fits today's safe to spend, rent is covered, and it's been long enough.
+export function treatNudge(treat: Treat, safe: { perDay: number; covered: boolean }, today: IsoDate) {
+  const waited = !treat.lastDate || daysBetween(treat.lastDate, today) >= treat.minDaysBetween;
+  return safe.covered && treat.lastCents <= safe.perDay && waited;
+}

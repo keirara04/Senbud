@@ -10,7 +10,7 @@ Researched 16 October 2026. Sources are official docs, release pages and store p
 The choice is sound. Expo SDK 58 is current and mature enough for this app, and it happens to pin the same React version as the website, which makes a shared core straightforward. The risky parts are not the framework. They are:
 
 1. **Payments.** Inside the iOS and Android apps, Pro has to be sold through Apple's and Google's in-app purchases. A Polar licence key that unlocks Pro in the iOS app breaks App Store rule 3.1.1.
-2. **Styling.** The Tailwind library for React Native (NativeWind) is only stable on Tailwind 3. Its Tailwind 4 version is still a release candidate.
+2. **Styling.** The Tailwind library for React Native (NativeWind) is only stable on Tailwind 3. Its Tailwind 4 version is still a release candidate. **Phase 0 result:** v5 rc works on SDK 58 but only with a repo-wide `lightningcss` pin, so start with `StyleSheet` plus shared tokens (see [Phase 0 results](#phase-0-results-16-october-2026)).
 3. **Google Play's new-developer gate.** A new personal account must run a closed test with at least **12 testers for 14 days in a row** before it can publish. Plan for this early.
 4. **Brand-new SDK.** SDK 58 shipped on 15 October 2026. Some libraries may lag for a few weeks.
 
@@ -52,18 +52,18 @@ Senbud/
 - **npm is fine.** Expo's monorepo guide supports npm, Yarn, pnpm and Bun, and recommends none in particular. Keep npm.
 - **Metro configures itself for monorepos** since SDK 52. Don't add `watchFolders` or other resolver settings by hand.
 - **Avoid two copies of React.** `web/` and Expo both use React 19.3 today. Pin `react` and `react-dom` with a root `overrides` field, and check with `npm why react`. If web upgrades React before Expo does, this is the first thing to break.
-- **Using the core without a build step:** point `packages/core/package.json` `main` (and `exports`) at `src/index.ts`. Metro compiles TypeScript from workspace packages. On the web side, Next.js probably needs `transpilePackages: ["@senbud/core"]`. Neither half is documented for TypeScript-source packages, so both are **UNVERIFIED** and are the first thing to prove in the spike.
-- **Next.js and the root lockfile.** Moving to workspaces creates a root `package-lock.json`. Set `turbopack.root` in `web/next.config.ts` so Next picks the right root, and change the planned `web/` Docker build to copy `packages/core` too.
+- **Using the core without a build step:** point `packages/core/package.json` `main` (and `exports`) at `src/index.ts`. Metro compiles TypeScript from workspace packages. On the web side, Next.js probably needs `transpilePackages: ["@senbud/core"]`. **Proven in Phase 0:** Metro bundles the TypeScript source with no extra config, and Next 16.4 needs only `transpilePackages: ["@senbud/core"]`.
+- **Next.js and the root lockfile.** Moving to workspaces creates a root `package-lock.json`. In Phase 0 Next showed no multiple-lockfile warning, so `turbopack.root` wasn't needed. The planned `web/` Docker build still has to copy `packages/core` and the root lockfile.
 
 ### What moves from `web/lib/demo.ts` into the core, and what has to change
 
 | Function | Moves as-is? | Change needed |
 |---|---|---|
-| `parseSpending`, `categorize` | Mostly | **Hermes risk:** the parser uses a regex lookbehind `(?<!…)` and Unicode classes `\p{L}`. Whether Hermes, React Native's JS engine, supports both is **UNVERIFIED**. Either rewrite these two spots without them (small) or prove them in the spike with a test that runs in the app. Category words need an extensible list for user-defined categories. |
+| `parseSpending`, `categorize` | Mostly | **Hermes risk:** the parser uses a regex lookbehind `(?<!…)` and Unicode classes `\p{L}`. **Phase 0: both work in Hermes** (RN 0.88), and parser output matches Node exactly, so no rewrite is needed. Category words need an extensible list for user-defined categories. |
 | `afford`, `hoursOfWork` | Yes | None |
 | `splitBill` | No | People are hard-coded as types (`"You" \| "Jordan" \| "Sarah"`). Make people a generic list of IDs. |
-| `money` | No | Hard-codes USD and `en-US`. Take currency and locale as arguments. Hermes `Intl` currency formatting is **UNVERIFIED** on both platforms; test it in the spike. |
-| Safe-to-spend, rent countdown, treat jar, subscription detection | Not written yet | Write them in the core, with tests, before any app screens. They're the product's brain. |
+| `money` | No | Hard-codes USD and `en-US`. Take currency and locale as arguments. **Phase 0:** done. Hermes `Intl` matches Node for `en-US`, `en-MY` and `de-DE`, but `ms-MY` differs on iOS (`RM12` vs Node's `RM 12`). Don't snapshot formatted strings across platforms. |
+| Safe-to-spend, rent countdown, treat jar, subscription detection | Written in Phase 1 | Done in the core with tests (plus category budgets and IOUs). See the notes under Phase 1 in section 5. |
 
 `web/lib/game/*` (Budget Dungeon) can stay in `web/` for now.
 
@@ -73,7 +73,7 @@ Senbud/
 
 | Need | Choice | Status | Notes and risks |
 |---|---|---|---|
-| **Styling** | **Decide in the spike:** NativeWind v5 (Tailwind 4, release candidate) **or** shared design tokens plus `StyleSheet` / Unistyles 3 | NativeWind stable is 4.2.7 but **Tailwind 3 only**. v5 is `5.0.0-rc.0` and needs Tailwind 4.1, the New Architecture and Reanimated 4. Unistyles is 3.5.3 (New Architecture only is inferred, **UNVERIFIED**). | Whichever wins, export colours and spacing from `@senbud/core/tokens` so the web CSS variables and the app share one palette. Don't bet launch on a release candidate without trying it on SDK 58 first. |
+| **Styling** | **Decided in Phase 0: shared tokens (`@senbud/core/tokens`) plus `StyleSheet`.** Revisit NativeWind v5 when it's stable and lists SDK 58. | NativeWind stable is 4.2.7 but **Tailwind 3 only**. v5 is `5.0.0-rc.0` and needs Tailwind 4.1, the New Architecture and Reanimated 4. Unistyles is 3.5.3 (New Architecture only is inferred, **UNVERIFIED**). | Whichever wins, export colours and spacing from `@senbud/core/tokens` so the web CSS variables and the app share one palette. Don't bet launch on a release candidate without trying it on SDK 58 first. |
 | **Animation** | **Reanimated 4.7** + `react-native-worklets` 0.13 | Current; 4.7 targets RN 0.86–0.88 | **Skip Moti.** Its last release was roughly 9 months ago and Reanimated 4 support is unclear. |
 | **Gestures** | **react-native-gesture-handler v3** | 3.3.0. v2 stops at RN 0.87, so **RN 0.88 needs v3** | Needed for swipe-to-undo and the bill-split taps |
 | **Local data** | **expo-sqlite** | Included in SDK 58 and works in Expo Go. Change listener available. | Optional encryption (SQLCipher) needs a development build |
@@ -146,11 +146,110 @@ Senbud/
 
 **Done when:** one screen in the app uses `@senbud/core` to parse "lunch 12, uber 8", web still builds, and the styling decision is made.
 
+### Phase 0 results (16 October 2026)
+Branch `claude/nifty-kalam-3076ea`.
+
+**Status:** done. Phase 0 ran on both an iOS simulator and an Android emulator.
+
+**What exists now**
+- **Workspaces.** The root `package.json` sets workspaces `["web", "mobile", "packages/*"]` and overrides `react`/`react-dom` to 19.3.0. There is one root `package-lock.json`, and `web/package-lock.json` is deleted. After merging, every checkout needs a fresh `npm install` at the repo root, because `web/node_modules` is no longer used.
+- **`@senbud/core`** (`packages/core`).
+  - It contains `parseSpending`, `categorize`, `afford`, `hoursOfWork`, `money(value, currency, locale)` and `splitBill(items, mode, people, payer)`.
+  - Leftover cents in `splitBill` go to `payer`.
+  - `@senbud/core/tokens` holds the brand colours and spacing.
+  - It has 13 Vitest tests.
+- **`web/lib/demo.ts`** is now a thin wrapper. It pins USD/`en-US` and the You/Jordan/Sarah cast, so no component changed. `web` passes `next build`, lint and 44 tests.
+- **`mobile/`** was created with `create-expo-app --template default@sdk-58`.
+  - Without that flag, `create-expo-app@latest` scaffolded **SDK 57**, so pass the template.
+  - Template screens are removed.
+  - One Stack screen parses "lunch 12, uber 8" with `@senbud/core` and shows Lunch · Food $12, Uber · Transport $8, Total $20.
+  - It also renders a temporary engine probe, the JSON that the Hermes table below comes from. Delete it in Phase 1.
+
+**Hermes vs Node** (Node 24.13; Hermes from RN 0.88 in dev builds on an iOS 27 simulator and an Android 17 (API 37) emulator)
+
+| Check | Node | Hermes iOS | Hermes Android |
+|---|---|---|---|
+| Lookbehind `(?<=a)b` | ✅ | ✅ | ✅ |
+| `\p{L}` with `u` flag | ✅ | ✅ | ✅ |
+| `Array.prototype.at` | ✅ | ✅ | ✅ |
+| `parseSpending("lunch 12, grab 8 and $4.50 kopi; 1,200 rent, café 3, -5 lunch")` | 5 items | **identical** | **identical** |
+| `money` `USD`/`en-US`: 12, 4.5, 1200, 11.999… | `$12` `$4.50` `$1,200` `$12` | identical | identical |
+| `money` `MYR`/`en-MY` | `RM 12` (NBSP) | identical | identical |
+| `money` `EUR`/`de-DE` | `12 €`, `1.200 €` (NBSP) | identical | identical |
+| `money` `MYR`/`ms-MY` | `RM 12` (NBSP) | **`RM12` (no space)** | `RM 12` (NBSP), same as Node |
+
+**Conclusions**
+- **The parser needs no rewrite.** Lookbehind and `\p{L}` work in Hermes, and the output matches Node byte for byte.
+- **`Intl` works, but locale data differs between engines.** iOS uses Apple's CLDR, Android uses its own ICU, and Node uses its bundled ICU, so `ms-MY` already differs on iOS.
+  - Never compare formatted money strings across platforms in tests.
+  - Keep `money` tests on `en-US` in Node.
+  - If exact output ever matters (for example, CSV export), format from `formatToParts` or from cents yourself.
+- **`money` assumes two-decimal currencies.** It forces 2 fraction digits for non-whole amounts, so `money(4.5, "JPY", "ja-JP")` prints `￥4.50`. That's wrong for currencies with no minor unit, such as JPY and KRW. Fix it in Phase 1 if the app supports them: let `Intl`'s defaults decide the digits, or read them from `resolvedOptions()`.
+- The regex compiler (`hermesc`) also accepts lookbehind and `\p{L}`, and rejects an invalid `\p{…}` name, so a regex Hermes can't handle fails the build rather than slipping through to runtime.
+
+**Styling: NativeWind v5 rc vs shared tokens plus StyleSheet**
+
+The NativeWind trial is kept on branch `claude/nativewind-v5-trial` (not for merge).
+- **Installs on SDK 58, but untested by NativeWind.** v5 rc was installed with `nativewind@5.0.0-rc.0`, `react-native-css@3.1.0-rc.0`, Tailwind 4.1.12, `@tailwindcss/postcss` and `postcss`. Its install page lists **SDK 57 / RN 0.86** as the tested target, not 58.
+- **First bundle failed** with `failed to deserialize; expected an object-like struct named Specifier`. Cause: npm hoisting gave `react-native-css` the root `lightningcss@1.32.0`, which is web's Tailwind 4.3 version, instead of 1.30.1.
+- **The fix is repo-wide.** It needs a root `overrides.lightningcss = 1.30.1`, and npm only honoured it after the `lightningcss` entries were deleted from the lockfile.
+- **Web was unaffected by the pin.** Web's Tailwind keeps a nested 1.32.0, and `next build` still passed.
+- **Version split.** `nativewind` itself resolved web's `tailwindcss@4.3.3`, not the pinned 4.1.12. It worked, but it's an untested combination.
+- **Once pinned, it works on iOS.** It handles custom `@theme` colours, `rounded-2xl`, `flex-row` and arbitrary classes, and Fast Refresh picks up both class edits and new `@theme` variables.
+- **It adds about 600 modules to the bundle** (1,276 → 1,879).
+- **Not tried on Android.**
+- **Decision: shared tokens plus `StyleSheet` for Phase 1.** Reasons:
+  - No release candidate on the critical path.
+  - No repo-wide pin that any `npm install` or web Tailwind bump can silently undo.
+  - No untested Tailwind version mix.
+  - Nothing extra in the bundle.
+- **What NativeWind would buy** is class-name parity with web. That's small, because the app's screens are new, not ported. The shared palette already lives in `@senbud/core/tokens`.
+- **Revisit** when NativeWind v5 is stable and its docs list the current SDK. The trial branch shows the exact setup.
+
+**Dev builds**
+
+| Platform | Result |
+|---|---|
+| iOS simulator (iPhone 17, iOS 27, Xcode 27) | ✅ `npx expo run:ios` built, installed and loaded the bundle from Metro. CocoaPods first run is slow because it downloads React Native core prebuilts. After install, `expo run:ios` exited on `osascript … "System Events"` (no Automation permission for the terminal) and took Metro down with it. Workaround: run `npx expo start --dev-client` separately and open `exp+senbud://expo-development-client/?url=http://localhost:8090`. |
+| Android | ✅ `npx expo prebuild -p android` + `./gradlew assembleDebug -PreactNativeArchitectures=arm64-v8a` → `BUILD SUCCESSFUL` (2 min 15 s incremental; a full four-ABI build is much slower, so pass the architecture flag for local builds). Gradle auto-installed Build-Tools 37 on first run. Built from `/Volumes/Ledgerly/...`, so the space in `~/VS CODE/` was never on the build path and wasn't tested. Emulator run: ✅ the APK installs on an API 37 `google_apis` arm64 emulator, loads from Metro over `adb reverse tcp:8090 tcp:8090`, and shows the screen. On first launch the dev client asks for the **Nearby devices** permission, used for LAN discovery of Metro. It isn't needed with `adb reverse`, so deny it. The machine had no system image installed; the existing AVDs point at an `android-37.1` beta image that Google's repository no longer serves. |
+
+**Other notes**
+- **`expo-doctor` false positive:** it reports `ios.icon` `./assets/expo.icon` as missing. It's an Icon Composer folder from the SDK 58 template. Leave it.
+- **The bundle id `app.senbud.mobile` is a placeholder.** Pick the real one before the first EAS build.
+- **The repo now lives on the external drive "keira".** It's in an APFS sparse image at `/Volumes/keira/Ledgerly.sparsebundle`, mounted at `/Volumes/Ledgerly`, and `~/VS CODE/Ledgerly` is a symlink to it.
+  - The drive itself is exFAT, which can't hold the repo directly: no symlinks for npm workspaces, and no executable bits for `gradlew` or `hermesc`.
+  - If the image isn't mounted, run `hdiutil attach /Volumes/keira/Ledgerly.sparsebundle`.
+
 ### Phase 1: the free app, no network needed
 - **Screens:** quick add (type), manual add, receipt list, safe-to-spend dial, rent countdown, budgets, treat jar, bill split with IOUs, CSV export, "Erase all data".
 - **Storage:** expo-sqlite (with Drizzle, or plain SQL with numbered migrations).
 - **Local nudges:** expo-notifications, rescheduled on every app open because of the iOS 64-notification cap.
 - **Logic:** all money maths in `@senbud/core`, tested.
+
+**Core logic choices where the spec is ambiguous** (`packages/core/src/budget.ts`, `dates.ts`, `subscriptions.ts`, `iou.ts`):
+- **Units.** New functions take integer cents and `"YYYY-MM-DD"` date strings, done in UTC. The caller passes `today` as the device's local date. The older float helpers (`afford`, `hoursOfWork`, `money`) are unchanged because web uses them.
+- **Budget period.** The spec has a single `startDay` field. The core uses a separate shape for each kind instead:
+  - week: `startWeekday` (0 = Sunday)
+  - month: `startDay` (1–31, clamped in short months)
+  - until: `start` and `payday`
+- **Period boundaries.** A period runs from `start` up to, but not including, the next start (or payday). Days left counts today, so it is 1 on the last day. A period whose payday has passed also counts as 1 day left.
+- **Safe to spend.** It is rounded down to the cent and never below 0. `covered` means `limit − spent − upcoming bills ≥ 0`, and the rent card and treat nudge both use it.
+- **Bills that count as upcoming.**
+  - A bill due today counts. One due on the next period's first day doesn't.
+  - Confirmed subscriptions that renew in the period count too.
+  - To stop a paid bill being counted twice (once in spending, once as upcoming), a bill has an optional `paidThrough` date. The app sets it when rent is paid.
+- **Month-end due days.** A bill due on the 31st falls due on Feb 28/29, Apr 30, and so on. Due today means 0 days left.
+- **Category status.**
+  - "close" starts at 90% used, and exactly at the limit is still "close".
+  - "over" means more than the limit.
+  - With a limit of 0, any spending is "over".
+  - The pace warning is a separate check (`aheadOfPace`).
+- **Treat jar.** Only end-of-period underspend rolls in (`leftover`). The jar has no rounding up of purchases, because the spec doesn't mention it. Learning treats from repeat purchases isn't built yet.
+- **Subscription cadence windows (in days).** Weekly is 6–8, monthly 27–33 and yearly 358–372. "Similar amount" means within 10% of the latest charge.
+  - Every charge from that merchant must fit the pattern, so one odd purchase at the same place hides the subscription.
+  - Merchants match on lower-cased, trimmed labels.
+  - Two charges are enough, as the spec says.
+- **IOUs.** Only debts involving the user are stored, with direction `theyOweMe` or `iOweThem`. If a friend paid, the user owes that friend their own share, and what others owe that friend isn't tracked. "Settle up" marks every unpaid IOU with that friend as paid. Stale means unpaid for more than 7 days.
 
 ### Phase 2: AI and Pro
 - **Receipt snapping:** image-picker, then resize, then Laravel `/v1/agent`, then OpenRouter. Show the consent screen first, keep no image retention, and add rate limits.
@@ -171,7 +270,7 @@ Senbud/
 - **The AI proxy doesn't exist yet.** Phase 2 depends on Laravel's `/v1/agent` endpoint (OpenRouter proxy, no image retention, rate limits), which hasn't been built.
 
 ## 7. Open decisions for you
-1. **Styling:** NativeWind v5 (release candidate, closest to your web Tailwind) or shared tokens plus StyleSheet/Unistyles (no release-candidate risk)? Decide after the spike.
+1. **Styling:** ~~NativeWind v5 or shared tokens plus StyleSheet?~~ Phase 0 recommends shared tokens plus `StyleSheet` (see Phase 0 results). Overrule it if Tailwind class parity with web matters more to you than avoiding the release candidate.
 2. **Seller name:** publish as an individual, with your legal name shown on the App Store, or register a company first?
 3. **Web Pro:** keep it separate from app Pro at launch (simplest), or build a shared entitlement later?
 4. **Age policy:** get advice on under-18 users and subscription consent before launch.
