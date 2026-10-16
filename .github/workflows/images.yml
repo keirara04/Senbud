@@ -10,6 +10,9 @@
 #   DOKPLOY_WEBHOOK_API, DOKPLOY_WEBHOOK_WEB, DOKPLOY_WEBHOOK_APP
 # A missing secret skips that deploy; the image is still pushed.
 #
+# Only images whose files changed in the push are built. If a run fails before deploying, the next
+# push won't pick its changes up: run this workflow by hand (Actions -> Run workflow, all three).
+#
 # Nothing builds or deploys unless the tests pass: API (phpunit), core and web (vitest), and the
 # mobile and web type checks. Pull requests run the tests only.
 name: Build and deploy images
@@ -81,15 +84,19 @@ jobs:
         id: filter
         with:
           filters: |
+            # A workflow change rebuilds everything: it may be fixing a run that failed before deploying.
             api:
               - 'api/**'
+              - '.github/workflows/images.yml'
             web:
               - 'web/**'
+              - '.github/workflows/images.yml'
               - 'packages/core/**'
               - 'package.json'
               - 'package-lock.json'
             app:
               - 'mobile/**'
+              - '.github/workflows/images.yml'
               - 'packages/core/**'
               - 'package.json'
               - 'package-lock.json'
