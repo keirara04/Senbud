@@ -60,6 +60,8 @@ export function Footer() {
                   ["FAQ", "/#faq"],
                   ["Compare apps", "/alternatives"],
                   ["Get early access", "/#waitlist"],
+                  ["Privacy", "/privacy"],
+                  ["Terms", "/terms"],
                 ].map(([label, href], i) => (
                   <li key={href}>
                     <Link href={href} className="group flex min-h-11 items-center gap-2 hover:text-[#1f3fd8]">
