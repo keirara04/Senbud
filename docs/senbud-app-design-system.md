@@ -134,7 +134,7 @@ Dynamic Type and font scaling stay on (React Native's default). Layouts must sur
 | `Progress` | `value` (0–1+), `status` | Fill colour shows the status. **Always paired with words** ("On track", "$10 left…"), so colour is never the only signal. Exposes `progressbar` and a value to screen readers. |
 | `Marker` | children | Highlighter stroke behind a phrase, as on the web's `.marker`. Use once per screen at most. |
 | `UndoBar` | `message`, `onUndo` | Ink bar with a highlighter "Undo". Shows for `motion.undoMs` (5 s) after any reversible write. Announced politely to screen readers. |
-| `useHeaderOptions()` | – | Native stack header that matches the theme: no hairline, accent back button. |
+| `useNavigationTheme()` | – | React Navigation theme built from ours, passed to `ThemeProvider` in `_layout.tsx`. Headers, back buttons and screen backgrounds follow the system scheme live. |
 
 **Building new components:** compose these first. If something new is needed, put it in `ui.tsx`, take colours from `useTheme()`, and add a row to this table.
 

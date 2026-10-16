@@ -18,6 +18,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
+import { DarkTheme, DefaultTheme } from 'expo-router';
 
 export const useTheme = (): Theme => themes[useColorScheme() === 'dark' ? 'dark' : 'light'];
 
@@ -234,15 +235,15 @@ export function UndoBar({ message, onUndo }: { message: string; onUndo: () => vo
   );
 }
 
-// Theme for the native Stack header so it matches the screen behind it.
-export function useHeaderOptions() {
+// React Navigation theme built from ours, so headers, back buttons and screen backgrounds follow the
+// system scheme live (static headerStyle options don't update when the scheme flips).
+export function useNavigationTheme() {
   const t = useTheme();
+  const dark = useColorScheme() === 'dark';
+  const base = dark ? DarkTheme : DefaultTheme;
   return {
-    headerStyle: { backgroundColor: t.bg },
-    headerTintColor: t.accent,
-    headerTitleStyle: { color: t.text },
-    headerShadowVisible: false,
-    contentStyle: { backgroundColor: t.bg },
+    ...base,
+    colors: { ...base.colors, primary: t.accent, background: t.bg, card: t.bg, text: t.text, border: t.line, notification: t.badFill },
   };
 }
 

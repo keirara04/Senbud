@@ -54,6 +54,12 @@ it("rounds float sums before formatting", () => {
   expect(money(1200, "USD", "en-US")).toBe("$1,200");
 });
 
+it("uses the currency's own minor digits", () => {
+  expect(money(33.33, "KRW", "en-US")).toBe("₩33");
+  expect(money(4.5, "JPY", "en-US")).toBe("¥5");
+  expect(money(4.5, "MYR", "en-US")).toMatch(/4\.50$/); // separator is an NBSP
+});
+
 describe("splitBill", () => {
   const people = ["Ana", "Ben", "Cy"] as const;
   const bill = [
