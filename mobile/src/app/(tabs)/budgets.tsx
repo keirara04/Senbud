@@ -80,7 +80,7 @@ export default function Budgets() {
           {rows.map((r) => (
             <StampRow key={r.category} {...r} fmt={fmt} onPress={() => router.push({ pathname: '/limit', params: { category: r.category } })} />
           ))}
-          <TextButton title="Set a category limit" onPress={() => router.push('/limit')} color={palette.cobalt} />
+          {hasLimits && <TextButton title="Set a category limit" onPress={() => router.push('/limit')} color={palette.cobalt} />}
         </ReceiptCard>
       ) : null}
       {!hasLimits && (
