@@ -8,6 +8,7 @@ import { Platform, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ReceiptCard } from '@/art';
+import { today } from '@/db';
 import { useWrapped } from '@/money';
 import { BarChart, Button, MONO, StoryPager, T, useTheme } from '@/ui';
 
@@ -29,7 +30,8 @@ export default function Wrapped() {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const { month } = useLocalSearchParams<{ month: string }>();
-  const r = useWrapped(month);
+  // On web the URL can be opened bare; fall back to this month.
+  const r = useWrapped(month ?? today().slice(0, 7));
   if (!r) return <View style={{ flex: 1, backgroundColor: t.panel }} />;
   const { w, name, fmt, pro, hours, running } = r;
   const pct = (n: number) => `${Math.round(n * 100)}%`;

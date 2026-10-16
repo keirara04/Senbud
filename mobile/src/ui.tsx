@@ -2,7 +2,7 @@
 // Spec: docs/senbud-app-design-system.md.
 import type { Category } from '@senbud/core';
 import { categoryColors, motion, palette, radius, space, type Theme, themes, touch, type } from '@senbud/core/tokens';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useState, useSyncExternalStore } from 'react';
 import {
   Appearance,
   Platform,
@@ -29,7 +29,18 @@ import { DarkTheme, DefaultTheme } from 'expo-router';
 // Receipt type: the thermal-printer look on ReceiptCards.
 export const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
 
-export const useTheme = (): Theme => themes[useColorScheme() === 'dark' ? 'dark' : 'light'];
+// RN-web's Appearance follows the browser only (no setColorScheme), so on web the Settings choice is kept
+// here and wins over the browser unless it is System.
+let webTheme: 'system' | 'light' | 'dark' = 'dark';
+const webThemeListeners = new Set<() => void>();
+const subscribeWebTheme = (cb: () => void) => (webThemeListeners.add(cb), () => void webThemeListeners.delete(cb));
+const useScheme = () => {
+  const system = useColorScheme();
+  const chosen = useSyncExternalStore(subscribeWebTheme, () => webTheme, () => webTheme);
+  return Platform.OS === 'web' && chosen !== 'system' ? chosen : system;
+};
+
+export const useTheme = (): Theme => themes[useScheme() === 'dark' ? 'dark' : 'light'];
 
 type Tone = 'text' | 'textDim' | 'accent' | 'good' | 'warn' | 'bad' | 'onPanel' | 'onPanelDim' | 'highlight';
 
@@ -287,14 +298,14 @@ export function ProLock({ onPress }: { onPress: () => void }) {
   );
 }
 
-// System icons, never emoji: SF Symbols on iOS, Material Symbols on Android. Decorative unless given a label.
+// System icons, never emoji: SF Symbols on iOS, Material Symbols on Android and web. Decorative unless given a label.
 export type IconName = { ios: Extract<SymbolViewProps['name'], string>; android: Exclude<SymbolViewProps['name'], string>['android'] };
 
 export function Icon({ name, size = 24, color, label }: { name: IconName; size?: number; color?: string; label?: string }) {
   const t = useTheme();
   return (
     <SymbolView
-      name={name}
+      name={{ ...name, web: name.android }}
       size={size}
       tintColor={color ?? t.text}
       accessibilityLabel={label}
@@ -463,13 +474,17 @@ export function BarChart({ data, font }: { data: { category: Category; share: nu
 }
 
 // Light / Dark / System from Settings. 'unspecified' hands the choice back to the OS.
-export const applyTheme = (theme: 'system' | 'light' | 'dark') => Appearance.setColorScheme(theme === 'system' ? 'unspecified' : theme);
+export const applyTheme = (theme: 'system' | 'light' | 'dark') => {
+  if (Platform.OS !== 'web') return Appearance.setColorScheme(theme === 'system' ? 'unspecified' : theme);
+  webTheme = theme;
+  webThemeListeners.forEach((l) => l());
+};
 
 // Centre of the tab bar: Bud on a raised cobalt circle (56 pt). Opens the assistant; never switches tabs.
 // In dark mode a periwinkle ring keeps the circle visible (cobalt on night is 2.4:1).
 export function BudTab({ onPress }: { onPress: () => void }) {
   const t = useTheme();
-  const dark = useColorScheme() === 'dark';
+  const dark = useScheme() === 'dark';
   return (
     <Pressable
       onPress={onPress}
@@ -531,7 +546,7 @@ export function UndoBar({ message, onUndo }: { message: string; onUndo: () => vo
       </T>
       {/* The bar is ink in light mode and moon in dark: highlighter reads on ink (15:1) but not on
           moon (1.0:1), so dark mode uses cobalt (6.7:1). */}
-      <TextButton title="Undo" onPress={onUndo} color={useColorScheme() === 'dark' ? palette.cobalt : t.highlight} />
+      <TextButton title="Undo" onPress={onUndo} color={useScheme() === 'dark' ? palette.cobalt : t.highlight} />
     </Animated.View>
   );
 }
@@ -540,7 +555,7 @@ export function UndoBar({ message, onUndo }: { message: string; onUndo: () => vo
 // system scheme live (static headerStyle options don't update when the scheme flips).
 export function useNavigationTheme() {
   const t = useTheme();
-  const dark = useColorScheme() === 'dark';
+  const dark = useScheme() === 'dark';
   const base = dark ? DarkTheme : DefaultTheme;
   return {
     ...base,
