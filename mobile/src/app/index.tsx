@@ -1,56 +1,156 @@
-import { money, parseSpending } from '@senbud/core';
-import { colors, radius, space } from '@senbud/core/tokens';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  aheadOfPace,
+  billCountdown,
+  budgetStatus,
+  money,
+  parseSpending,
+  periodRange,
+  safeToSpend,
+  type Transaction,
+} from '@senbud/core';
+import { Link, Redirect, useFocusEffect } from 'expo-router';
+import { useSQLiteContext } from 'expo-sqlite';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
-const INPUT = 'lunch 12, uber 8';
-const items = parseSpending(INPUT);
-const total = items.reduce((sum, i) => sum + i.amount, 0);
+import { addTransactions, deleteTransactions, listTransactions, loadSetup, type Setup, today, type Txn } from '@/db';
+import { c, ui } from '@/ui';
 
-// Phase 0 spike: engine probes, diffed against Node in docs/senbud-mobile-audit.md (Hermes findings).
-const probe = {
-  engine: 'HermesInternal' in globalThis ? 'hermes' : 'other',
-  lookbehind: /(?<=a)b/.test('ab'),
-  unicodeLetter: /\p{L}/u.test('é'),
-  at: [1, 2].at(-1),
-  parsed: parseSpending('lunch 12, grab 8 and $4.50 kopi; 1,200 rent, café 3, -5 lunch'),
-  money: [12, 4.5, 1200, 11.999999999999998].flatMap((n) =>
-    [['USD', 'en-US'], ['MYR', 'ms-MY'], ['MYR', 'en-MY'], ['EUR', 'de-DE']].map(([c, l]) => money(n, c, l)),
-  ),
-};
-console.log('SENBUD_PROBE ' + JSON.stringify(probe));
+const STATUS_COLOR = { ok: c.mint, close: '#f5c542', over: c.coral };
 
 export default function Home() {
+  const db = useSQLiteContext();
+  const [setup, setSetup] = useState<Setup | null | undefined>(undefined);
+  const [txns, setTxns] = useState<Txn[]>([]);
+  const [text, setText] = useState('');
+  const [undo, setUndo] = useState<{ ids: number[]; summary: string } | null>(null);
+  const undoTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const load = useCallback(async () => {
+    const s = await loadSetup(db);
+    setSetup(s);
+    if (s) setTxns(await listTransactions(db, periodRange(s.budget.period, today()).start));
+  }, [db]);
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
+  useEffect(() => () => clearTimeout(undoTimer.current), []);
+
+  if (setup === undefined) return null;
+  if (setup === null) return <Redirect href="/setup" />;
+
+  const { currency, locale } = setup.profile;
+  const fmt = (cents: number) => money(cents / 100, currency, locale);
+  const day = today();
+  const safe = safeToSpend({
+    limit: setup.budget.cents,
+    period: setup.budget.period,
+    transactions: txns,
+    bills: setup.rent ? [setup.rent] : [],
+    today: day,
+  });
+  const status = budgetStatus(safe.spent, setup.budget.cents);
+  const fast = aheadOfPace(safe.spent, setup.budget.cents, safe, day);
+  const rent = setup.rent && { ...setup.rent, ...billCountdown(setup.rent, day) };
+
+  async function add() {
+    const items = parseSpending(text);
+    if (!items.length) return;
+    const rows: Transaction[] = items.map((i) => ({
+      date: day,
+      cents: Math.round(i.amount * 100),
+      label: i.label,
+      category: i.category,
+      source: 'text',
+    }));
+    const ids = await addTransactions(db, rows);
+    setText('');
+    clearTimeout(undoTimer.current);
+    setUndo({ ids, summary: `Added ${rows.length} · ${fmt(rows.reduce((s, r) => s + r.cents, 0))}` });
+    undoTimer.current = setTimeout(() => setUndo(null), 5000);
+    load();
+  }
+
+  async function undoAdd() {
+    if (!undo) return;
+    clearTimeout(undoTimer.current);
+    await deleteTransactions(db, undo.ids);
+    setUndo(null);
+    load();
+  }
+
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.page}>
-      <Text style={styles.input}>“{INPUT}”</Text>
-      <View style={styles.receipt}>
-        {items.map((i) => (
-          <View key={i.label} style={styles.row}>
-            <Text style={styles.label}>
-              {i.label} · {i.category}
-            </Text>
-            <Text style={styles.amount}>{money(i.amount, 'USD', 'en-US')}</Text>
-          </View>
-        ))}
-        <View style={[styles.row, styles.total]}>
-          <Text style={styles.label}>Total</Text>
-          <Text style={styles.amount}>{money(total, 'USD', 'en-US')}</Text>
-        </View>
+    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
+      <View style={[ui.card, { backgroundColor: c.panel }]}>
+        <Text style={[ui.label, { color: c.onPanelDim }]}>Safe to spend today</Text>
+        <Text style={{ color: c.hl, fontSize: 48, fontWeight: '800', fontVariant: ['tabular-nums'] }} accessibilityRole="header">
+          {fmt(safe.perDay)}
+        </Text>
+        <Text style={{ color: c.onPanelDim, fontSize: 15 }}>
+          {fmt(Math.max(0, safe.left))} left for {safe.daysLeft} {safe.daysLeft === 1 ? 'day' : 'days'}
+        </Text>
       </View>
-      <Text selectable style={styles.probe}>
-        {JSON.stringify(probe, null, 1)}
-      </Text>
+
+      {rent && (
+        <View style={ui.card}>
+          <Text style={ui.text}>
+            🏠 Rent {fmt(rent.cents)} {rent.days === 0 ? 'due today' : `in ${rent.days} ${rent.days === 1 ? 'day' : 'days'}`}
+            {safe.covered ? ' — you’re covered.' : ' — not covered yet.'}
+          </Text>
+        </View>
+      )}
+
+      <View style={ui.card}>
+        <View style={ui.row}>
+          <Text style={ui.text}>
+            {fmt(safe.spent)} of {fmt(setup.budget.cents)} this {setup.budget.period.kind}
+          </Text>
+          <Text style={ui.dim}>{status === 'over' ? 'Over' : status === 'close' ? 'Close' : 'On track'}</Text>
+        </View>
+        <View style={{ height: 10, borderRadius: 5, backgroundColor: '#e6e8f0', overflow: 'hidden' }}>
+          <View
+            style={{
+              height: 10,
+              width: `${Math.min(100, (safe.spent / setup.budget.cents) * 100)}%`,
+              backgroundColor: STATUS_COLOR[status],
+            }}
+          />
+        </View>
+        {fast && status === 'ok' && <Text style={ui.dim}>Spending is running ahead of the {setup.budget.period.kind}.</Text>}
+      </View>
+
+      <View style={ui.card}>
+        <Text style={ui.label}>Quick add</Text>
+        <TextInput
+          style={ui.input}
+          value={text}
+          onChangeText={setText}
+          onSubmitEditing={add}
+          returnKeyType="done"
+          placeholder="lunch 12, uber 8"
+          accessibilityLabel="Type what you spent"
+        />
+        {undo && (
+          <View style={ui.row}>
+            <Text style={ui.dim}>{undo.summary}</Text>
+            <Pressable onPress={undoAdd} accessibilityRole="button" hitSlop={12}>
+              <Text style={ui.link}>Undo</Text>
+            </Pressable>
+          </View>
+        )}
+      </View>
+
+      <View style={[ui.row, { justifyContent: 'space-around' }]}>
+        <Link href="/activity" style={ui.link}>
+          Activity
+        </Link>
+        <Link href="/setup" style={ui.link}>
+          Budget & rent
+        </Link>
+      </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  page: { padding: space.md, gap: space.md, backgroundColor: colors.light.paper, flexGrow: 1 },
-  input: { fontSize: 20, fontWeight: '600', color: colors.light.ink },
-  receipt: { backgroundColor: colors.receipt, borderRadius: radius.md, padding: space.md, gap: space.sm },
-  row: { flexDirection: 'row', justifyContent: 'space-between' },
-  total: { borderTopWidth: 1, borderColor: colors.light.inkDim, paddingTop: space.sm },
-  label: { color: colors.receiptInk, fontSize: 16 },
-  amount: { color: colors.receiptInk, fontSize: 16, fontVariant: ['tabular-nums'] },
-  probe: { fontFamily: 'Menlo', fontSize: 11, color: colors.light.inkDim },
-});
