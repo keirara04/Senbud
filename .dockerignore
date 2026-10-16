@@ -1,0 +1,10 @@
+**/node_modules
+**/.expo
+**/dist
+.git
+.claude
+api
+art
+docs
+web
+!web/package.json
