@@ -170,6 +170,8 @@ body {
 .switch.on { background: var(--accent); }
 .switch.on::after { left: 22px; }
 
+.bud { display: block; flex: none; }
+.fab .bud { margin-top: 2px; }
 .fab { position: absolute; right: 16px; bottom: 99px; width: 56px; height: 56px; border-radius: 28px; background: var(--panel); color: var(--on-panel); display: grid; place-items: center; box-shadow: var(--float), 0 0 0 1.5px var(--fab-ring); z-index: 6; }
 .scrim { position: absolute; inset: 0; background: var(--scrim); z-index: 7; }
 .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 8; background: var(--surface); border-radius: 24px 24px 0 0; box-shadow: var(--float); padding: 8px 16px 34px; display: flex; flex-direction: column; gap: 12px; }
@@ -209,6 +211,21 @@ body {
 .qs li { counter-increment: q; background: var(--surface); border-radius: 16px; padding: 14px 16px 14px 56px; position: relative; font-size: 15px; line-height: 21px; }
 .qs li::before { content: counter(q); position: absolute; left: 16px; top: 13px; width: 26px; height: 26px; border-radius: 13px; background: var(--hl); color: var(--on-hl); font: 700 14px/26px var(--sans); text-align: center; }
 .qs b { display: block; font-size: 16px; }
+.btn.apple { background: var(--text); color: var(--bg); }
+.ptabs { display: flex; gap: 6px; }
+.ptab { flex: 1; min-height: 52px; border-radius: 12px; border: 1px solid var(--line); display: grid; place-items: center; align-content: center; gap: 0; font-size: 13px; line-height: 17px; color: var(--dim); background: var(--surface); }
+.ptab b { font-size: 15px; color: var(--text); }
+.ptab.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.ptab.on b { color: var(--on-accent); }
+.claim { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 4px; border-bottom: 1px dashed rgba(26,28,46,.18); }
+.claim:last-child { border-bottom: 0; }
+.claim.todo { background: repeating-linear-gradient(135deg, transparent 0 6px, rgba(245,197,66,.18) 6px 9px); border-radius: 6px; }
+.claimbox { width: 28px; height: 28px; border-radius: 8px; border: 2px solid rgba(26,28,46,.3); display: grid; place-items: center; flex: none; }
+.claimbox.on { background: #1f3fd8; border-color: #1f3fd8; color: #f4f6ff; }
+.radio.sel { border: 7px solid var(--accent); }
+.bud-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; padding-block: 24px; }
+.bud-tile { background: var(--surface); border-radius: 16px; padding: 20px; display: grid; justify-items: center; align-content: center; gap: 8px; min-height: 220px; }
+.bud-tile.panel { background: var(--panel); }
 .alert .acts span.destructive { color: #ff3b30; }
 .alert .acts span.cancel { font-weight: 600; }
 .phone.story { background: var(--panel); color: var(--on-panel); border-color: var(--bezel); }
@@ -261,13 +278,18 @@ body {
   <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="bud-body" viewBox="0 0 64 64"><path d="M14 6h36a5 5 0 0 1 5 5v41l-5.75 5-5.75-5-5.75 5-5.75-5-5.75 5-5.75-5-5.75 5-5.75-5V11a5 5 0 0 1 5-5z" fill="#fff" stroke="#1a1c2e" stroke-width="2.5" stroke-linejoin="round"/><path d="M18 15h20M18 20h13" stroke="#1a1c2e" stroke-opacity=".22" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="19.5" cy="39" rx="3.6" ry="2.2" fill="#ff6b5b" fill-opacity=".45"/><ellipse cx="44.5" cy="39" rx="3.6" ry="2.2" fill="#ff6b5b" fill-opacity=".45"/></symbol>
+  <symbol id="bud" viewBox="0 0 64 64"><use href="#bud-body"/><ellipse cx="25" cy="32" rx="3" ry="3.6" fill="#1a1c2e"/><ellipse cx="39" cy="32" rx="3" ry="3.6" fill="#1a1c2e"/><circle cx="26" cy="30.6" r="1" fill="#fff"/><circle cx="40" cy="30.6" r="1" fill="#fff"/><path d="M28.5 38.5q3.5 3.5 7 0" fill="none" stroke="#1a1c2e" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="bud-think" viewBox="0 0 64 64"><use href="#bud-body"/><ellipse cx="24" cy="30" rx="3" ry="3.6" fill="#1a1c2e"/><ellipse cx="38" cy="30" rx="3" ry="3.6" fill="#1a1c2e"/><circle cx="24.6" cy="28.5" r="1" fill="#fff"/><circle cx="38.6" cy="28.5" r="1" fill="#fff"/><path d="M29 40h6" stroke="#1a1c2e" stroke-width="2.2" stroke-linecap="round"/><circle cx="44" cy="44" r="1.6" fill="#1a1c2e" fill-opacity=".5"/><circle cx="48" cy="44" r="1.6" fill="#1a1c2e" fill-opacity=".5"/><circle cx="52" cy="44" r="1.6" fill="#1a1c2e" fill-opacity=".5"/></symbol>
+  <symbol id="bud-oops" viewBox="0 0 64 64"><use href="#bud-body"/><path d="M21.5 32.5q3.5 2.5 7 0M35.5 32.5q3.5 2.5 7 0" fill="none" stroke="#1a1c2e" stroke-width="2.4" stroke-linecap="round"/><path d="M28 40.5q1.33-1.6 2.66 0t2.66 0t2.66 0" fill="none" stroke="#1a1c2e" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="bud-yay" viewBox="0 0 64 64"><use href="#bud-body"/><path d="M21.5 33q3.5-4.5 7 0M35.5 33q3.5-4.5 7 0" fill="none" stroke="#1a1c2e" stroke-width="2.4" stroke-linecap="round"/><path d="M27 36.5h10q0 6.5-5 6.5t-5-6.5z" fill="#1a1c2e"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
 </svg>
 
 <div class="top">
   <div class="wrap">
     <nav class="jump" aria-label="Screens">
-      <a href="#nav">Navigation</a><a href="#home">Home</a><a href="#budgets">Budgets</a><a href="#afford">Can I afford it?</a><a href="#friends">Friends</a><a href="#treats">Treats</a><a href="#wrapped">Wrapped</a><a href="#settings">Settings</a><a href="#paywall">Paywall</a><a href="#assistant">Assistant</a><a href="#components">New components</a><a href="#questions">Questions</a>
+      <a href="#nav">Navigation</a><a href="#mascot">Bud</a><a href="#welcome">Welcome</a><a href="#home">Home</a><a href="#budgets">Budgets</a><a href="#afford">Can I afford it?</a><a href="#friends">Friends</a><a href="#treats">Treats</a><a href="#wrapped">Wrapped</a><a href="#settings">Settings</a><a href="#paywall">Paywall</a><a href="#assistant">Assistant</a><a href="#components">New components</a><a href="#questions">Questions</a>
     </nav>
     <div class="seg-page" role="group" aria-label="Theme">
       <button type="button" id="th-light" data-t="light" aria-pressed="false">Light</button>
@@ -304,6 +326,125 @@ body {
         <li><b>Assistant:</b> a floating button on every tab except Home. On Home, the quick-capture bar is the way in (see Home).</li>
         <li><b>Large titles</b> on tab roots (Budgets, Friends, Treats). Home has no title; the date sits where it would be, and the safe-to-spend panel is the first thing you see.</li>
       </ul>
+    </div>
+  </section>
+
+  <!-- ================= MASCOT ================= -->
+  <section class="sec" id="mascot">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">The assistant’s face</span>
+        <h2>Meet Bud</h2>
+        <p class="job">A little thermal receipt with a face. The Highlighter-S tile stays the app’s logo; Bud is who you talk to.</p>
+      </div>
+      <ul class="decide">
+        <li><b>Made from the brand’s own parts:</b> receipt-white body with torn edges, ink outline, two printed lines for a fringe, coral blush. No highlighter on Bud, so it never competes with a screen’s key number.</li>
+        <li><b>Four faces, each with a job:</b> happy (default, the assistant button), thinking (an answer is loading), oops (offline or AI off) and yay (Pro unlocked, Wrapped, a goal reached).</li>
+        <li><b>Where it shows:</b> the assistant button (38 pt inside the 56 pt cobalt circle), the assistant sheet header, the welcome screen, and empty states. Never inside copy, and it doesn’t replace words.</li>
+        <li><b>Decorative for screen readers.</b> The button keeps its label “Ask Senbud”. A small idle wobble on the button turns off with Reduce Motion.</li>
+        <li>Same drawing in light and dark: the white body reads on paper, night and cobalt.</li>
+      </ul>
+    </div>
+    <div class="bud-board">
+      <div class="bud-tile"><svg class="bud" width="150" height="150" aria-hidden="true"><use href="#bud"/></svg><span class="cap dim">On paper</span></div>
+      <div class="bud-tile panel"><svg class="bud" width="150" height="150" aria-hidden="true"><use href="#bud"/></svg><span class="cap pdim">On cobalt</span></div>
+      <div class="bud-tile"><div class="row start" style="gap:18px;justify-content:center">
+        <span class="stack" style="align-items:center"><svg class="bud" width="72" height="72" aria-hidden="true"><use href="#bud"/></svg><span class="cap dim">Happy</span></span>
+        <span class="stack" style="align-items:center"><svg class="bud" width="72" height="72" aria-hidden="true"><use href="#bud-think"/></svg><span class="cap dim">Thinking</span></span>
+        <span class="stack" style="align-items:center"><svg class="bud" width="72" height="72" aria-hidden="true"><use href="#bud-oops"/></svg><span class="cap dim">Oops</span></span>
+        <span class="stack" style="align-items:center"><svg class="bud" width="72" height="72" aria-hidden="true"><use href="#bud-yay"/></svg><span class="cap dim">Yay</span></span>
+      </div></div>
+      <div class="bud-tile"><div class="row start" style="gap:24px;justify-content:center;align-items:flex-end">
+        <span class="stack" style="align-items:center"><span class="fab" style="position:static"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span><span class="cap dim">Button, 56 pt</span></span>
+        <span class="stack" style="align-items:center"><svg class="bud" width="32" height="32" aria-hidden="true"><use href="#bud"/></svg><span class="cap dim">Sheet, 32 pt</span></span>
+        <span class="stack" style="align-items:center"><svg class="bud" width="24" height="24" aria-hidden="true"><use href="#bud"/></svg><span class="cap dim">Smallest, 24 pt</span></span>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ================= WELCOME ================= -->
+  <section class="sec" id="welcome">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Screen 0 · first launch, before Setup</span>
+        <h2>Welcome and sign in</h2>
+        <p class="job">Say what Senbud is in one breath, then get out of the way.</p>
+      </div>
+      <ul class="decide">
+        <li><b>There’s no login today, on purpose.</b> The spec promises no bank login and no accounts, and Pro works through an anonymous RevenueCat id. So the first screen is a welcome, not a sign-in wall: “Get started” goes straight to Setup.</li>
+        <li><b>Returning people</b> tap “I’ve used Senbud before” and get the two things that bring them back: restore a backup file, and restore Pro.</li>
+        <li><b>Sign in is drawn for later:</b> only if encrypted sync between phones ships (spec 8, Pro). It’s optional and skippable. If Google sign-in is offered on iOS, Sign in with Apple must be too (App Store rule 4.8), and it goes first.</li>
+        <li>Bud, the logo and one cobalt button. No highlighter except the logo’s own “bud”.</li>
+      </ul>
+    </div>
+    <div class="shots">
+      <figure class="shot">
+        <figcaption><b>Welcome.</b> One sentence, three promises, one button.</figcaption>
+        <div class="phone">
+          <div class="sb"><span>9:41</span><i></i></div>
+          <div class="scroll" style="padding:12px 24px 34px;gap:16px">
+            <span class="row start" style="gap:8px;flex-wrap:nowrap"><svg width="30" height="30" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#1F3FD8"/><rect x="8" y="26" width="32" height="10" rx="3" fill="#EEFF5A" transform="rotate(-10 24 31)"/><path d="M31.5 15c-2.5-3-12.5-3.5-13 2.5 -.5 6 13.5 4.5 13 11.5 -.5 6.5-11.5 7-15 2.5" fill="none" stroke="#1A1C2E" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M31.5 15c-2.5-3-12.5-3.5-13 2.5 -.5 6 13.5 4.5 13 11.5 -.5 6.5-11.5 7-15 2.5" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font:600 20px/1 var(--display)">Sen<span style="background:var(--hl);color:var(--on-hl);border-radius:5px;padding:0 4px;margin-left:1px">bud</span></span></span>
+            <div style="flex:1;display:grid;place-items:center"><svg class="bud" width="170" height="170" aria-hidden="true"><use href="#bud"/></svg></div>
+            <h3 class="title">Your money buddy</h3>
+            <p class="dim" style="margin:0">Snap or type what you spend. Senbud tells you what’s safe to spend today and when rent is coming.</p>
+            <div class="row start cap dim" style="gap:6px 14px"><span class="row start" style="gap:4px"><svg class="ic" style="width:16px;height:16px;color:var(--good)"><use href="#i-check"/></svg>No bank login</span><span class="row start" style="gap:4px"><svg class="ic" style="width:16px;height:16px;color:var(--good)"><use href="#i-check"/></svg>No account</span><span class="row start" style="gap:4px"><svg class="ic" style="width:16px;height:16px;color:var(--good)"><use href="#i-check"/></svg>Stays on your phone</span></div>
+            <div class="btn primary">Get started</div>
+            <span class="tbtn" style="align-self:center">I’ve used Senbud before</span>
+          </div>
+        </div>
+      </figure>
+
+      <figure class="shot">
+        <figcaption><b>Welcome back.</b> No account to log in to, so it offers what actually brings your data back.</figcaption>
+        <div class="phone">
+          <div class="sb"><span>9:41</span><i></i></div>
+          <div class="scroll" style="padding:12px 24px 34px;gap:16px">
+            <span class="row start" style="gap:8px;flex-wrap:nowrap"><svg width="30" height="30" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#1F3FD8"/><rect x="8" y="26" width="32" height="10" rx="3" fill="#EEFF5A" transform="rotate(-10 24 31)"/><path d="M31.5 15c-2.5-3-12.5-3.5-13 2.5 -.5 6 13.5 4.5 13 11.5 -.5 6.5-11.5 7-15 2.5" fill="none" stroke="#1A1C2E" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M31.5 15c-2.5-3-12.5-3.5-13 2.5 -.5 6 13.5 4.5 13 11.5 -.5 6.5-11.5 7-15 2.5" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font:600 20px/1 var(--display)">Sen<span style="background:var(--hl);color:var(--on-hl);border-radius:5px;padding:0 4px;margin-left:1px">bud</span></span></span>
+            <div style="flex:1;display:grid;place-items:center"><svg class="bud" width="170" height="170" aria-hidden="true"><use href="#bud"/></svg></div>
+            <h3 class="title">Your money buddy</h3>
+            <p class="dim" style="margin:0">Snap or type what you spend. Senbud tells you what’s safe to spend today and when rent is coming.</p>
+            <div class="row start cap dim" style="gap:6px 14px"><span class="row start" style="gap:4px"><svg class="ic" style="width:16px;height:16px;color:var(--good)"><use href="#i-check"/></svg>No bank login</span><span class="row start" style="gap:4px"><svg class="ic" style="width:16px;height:16px;color:var(--good)"><use href="#i-check"/></svg>No account</span><span class="row start" style="gap:4px"><svg class="ic" style="width:16px;height:16px;color:var(--good)"><use href="#i-check"/></svg>Stays on your phone</span></div>
+            <div class="btn primary">Get started</div>
+            <span class="tbtn" style="align-self:center">I’ve used Senbud before</span>
+          </div>
+          <div class="scrim"></div>
+          <div class="sheet" style="top:330px">
+            <div class="grab"></div>
+            <div class="row"><h3 class="heading">Welcome back</h3><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
+            <span class="dim">Senbud keeps everything on your phone, so there’s no account to log in to. Bring things back here:</span>
+            <div class="list sunk" style="background:var(--bg)">
+              <div class="li"><span class="grow stack" style="gap:0"><span class="strong">Restore from a backup</span><span class="cap dim">Pick the file from Files or Google Drive</span></span><svg class="ic chev"><use href="#i-chev"/></svg></div>
+              <div class="li"><span class="grow stack" style="gap:0"><span class="strong">Restore Senbud Pro</span><span class="cap dim">From your Apple or Google account</span></span><svg class="ic chev"><use href="#i-chev"/></svg></div>
+            </div>
+            <span class="cap dim">Make a backup any time in Settings → Back up everything.</span>
+          </div>
+        </div>
+      </figure>
+
+      <figure class="shot">
+        <figcaption><b>Sign in, only if sync ships.</b> Optional, skippable, Apple first.</figcaption>
+        <div class="phone">
+          <div class="sb"><span>9:41</span><i></i></div>
+          <div class="scroll" style="padding:12px 24px 34px;gap:16px">
+            <span class="row start" style="gap:8px;flex-wrap:nowrap"><svg width="30" height="30" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#1F3FD8"/><rect x="8" y="26" width="32" height="10" rx="3" fill="#EEFF5A" transform="rotate(-10 24 31)"/><path d="M31.5 15c-2.5-3-12.5-3.5-13 2.5 -.5 6 13.5 4.5 13 11.5 -.5 6.5-11.5 7-15 2.5" fill="none" stroke="#1A1C2E" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M31.5 15c-2.5-3-12.5-3.5-13 2.5 -.5 6 13.5 4.5 13 11.5 -.5 6.5-11.5 7-15 2.5" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font:600 20px/1 var(--display)">Sen<span style="background:var(--hl);color:var(--on-hl);border-radius:5px;padding:0 4px;margin-left:1px">bud</span></span></span>
+            <div style="flex:1;display:grid;place-items:center"><svg class="bud" width="170" height="170" aria-hidden="true"><use href="#bud"/></svg></div>
+            <h3 class="title">Your money buddy</h3>
+            <p class="dim" style="margin:0">Snap or type what you spend. Senbud tells you what’s safe to spend today and when rent is coming.</p>
+            <div class="row start cap dim" style="gap:6px 14px"><span class="row start" style="gap:4px"><svg class="ic" style="width:16px;height:16px;color:var(--good)"><use href="#i-check"/></svg>No bank login</span><span class="row start" style="gap:4px"><svg class="ic" style="width:16px;height:16px;color:var(--good)"><use href="#i-check"/></svg>No account</span><span class="row start" style="gap:4px"><svg class="ic" style="width:16px;height:16px;color:var(--good)"><use href="#i-check"/></svg>Stays on your phone</span></div>
+            <div class="btn primary">Get started</div>
+            <span class="tbtn" style="align-self:center">I’ve used Senbud before</span>
+          </div>
+          <div class="scrim"></div>
+          <div class="sheet" style="top:300px">
+            <div class="grab"></div>
+            <div class="row start" style="gap:12px;flex-wrap:nowrap"><svg class="bud" width="48" height="48" aria-hidden="true"><use href="#bud-yay"/></svg><h3 class="heading grow">Use Senbud on more than one phone</h3></div>
+            <span class="dim">Optional. Sign in only to sync. Your spending is encrypted on this phone before it’s sent.</span>
+            <div class="btn apple">Sign in with Apple</div>
+            <div class="btn secondary" style="color:var(--text)">Continue with Google</div>
+            <span class="tbtn" style="align-self:center">Not now</span>
+          </div>
+        </div>
+      </figure>
     </div>
   </section>
 
@@ -484,7 +625,7 @@ body {
             </div>
           </div>
           <nav class="tabs" data-on="budgets"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="ic"><use href="#i-chat"/></svg></span>
+          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
         </div>
       </figure>
 
@@ -515,7 +656,7 @@ body {
             </div>
           </div>
           <nav class="tabs" data-on="budgets"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="ic"><use href="#i-chat"/></svg></span>
+          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
         </div>
       </figure>
 
@@ -541,7 +682,7 @@ body {
             </div>
           </div>
           <nav class="tabs" data-on="budgets"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="ic"><use href="#i-chat"/></svg></span>
+          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
         </div>
       </figure>
 
@@ -570,7 +711,7 @@ body {
             </div>
           </div>
           <nav class="tabs" data-on="budgets"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="ic"><use href="#i-chat"/></svg></span>
+          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
         </div>
       </figure>
     </div>
@@ -693,8 +834,8 @@ body {
       <ul class="decide">
         <li><b>Hero:</b> the net balance on the cobalt panel, in highlighter <i>both ways</i>. The words say the direction (“owed to you” / “you owe overall”), so “you owe” isn’t painted coral. <b>This changes the section 4 table</b>, which said good/bad colour.</li>
         <li><b>One row per friend</b> with initials (no contacts access, no photos), the latest note and date, and the amount with “owes you” in good ink or “you owe” in plain dim text.</li>
-        <li><b>IOUs older than 7 days</b> show “Remind” right on the row. Tap a row for the friend sheet: copy a pre-written message, or mark paid with Undo. Senbud never sends anything.</li>
-        <li><b>Split flow</b> is a pushed screen: <code>Segmented</code> Even / By item / Amounts. By item lists the receipt on a torn-edge receipt card with a 48 pt initial toggle per person per item. Shared items split evenly. By item is Pro.</li>
+        <li><b>IOUs older than 7 days</b> show “Remind” right on the row, which opens the friend sheet. <b>“Send on WhatsApp” opens WhatsApp with the message already written</b>; you pick the chat and tap send, so Senbud still never sends anything itself and never needs contacts. “Other apps” opens the share sheet (Telegram, Messages); “Copy” copies it. “Mark paid” has Undo.</li>
+        <li><b>Split is three short steps</b> instead of one crowded grid: 1) who was there, who paid, by item or evenly; 2) pick a person, then tap their items on the receipt (tabs show running totals; “1 item left” until every item has an owner); 3) check everyone’s share and save. Evenly skips step 2. By item is Pro.</li>
       </ul>
     </div>
     <div class="shots">
@@ -720,48 +861,85 @@ body {
             <span class="tbtn" style="align-self:center;color:var(--dim)">2 settled this month</span>
           </div>
           <nav class="tabs" data-on="friends"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="ic"><use href="#i-chat"/></svg></span>
+          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
         </div>
       </figure>
 
       <figure class="shot">
-        <figcaption><b>Split by item.</b> Mamak receipt read by AI. Tap who had what; shared drinks split three ways.</figcaption>
+        <figcaption><b>Split, step 1: who and how.</b> Everyone you name, who paid, and how to split. Even is one tap from here.</figcaption>
         <div class="phone">
           <div class="sb"><span>9:41</span><i></i></div>
-          <div class="navbar center"><span class="back"><svg class="ic"><use href="#i-back"/></svg>Friends</span><span>Split</span></div>
-          <div class="scroll tight">
-            <div class="seg"><span>Even</span><span class="on">By item</span><span>Amounts</span></div>
-            <div class="receipt" style="padding:18px 14px 20px;display:grid;gap:4px;margin-top:4px">
-              <div class="row"><span class="strong">Restoran Ali Maju</span><span class="cap rdim">You paid</span></div>
-              <div class="rc-row"><span class="grow stack" style="gap:0"><span>Nasi lemak ayam</span><span class="cap rdim money">RM 9.50</span></span><span class="who on">Me</span><span class="who">A</span><span class="who">S</span></div>
-              <div class="rc-row"><span class="grow stack" style="gap:0"><span>Roti canai ×2</span><span class="cap rdim money">RM 3.00</span></span><span class="who">Me</span><span class="who on">A</span><span class="who">S</span></div>
-              <div class="rc-row"><span class="grow stack" style="gap:0"><span>Maggi goreng</span><span class="cap rdim money">RM 7.50</span></span><span class="who">Me</span><span class="who">A</span><span class="who on">S</span></div>
-              <div class="rc-row"><span class="grow stack" style="gap:0"><span>Milo ais</span><span class="cap rdim money">RM 3.80</span></span><span class="who">Me</span><span class="who on">A</span><span class="who">S</span></div>
-              <div class="rc-row"><span class="grow stack" style="gap:0"><span>Teh tarik ×3</span><span class="cap rdim money">RM 7.50 · shared</span></span><span class="who on">Me</span><span class="who on">A</span><span class="who on">S</span></div>
-              <div class="row" style="border-top:1px dashed rgba(26,28,46,.25);padding-top:8px;margin-top:4px"><span class="strong">Total</span><span class="strong money">RM 31.30</span></div>
+          <div class="navbar center"><span class="back"><svg class="ic"><use href="#i-back"/></svg>Friends</span><span>Split a bill</span><span class="lab" style="position:absolute;right:16px">1 of 3</span></div>
+          <div class="scroll" style="gap:14px">
+            <div class="card" style="flex-direction:row;align-items:center;gap:12px"><span class="ibtn" style="background:var(--bg);border-radius:10px;color:var(--dim)"><svg class="ic"><use href="#i-camera"/></svg></span><span class="grow stack" style="gap:0"><span class="strong">Restoran Ali Maju</span><span class="cap dim money">RM 31.30 · 5 items from your photo</span></span></div>
+            <div class="field"><span class="lab">Who was there?</span><div class="row start" style="gap:8px"><span class="pick on">You</span><span class="pick on">Aiman</span><span class="pick on">Sarah</span><span class="pick">Wei Ling</span><span class="pick"><svg class="ic" style="width:18px;height:18px"><use href="#i-plus"/></svg>&nbsp;Add</span></div></div>
+            <div class="field"><span class="lab">Who paid?</span><div class="seg"><span class="on">You</span><span>Aiman</span><span>Sarah</span></div></div>
+            <div class="field"><span class="lab">How to split it?</span>
+              <div class="card plan" style="border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)"><span class="radio sel"></span><span class="grow stack" style="gap:0"><span class="strong">By item</span><span class="cap dim">Tap who had what on the receipt.</span></span></div>
+              <div class="card plan"><span class="radio"></span><span class="grow stack" style="gap:0"><span class="strong">Evenly</span><span class="cap dim money">About RM 10.43 each</span></span></div>
             </div>
-            <div class="row cap money" style="padding:4px 2px"><span><b>You</b> RM 12.00</span><span><b>Aiman</b> RM 9.30</span><span><b>Sarah</b> RM 10.00</span></div>
-            <div class="btn primary">Save split</div>
+            <div class="btn primary">Next</div>
           </div>
-          <nav class="tabs" data-on="friends"></nav>
         </div>
       </figure>
 
       <figure class="shot">
-        <figcaption><b>Friend sheet.</b> Copy a ready-made reminder, or mark it paid (with Undo).</figcaption>
+        <figcaption><b>Step 2: who had what.</b> Pick a person, then tap their items. Totals update on the tabs. One item still needs an owner.</figcaption>
+        <div class="phone">
+          <div class="sb"><span>9:41</span><i></i></div>
+          <div class="navbar center"><span class="back"><svg class="ic"><use href="#i-back"/></svg>Back</span><span>Who had what?</span><span class="lab" style="position:absolute;right:16px">2 of 3</span></div>
+          <div class="scroll tight" style="gap:10px">
+            <div class="ptabs" role="tablist"><span class="ptab"><b>You</b><span class="money">RM 12.00</span></span><span class="ptab"><b>Aiman</b><span class="money">RM 5.50</span></span><span class="ptab on"><b>Sarah</b><span class="money">RM 10.00</span></span></div>
+            <span class="cap dim">Tap everything Sarah had. Shared something? Tap it for each person.</span>
+            <div class="receipt" style="padding:14px 12px 16px;display:grid;gap:0">
+              <div class="claim"><span class="grow stack" style="gap:0"><span>Nasi lemak ayam</span><span class="cap rdim money">RM 9.50</span></span><span class="row start" style="gap:2px;flex-wrap:nowrap"><span class="avatar" style="width:26px;height:26px;font-size:12px;background:#e6e8f0;color:#3d4256">Y</span></span><span class="claimbox"></span></div>
+              <div class="claim"><span class="grow stack" style="gap:0"><span>Roti canai ×2</span><span class="cap rdim money">RM 3.00</span></span><span class="row start" style="gap:2px;flex-wrap:nowrap"><span class="avatar" style="width:26px;height:26px;font-size:12px;background:#e6e8f0;color:#3d4256">A</span></span><span class="claimbox"></span></div>
+              <div class="claim mine"><span class="grow stack" style="gap:0"><span>Maggi goreng</span><span class="cap rdim money">RM 7.50</span></span><span class="row start" style="gap:2px;flex-wrap:nowrap"><span class="avatar" style="width:26px;height:26px;font-size:12px;background:#e6e8f0;color:#3d4256">S</span></span><span class="claimbox on"><svg class="ic" style="width:18px;height:18px"><use href="#i-check"/></svg></span></div>
+              <div class="claim mine"><span class="grow stack" style="gap:0"><span>Teh tarik ×3</span><span class="cap rdim money">RM 7.50 · shared</span></span><span class="row start" style="gap:2px;flex-wrap:nowrap"><span class="avatar" style="width:26px;height:26px;font-size:12px;background:#e6e8f0;color:#3d4256">Y</span><span class="avatar" style="width:26px;height:26px;font-size:12px;background:#e6e8f0;color:#3d4256">A</span><span class="avatar" style="width:26px;height:26px;font-size:12px;background:#e6e8f0;color:#3d4256">S</span></span><span class="claimbox on"><svg class="ic" style="width:18px;height:18px"><use href="#i-check"/></svg></span></div>
+              <div class="claim todo"><span class="grow stack" style="gap:0"><span>Milo ais</span><span class="cap rdim money">RM 3.80</span></span><span class="row start" style="gap:2px;flex-wrap:nowrap"><span class="cap" style="color:#8a5a00;font-weight:600">Not assigned</span></span><span class="claimbox"></span></div>
+            </div>
+            <span class="cap warn strong" style="text-align:center">1 item left: Milo ais</span>
+            <div class="btn primary" style="opacity:.4">Next</div>
+          </div>
+        </div>
+      </figure>
+
+      <figure class="shot">
+        <figcaption><b>Step 3: check and save.</b> Everyone’s share and why. Your part becomes spending; the rest become IOUs.</figcaption>
+        <div class="phone">
+          <div class="sb"><span>9:41</span><i></i></div>
+          <div class="navbar center"><span class="back"><svg class="ic"><use href="#i-back"/></svg>Back</span><span>Check and save</span><span class="lab" style="position:absolute;right:16px">3 of 3</span></div>
+          <div class="scroll" style="gap:14px">
+            <div class="list">
+              <div class="li"><span class="avatar" style="width:40px;height:40px;font-size:15px;background:#e6e8f0;color:#3d4256">Y</span><span class="grow stack" style="gap:0"><span class="strong">You</span><span class="cap dim">Nasi lemak, a teh tarik</span></span><span class="stack" style="align-items:flex-end;gap:0"><span class="strong money">RM 12.00</span><span class="cap dim">your Food</span></span></div>
+              <div class="li"><span class="avatar" style="width:40px;height:40px;font-size:15px;background:#e6e8f0;color:#3d4256">A</span><span class="grow stack" style="gap:0"><span class="strong">Aiman</span><span class="cap dim">Roti canai, Milo ais, a teh tarik</span></span><span class="stack" style="align-items:flex-end;gap:0"><span class="strong money">RM 9.30</span><span class="cap good">owes you</span></span></div>
+              <div class="li"><span class="avatar" style="width:40px;height:40px;font-size:15px;background:#e6e8f0;color:#3d4256">S</span><span class="grow stack" style="gap:0"><span class="strong">Sarah</span><span class="cap dim">Maggi goreng, a teh tarik</span></span><span class="stack" style="align-items:flex-end;gap:0"><span class="strong money">RM 10.00</span><span class="cap good">owes you</span></span></div>
+            </div>
+            <div class="row" style="padding:0 4px"><span class="strong">Total, paid by you</span><span class="strong money">RM 31.30</span></div>
+            <span class="cap dim" style="padding:0 4px">No service charge or SST on this receipt. When there is, it’s shared out by each person’s part.</span>
+            <div style="flex:1"></div>
+            <div class="btn primary">Save split</div>
+            <span class="tbtn" style="align-self:center">Change amounts</span>
+          </div>
+        </div>
+      </figure>
+
+      <figure class="shot">
+        <figcaption><b>Friend sheet.</b> One tap opens WhatsApp with the reminder written. Other apps use the share sheet. Mark paid has Undo.</figcaption>
         <div class="phone">
           <div class="sb"><span>9:41</span><i></i></div>
           <h3 class="lt" style="padding-top:48px">Friends</h3>
           <div class="scroll"><div class="card panel"><span class="lab">Owed to you</span><span class="hero">RM&nbsp;30</span></div></div>
           <div class="scrim"></div>
-          <div class="sheet" style="top:250px">
+          <div class="sheet" style="top:190px">
             <div class="grab"></div>
             <div class="row start" style="gap:12px;flex-wrap:nowrap"><span class="avatar">S</span><span class="grow stack" style="gap:0"><span class="heading">Sarah</span><span class="cap good">owes you RM 23.10</span></span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
             <div class="row"><span class="cap dim">Grab to Mid Valley · 13 Oct</span><span class="money strong">RM 23.10</span></div>
             <div class="sunkbox">Hey Sarah! Grab to Mid Valley was RM 23.10!</div>
-            <div class="btn secondary"><svg class="ic"><use href="#i-copy"/></svg>Copy message</div>
-            <span class="cap dim">Senbud never sends anything. Paste it into WhatsApp yourself.</span>
-            <div class="btn primary"><svg class="ic"><use href="#i-check"/></svg>Mark paid</div>
+            <div class="btn primary"><svg class="ic"><use href="#i-send"/></svg>Send on WhatsApp</div>
+            <div class="row" style="flex-wrap:nowrap"><div class="btn secondary grow">Other apps</div><div class="btn secondary grow"><svg class="ic"><use href="#i-copy"/></svg>Copy</div></div>
+            <span class="cap dim">Opens WhatsApp with this message ready. You pick Sarah’s chat and tap send.</span>
+            <div class="btn secondary" style="color:var(--good)"><svg class="ic"><use href="#i-check"/></svg>Mark paid</div>
           </div>
         </div>
       </figure>
@@ -778,14 +956,15 @@ body {
               <span class="hero">RM&nbsp;0</span>
               <span class="cap pdim">All square with everyone.</span>
             </div>
-            <div class="card">
+            <div class="card" style="align-items:center;text-align:center">
+              <svg class="bud" width="64" height="64" aria-hidden="true"><use href="#bud"/></svg>
               <span>Paid for the group? Snap the receipt, or type something like “dinner 45 with Aiman and Sarah”.</span>
               <div class="btn primary"><svg class="ic"><use href="#i-plus"/></svg>Split a bill</div>
             </div>
             <span class="cap dim" style="padding:0 16px;text-align:center">Friends are just names. Senbud doesn’t read your contacts.</span>
           </div>
           <nav class="tabs" data-on="friends"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="ic"><use href="#i-chat"/></svg></span>
+          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
         </div>
       </figure>
     </div>
@@ -800,7 +979,8 @@ body {
         <p class="job">Guilt-free treats, paid for by leftover budget.</p>
       </div>
       <ul class="decide">
-        <li><b>Hero:</b> the jar total in highlighter on cobalt, translated into treats (“= 4 Tealives or 2 movies”).</li>
+        <li><b>Hero: a jar that fills.</b> Drawn on the cobalt panel with the highlighter as the money inside, so the fill <i>is</i> the key number, with the total in highlighter under it. Coins show through the yellow; tick marks at quarters; a dashed line at the goal.</li>
+        <li><b>A jar needs a size, so it gets a goal:</b> “Movie night for two, RM 60”. Fill = jar ÷ goal. No goal yet: an empty jar and “Set a goal”. Goal reached: it overflows a little and the button spends it. This is a new field (<code>goalCents</code> on the treat jar).</li>
         <li><b>“Add to jar” goes inside the panel.</b> The yellow button sits next to the yellow number, so the screen still has one yellow zone. <b>The Marker on the jar name is dropped</b>; it would be a second yellow.</li>
         <li><b>Treat rows</b> show your own last price, “every N days”, and a status in words (“Fits today”, “Next in 9 days”). Prices come from your history, never guessed.</li>
         <li><b>Month-end leftover</b> is offered as a sheet on the 1st (or from the Home nudge): move it to the jar or keep it in the budget.</li>
@@ -809,16 +989,20 @@ body {
     </div>
     <div class="shots">
       <figure class="shot">
-        <figcaption><b>Normal.</b> RM 46.50 in the jar. Tealive and a movie fit today.</figcaption>
+        <figcaption><b>Normal.</b> RM 46.50 in a RM 60 jar. You can see it 78% full.</figcaption>
         <div class="phone">
           <div class="sb"><span>9:41</span><i></i></div>
           <div class="navbar" style="justify-content:flex-end"><span class="tbtn" style="padding-right:8px">Edit</span></div>
           <h3 class="lt">Treats</h3>
           <div class="scroll">
-            <div class="card panel">
+            <div class="card panel" style="gap:6px">
               <span class="lab">Treat jar</span>
+              <div class="row start" style="flex-wrap:nowrap;gap:16px;align-items:flex-end">
+                <svg width="112" height="140" viewBox="0 0 120 150" aria-hidden="true" style="flex:none"><defs><clipPath id="jarclip1"><path d="M36 24h48v8c14 5 20 14 20 28v72c0 8-6 14-14 14H30c-8 0-14-6-14-14V60c0-14 6-23 20-28z"/></clipPath></defs><path d="M36 24h48v8c14 5 20 14 20 28v72c0 8-6 14-14 14H30c-8 0-14-6-14-14V60c0-14 6-23 20-28z" fill="#ffffff" fill-opacity=".1"/><g clip-path="url(#jarclip1)"><path d="M0 77.8q12.5-5 25 0t25 0t25 0t25 0t25 0V150H0z" fill="#eeff5a"/><circle cx="40" cy="134" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="60" cy="138" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="80" cy="132" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="52" cy="124" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="72" cy="122" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="44" cy="112" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="64" cy="108" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="84" cy="112" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="56" cy="96" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="76" cy="94" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="86" cy="84" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/></g><path d="M20 58h80" stroke="#c9d2ff" stroke-width="1.5" stroke-dasharray="4 4"/><path d="M94 124.0h8" stroke="#f4f6ff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/><path d="M94 102.0h8" stroke="#f4f6ff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/><path d="M94 80.0h8" stroke="#f4f6ff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/><path d="M36 24h48v8c14 5 20 14 20 28v72c0 8-6 14-14 14H30c-8 0-14-6-14-14V60c0-14 6-23 20-28z" fill="none" stroke="#f4f6ff" stroke-width="3" stroke-linejoin="round"/><rect x="30" y="8" width="60" height="16" rx="5" fill="#f4f6ff"/><path d="M38 16h44" stroke="#1f3fd8" stroke-opacity=".35" stroke-width="2" stroke-linecap="round"/></svg>
+                <div class="stack" style="gap:2px;padding-bottom:4px"><span class="cap pdim">Goal</span><span class="strong">Movie night for two</span><span class="money">RM 60</span><span class="cap pdim" style="margin-top:6px">78% full</span><span class="tbtn cap" style="font-size:14px;min-height:44px">Change goal</span></div>
+              </div>
               <span class="hero">RM&nbsp;46.50</span>
-              <span class="cap pdim">= 4 Tealives or 2 movies at GSC</span>
+              <span class="cap pdim">= 4 Tealives or 2 movies at GSC. RM 13.50 to your goal.</span>
               <div class="btn hl" style="margin-top:4px">Add to jar</div>
             </div>
             <span class="lab glab">Your treats</span>
@@ -833,7 +1017,40 @@ body {
             </div>
           </div>
           <nav class="tabs" data-on="treats"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="ic"><use href="#i-chat"/></svg></span>
+          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
+        </div>
+      </figure>
+
+      <figure class="shot">
+        <figcaption><b>Goal reached.</b> The jar overflows a little; the button spends it on the goal.</figcaption>
+        <div class="phone">
+          <div class="sb"><span>9:41</span><i></i></div>
+          <div class="navbar" style="justify-content:flex-end"><span class="tbtn" style="padding-right:8px">Edit</span></div>
+          <h3 class="lt">Treats</h3>
+          <div class="scroll">
+            <div class="card panel" style="gap:6px">
+              <span class="lab">Treat jar</span>
+              <div class="row start" style="flex-wrap:nowrap;gap:16px;align-items:flex-end">
+                <svg width="112" height="140" viewBox="0 0 120 150" aria-hidden="true" style="flex:none"><defs><clipPath id="jarclip3"><path d="M36 24h48v8c14 5 20 14 20 28v72c0 8-6 14-14 14H30c-8 0-14-6-14-14V60c0-14 6-23 20-28z"/></clipPath></defs><path d="M36 24h48v8c14 5 20 14 20 28v72c0 8-6 14-14 14H30c-8 0-14-6-14-14V60c0-14 6-23 20-28z" fill="#ffffff" fill-opacity=".1"/><g clip-path="url(#jarclip3)"><path d="M0 55.4q12.5-5 25 0t25 0t25 0t25 0t25 0V150H0z" fill="#eeff5a"/><circle cx="40" cy="134" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="60" cy="138" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="80" cy="132" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="52" cy="124" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="72" cy="122" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="44" cy="112" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="64" cy="108" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="84" cy="112" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="56" cy="96" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="76" cy="94" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="46" cy="82" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="66" cy="78" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="86" cy="84" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/><circle cx="58" cy="66" r="6" fill="none" stroke="#c9d84a" stroke-width="2"/></g><path d="M20 58h80" stroke="#c9d2ff" stroke-width="1.5" stroke-dasharray="4 4"/><path d="M94 124.0h8" stroke="#f4f6ff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/><path d="M94 102.0h8" stroke="#f4f6ff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/><path d="M94 80.0h8" stroke="#f4f6ff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/><path d="M36 24h48v8c14 5 20 14 20 28v72c0 8-6 14-14 14H30c-8 0-14-6-14-14V60c0-14 6-23 20-28z" fill="none" stroke="#f4f6ff" stroke-width="3" stroke-linejoin="round"/><rect x="30" y="8" width="60" height="16" rx="5" fill="#f4f6ff"/><path d="M38 16h44" stroke="#1f3fd8" stroke-opacity=".35" stroke-width="2" stroke-linecap="round"/></svg>
+                <div class="stack" style="gap:2px;padding-bottom:4px"><span class="cap pdim">Goal</span><span class="strong">Movie night for two</span><span class="money">RM 60</span><span class="cap pdim" style="margin-top:6px">Full</span></div>
+              </div>
+              <span class="hero">RM&nbsp;61.90</span>
+              <span class="cap pdim">Goal reached. Movie night for two is covered, with RM 1.90 spare.</span>
+              <div class="btn hl" style="margin-top:4px">Spend RM 60 on movie night</div>
+            </div>
+            <span class="lab glab">Your treats</span>
+            <div class="list">
+              <div class="li"><span class="grow stack"><span class="strong">Tealive brown sugar</span><span class="cap dim">every 7 days · last 9 days ago</span><span class="cap good strong">Fits today</span></span><span class="strong money">RM 9.90</span></div>
+              <div class="li"><span class="grow stack"><span class="strong">Big Mac meal</span><span class="cap dim">every 14 days · last 5 days ago</span><span class="cap dim">Next in 9 days</span></span><span class="strong money">RM 13.95</span></div>
+              <div class="li"><span class="grow stack"><span class="strong">GSC movie</span><span class="cap dim">every 30 days · last 40 days ago</span><span class="cap good strong">Fits today</span></span><span class="strong money">RM 18.00</span></div>
+            </div>
+            <span class="lab glab">History</span>
+            <div class="list">
+              <div class="li"><span class="grow stack"><span>Tealive</span><span class="cap dim">7 Oct</span></span><span class="money">−RM 9.90</span></div>
+            </div>
+          </div>
+          <nav class="tabs" data-on="treats"></nav>
+          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
         </div>
       </figure>
 
@@ -842,7 +1059,16 @@ body {
         <div class="phone">
           <div class="sb"><span>9:41</span><i></i></div>
           <h3 class="lt" style="padding-top:48px">Treats</h3>
-          <div class="scroll"><div class="card panel"><span class="lab">Treat jar</span><span class="hero">RM&nbsp;8.50</span></div></div>
+          <div class="scroll"><div class="card panel" style="gap:6px">
+              <span class="lab">Treat jar</span>
+              <div class="row start" style="flex-wrap:nowrap;gap:16px;align-items:flex-end">
+                <svg width="112" height="140" viewBox="0 0 120 150" aria-hidden="true" style="flex:none"><defs><clipPath id="jarclip4"><path d="M36 24h48v8c14 5 20 14 20 28v72c0 8-6 14-14 14H30c-8 0-14-6-14-14V60c0-14 6-23 20-28z"/></clipPath></defs><path d="M36 24h48v8c14 5 20 14 20 28v72c0 8-6 14-14 14H30c-8 0-14-6-14-14V60c0-14 6-23 20-28z" fill="#ffffff" fill-opacity=".1"/><g clip-path="url(#jarclip4)"><path d="M0 133.5q12.5-5 25 0t25 0t25 0t25 0t25 0V150H0z" fill="#eeff5a"/></g><path d="M20 58h80" stroke="#c9d2ff" stroke-width="1.5" stroke-dasharray="4 4"/><path d="M94 124.0h8" stroke="#f4f6ff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/><path d="M94 102.0h8" stroke="#f4f6ff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/><path d="M94 80.0h8" stroke="#f4f6ff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/><path d="M36 24h48v8c14 5 20 14 20 28v72c0 8-6 14-14 14H30c-8 0-14-6-14-14V60c0-14 6-23 20-28z" fill="none" stroke="#f4f6ff" stroke-width="3" stroke-linejoin="round"/><rect x="30" y="8" width="60" height="16" rx="5" fill="#f4f6ff"/><path d="M38 16h44" stroke="#1f3fd8" stroke-opacity=".35" stroke-width="2" stroke-linecap="round"/></svg>
+                <div class="stack" style="gap:2px;padding-bottom:4px"><span class="cap pdim">Goal</span><span class="strong">Movie night for two</span><span class="money">RM 60</span><span class="cap pdim" style="margin-top:6px">14% full</span></div>
+              </div>
+              <span class="hero">RM&nbsp;8.50</span>
+              <span class="cap pdim"></span>
+              
+            </div></div>
           <div class="scrim"></div>
           <div class="sheet" style="top:380px">
             <div class="grab"></div>
@@ -862,8 +1088,12 @@ body {
           <div class="navbar" style="justify-content:flex-end"><span class="tbtn" style="padding-right:8px">Edit</span></div>
           <h3 class="lt">Treats</h3>
           <div class="scroll">
-            <div class="card panel">
+            <div class="card panel" style="gap:6px">
               <span class="lab">Treat jar</span>
+              <div class="row start" style="flex-wrap:nowrap;gap:16px;align-items:flex-end">
+                <svg width="112" height="140" viewBox="0 0 120 150" aria-hidden="true" style="flex:none"><defs><clipPath id="jarclip2"><path d="M36 24h48v8c14 5 20 14 20 28v72c0 8-6 14-14 14H30c-8 0-14-6-14-14V60c0-14 6-23 20-28z"/></clipPath></defs><path d="M36 24h48v8c14 5 20 14 20 28v72c0 8-6 14-14 14H30c-8 0-14-6-14-14V60c0-14 6-23 20-28z" fill="#ffffff" fill-opacity=".1"/><g clip-path="url(#jarclip2)"></g><path d="M20 58h80" stroke="#c9d2ff" stroke-width="1.5" stroke-dasharray="4 4"/><path d="M94 124.0h8" stroke="#f4f6ff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/><path d="M94 102.0h8" stroke="#f4f6ff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/><path d="M94 80.0h8" stroke="#f4f6ff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/><path d="M36 24h48v8c14 5 20 14 20 28v72c0 8-6 14-14 14H30c-8 0-14-6-14-14V60c0-14 6-23 20-28z" fill="none" stroke="#f4f6ff" stroke-width="3" stroke-linejoin="round"/><rect x="30" y="8" width="60" height="16" rx="5" fill="#f4f6ff"/><path d="M38 16h44" stroke="#1f3fd8" stroke-opacity=".35" stroke-width="2" stroke-linecap="round"/></svg>
+                <div class="stack" style="gap:2px;padding-bottom:4px"><span class="cap pdim">No goal yet</span><span class="cap pdim" style="max-width:150px">Pick something to fill it for, like a concert.</span><span class="tbtn cap" style="font-size:14px;min-height:44px">Set a goal</span></div>
+              </div>
               <span class="hero">RM&nbsp;0</span>
               <span class="cap pdim">Leftover budget lands here at the end of each month.</span>
               <div class="btn hl" style="margin-top:4px">Add to jar</div>
@@ -876,7 +1106,7 @@ body {
             <span class="tbtn" style="align-self:center"><svg class="ic"><use href="#i-plus"/></svg>&nbsp;Add a treat</span>
           </div>
           <nav class="tabs" data-on="treats"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="ic"><use href="#i-chat"/></svg></span>
+          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
         </div>
       </figure>
     </div>
@@ -1210,7 +1440,7 @@ body {
         <p class="job">Ask or add in plain words, from anywhere.</p>
       </div>
       <ul class="decide">
-        <li><b>Floating button:</b> 56 pt cobalt circle, bottom right, 16 pt above the tab bar, with a shadow. In dark mode cobalt on night is only 2.4:1, so it gets a 1.5 pt <code>onPanelDim</code> ring (12:1). Hidden on Home (the capture bar does this job), Can I afford it?, Wrapped, and whenever a sheet or keyboard is up.</li>
+        <li><b>Floating button:</b> Bud on a 56 pt cobalt circle, bottom right, 16 pt above the tab bar, with a shadow. In dark mode cobalt on night is only 2.4:1, so it gets a 1.5 pt <code>onPanelDim</code> ring (12:1). Hidden on Home (the capture bar does this job), Can I afford it?, Wrapped, and whenever a sheet or keyboard is up.</li>
         <li><b>Bottom sheet</b> (<code>radius.lg</code>) at the medium detent, drag up for full height. Native form sheet, so VoiceOver focus and swipe-to-close come for free.</li>
         <li><b>Answers reuse the app’s rules:</b> “can I afford” runs the same verdict as screen 3; quick text saves with Undo inline. Rules decide; the AI only writes the sentence.</li>
         <li><b>Asks first when unsure</b> (splits, odd amounts), as the spec says, with two buttons instead of guessing.</li>
@@ -1227,7 +1457,7 @@ body {
           <div class="scrim"></div>
           <div class="sheet" style="top:200px;padding-bottom:30px">
             <div class="grab"></div>
-            <div class="row"><span class="heading">Ask Senbud</span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
+            <div class="row"><span class="row start" style="gap:10px;flex-wrap:nowrap"><svg class="bud" width="32" height="32" aria-hidden="true"><use href="#bud"/></svg><span class="heading">Ask Senbud</span></span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
             <div class="chat">
               <span class="bubble me">can I afford a RM 45 ticket on saturday?</span>
               <span class="bubble bot">Yes! You’d still have <b class="money">RM 22.75</b> a day till the 31st.<br><span class="cap dim">= 4.5 hours of work</span></span>
@@ -1253,7 +1483,7 @@ body {
           <div class="scrim"></div>
           <div class="sheet" style="top:200px;padding-bottom:30px">
             <div class="grab"></div>
-            <div class="row"><span class="heading">Ask Senbud</span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
+            <div class="row"><span class="row start" style="gap:10px;flex-wrap:nowrap"><svg class="bud" width="32" height="32" aria-hidden="true"><use href="#bud-think"/></svg><span class="heading">Ask Senbud</span></span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
             <div class="chat">
               <span class="bubble me">badminton court 32 split with aiman</span>
               <span class="bubble bot">Split <span class="money">RM 32</span> evenly? You’d spend <span class="money">RM 16</span>, and Aiman would owe you <span class="money">RM 16</span>.</span>
@@ -1277,7 +1507,7 @@ body {
           <div class="scrim"></div>
           <div class="sheet" style="top:330px;padding-bottom:30px">
             <div class="grab"></div>
-            <div class="row"><span class="heading">Ask Senbud</span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
+            <div class="row"><span class="row start" style="gap:10px;flex-wrap:nowrap"><svg class="bud" width="32" height="32" aria-hidden="true"><use href="#bud-oops"/></svg><span class="heading">Ask Senbud</span></span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
             <div class="chat">
               <span class="bubble me">how much on grab this month</span>
               <span class="bubble bot">AI is off, so I can’t answer questions. Quick adds still work, like “kopi 4.50”.</span>
@@ -1300,7 +1530,7 @@ body {
           <div class="scrim"></div>
           <div class="sheet" style="top:330px;padding-bottom:30px">
             <div class="grab"></div>
-            <div class="row"><span class="heading">Ask Senbud</span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
+            <div class="row"><span class="row start" style="gap:10px;flex-wrap:nowrap"><svg class="bud" width="32" height="32" aria-hidden="true"><use href="#bud-oops"/></svg><span class="heading">Ask Senbud</span></span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
             <div class="chat">
               <span class="bubble me">how much on grab this month</span>
               <span class="bubble bot">Can’t reach Senbud right now. Anything you add is still saved on your phone.</span>
@@ -1368,13 +1598,22 @@ body {
         <div class="demo"><div class="card panel" style="gap:6px"><div class="track"><i style="width:36%"></i></div><div class="track"><i class="close" style="width:90%"></i></div><div class="track"><i class="over" style="width:100%"></i></div></div></div>
       </div>
       <div class="spec">
-        <h3><code>PersonToggle</code> + <code>Avatar</code></h3>
-        <p>48 pt circle with initials. Off: outline, dim text. On: <code>accent</code> fill. Role <code>checkbox</code>, label “Aiman had Roti canai”. Avatar is the same circle on <code>surfaceSunken</code>, 40 pt, not tappable on its own.</p>
-        <div class="demo"><div class="row start" style="gap:8px"><span class="who on">Me</span><span class="who">A</span><span class="who on">S</span><span class="avatar">W</span></div></div>
+        <h3><code>PersonTabs</code> + <code>ClaimRow</code></h3>
+        <p>Split step 2. Tabs (52 pt, running totals) pick a person; full-width 52 pt rows on the receipt claim items for them, with a checkbox and the owners’ initials. Unassigned rows are hatched amber. Replaces the old grid of per-item circles.</p>
+        <div class="demo"><div class="ptabs"><span class="ptab"><b>You</b><span class="money">RM 12.00</span></span><span class="ptab on"><b>Sarah</b><span class="money">RM 10.00</span></span></div></div>
+      </div>
+      <div class="spec">
+        <h3><code>TreatJar</code></h3>
+        <p>The Treats hero. A jar on cobalt that fills with highlighter toward a goal; coins show through, ticks at quarters, dashed goal line, a little overflow when full. Needs a jar goal (<code>goalCents</code>).</p>
+      </div>
+      <div class="spec">
+        <h3><code>Bud</code></h3>
+        <p>The assistant mascot in four faces (happy, thinking, oops, yay). Decorative, same in both themes, never in copy. Lives in the assistant button, the sheet header, Welcome and empty states.</p>
+        <div class="demo"><div class="row start" style="gap:12px"><svg class="bud" width="40" height="40" aria-hidden="true"><use href="#bud"/></svg><svg class="bud" width="40" height="40" aria-hidden="true"><use href="#bud-think"/></svg><svg class="bud" width="40" height="40" aria-hidden="true"><use href="#bud-oops"/></svg><svg class="bud" width="40" height="40" aria-hidden="true"><use href="#bud-yay"/></svg></div></div>
       </div>
       <div class="spec">
         <h3><code>AssistantFab</code></h3>
-        <p>56 pt <code>panel</code> circle, chat glyph in <code>onPanel</code>, <code>float</code> shadow. Dark mode adds a 1.5 pt <code>onPanelDim</code> ring (cobalt on night is 2.4:1, below 3:1). Label “Ask Senbud”. Hidden on Home, Can I afford it?, Wrapped, and with a sheet or keyboard up. Lists get a 72 pt bottom inset so the last row clears it.</p>
+        <p>56 pt <code>panel</code> circle with Bud inside, <code>float</code> shadow. Dark mode adds a 1.5 pt <code>onPanelDim</code> ring (cobalt on night is 2.4:1, below 3:1). Label “Ask Senbud”. Hidden on Home, Can I afford it?, Wrapped, and with a sheet or keyboard up. Lists get a 72 pt bottom inset so the last row clears it.</p>
       </div>
       <div class="spec">
         <h3><code>StoryPager</code></h3>
@@ -1416,6 +1655,9 @@ body {
       </div>
     </div>
     <ol class="qs">
+      <li><b>Does Senbud get accounts at all?</b> There’s no login today on purpose (no bank login, no accounts, anonymous Pro). These frames draw a welcome screen and an optional sign-in only for future sync. A real login would change the privacy promise.</li>
+      <li><b>Mascot name.</b> Keep “Bud”, or something else?</li>
+      <li><b>Jar goal.</b> OK to give the treat jar a goal, so it has a size to fill?</li>
       <li><b>Tab bar?</b> Four tabs (Home, Budgets, Friends, Treats) with Activity, Can I afford it?, Wrapped and Settings pushed from them. Or keep today’s single stack with links from Home.</li>
       <li><b>No assistant button on Home?</b> The spec puts it on every screen. Here the capture bar does that job on Home, so there aren’t two “type to Senbud” boxes.</li>
       <li><b>Friends hero in highlighter both ways?</b> Section 4 said good/bad colour. Painting “you owe RM 8” coral reads as a telling-off.</li>
