@@ -29,7 +29,10 @@ export default function Welcome() {
           </Marker>
         </View>
         <Bud size={170} />
-        <T variant="title">Your money buddy</T>
+        {/* Stretched: in a centred column Android measures bold text short and clips the last word. */}
+        <T variant="title" style={{ alignSelf: 'stretch', textAlign: 'center' }}>
+          Your money buddy
+        </T>
         <T tone="textDim" style={{ textAlign: 'center' }}>
           Snap or type what you spend. Senbud tells you what’s safe to spend today and when rent is coming.
         </T>
@@ -43,7 +46,8 @@ export default function Welcome() {
         </View>
       </View>
 
-      <Button title="Get started" onPress={() => router.push('/setup')} />
+      {/* replace, so Welcome never sits behind Setup or Home. */}
+      <Button title="Get started" onPress={() => router.replace('/setup')} />
       <TextButton title="I’ve used Senbud before" onPress={() => setBack((b) => !b)} />
 
       {back && (

@@ -143,7 +143,11 @@ export async function importAll(db: SQLiteDatabase, data: unknown) {
     }
     await db.runAsync('INSERT OR IGNORE INTO treat_jar (id) VALUES (1)');
     const s = b.settings ?? {};
-    for (const k of BACKUP_SETTINGS) if (k in s && plain(s[k])) await db.runAsync(`UPDATE app SET ${k} = ?`, s[k]);
+    for (const k of BACKUP_SETTINGS) {
+      if (!(k in s) || !plain(s[k])) continue;
+      if (k === 'theme' && !['system', 'light', 'dark'].includes(s[k] as string)) continue; // goes to Appearance
+      await db.runAsync(`UPDATE app SET ${k} = ?`, s[k]);
+    }
   });
 }
 
