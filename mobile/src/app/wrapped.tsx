@@ -4,7 +4,7 @@
 import { space } from '@senbud/core/tokens';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ReceiptCard } from '@/art';
@@ -84,7 +84,7 @@ export default function Wrapped() {
         ),
       });
     pages.push(
-      w.saved
+      total <= w.budget
         ? {
             label: `You kept ${fmt(w.saved)} of your budget.`,
             body: (
@@ -197,7 +197,7 @@ export default function Wrapped() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.panel, paddingTop: insets.top + space.sm, paddingBottom: insets.bottom + space.md, paddingHorizontal: space.lg }}>
+    <View style={{ flex: 1, backgroundColor: t.panel, paddingTop: Platform.OS === 'ios' ? space.lg : insets.top + space.sm, paddingBottom: insets.bottom + space.md, paddingHorizontal: space.lg }}>
       <StatusBar style="light" />
       <StoryPager
         title={name}

@@ -393,7 +393,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
   - Bills count as spent, since rent is part of the budget. A weekly budget is scaled to the month (× days ÷ 7).
   - Best streak: the longest run of days that each stayed within the month's budget after bills ÷ days. Days with no spending count.
   - "Top place" is the most repeated label (2+ times); Senbud has no shop names apart from what you type.
-  - The share image is a 9:16 receipt on cobalt, captured with `react-native-view-shot` and shared with `expo-sharing`.
+  - The share image is a 9:16 receipt on cobalt, captured with `react-native-view-shot` and shared with `expo-sharing`. Android draws the receipt's dashed rules solid (RN ignores `borderStyle: 'dashed'` on a single border there).
 
 ### 4.8 Settings
 
