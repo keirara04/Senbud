@@ -4,10 +4,12 @@ import type { Category } from '@senbud/core';
 import { categoryColors, motion, palette, radius, space, type Theme, themes, touch, type } from '@senbud/core/tokens';
 import type { ReactNode } from 'react';
 import {
+  Appearance,
   Pressable,
   ScrollView,
   type StyleProp,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   type TextInputProps,
@@ -19,6 +21,8 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+
+import { Bud } from '@/art';
 import { DarkTheme, DefaultTheme } from 'expo-router';
 
 export const useTheme = (): Theme => themes[useColorScheme() === 'dark' ? 'dark' : 'light'];
@@ -97,7 +101,7 @@ export function Button({
 }) {
   const t = useTheme();
   const look: Record<ButtonVariant, { bg: string; pressed: string; fg: string; border?: string }> = {
-    primary: { bg: t.accent, pressed: t.accentPressed, fg: t.onAccent },
+    primary: { bg: t.primary, pressed: t.primaryPressed, fg: t.onPrimary },
     highlight: { bg: t.highlight, pressed: palette.highlighterPressed, fg: t.onHighlight },
     secondary: { bg: 'transparent', pressed: t.surfaceSunken, fg: t.accent, border: t.line },
     danger: { bg: 'transparent', pressed: t.surfaceSunken, fg: t.bad, border: t.line },
@@ -115,7 +119,7 @@ export function Button({
         { backgroundColor: pressed ? v.pressed : v.bg, borderColor: v.border ?? 'transparent', opacity: disabled ? 0.4 : 1 },
       ]}
     >
-      <T variant="bodyStrong" style={{ color: v.fg }}>
+      <T variant="bodyStrong" style={{ color: v.fg, textAlign: 'center' }}>
         {title}
       </T>
     </Pressable>
@@ -192,19 +196,88 @@ export function CategoryChip({ category }: { category: Category }) {
   );
 }
 
-// Budget pace: fill colour carries the status, the label next to it says it in words (never colour alone).
-export function Progress({ value, status }: { value: number; status: 'ok' | 'close' | 'over' }) {
+export const CATEGORIES: Category[] = ['Food', 'Transport', 'Treat', 'Groceries', 'Subscription', 'Other'];
+
+// Category chips as a radio group; the selected chip gets a 2 pt ring in text colour (spec 4.1).
+export function CategoryPicker({ value, onChange }: { value: Category; onChange: (c: Category) => void }) {
   const t = useTheme();
-  const fill = { ok: t.goodFill, close: t.warnFill, over: t.badFill }[status];
+  return (
+    <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+      {CATEGORIES.map((c) => {
+        const on = c === value;
+        return (
+          <Pressable
+            key={c}
+            onPress={() => onChange(c)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: on }}
+            style={{
+              minHeight: touch.min - 8,
+              justifyContent: 'center',
+              paddingHorizontal: space.md,
+              borderRadius: radius.pill,
+              backgroundColor: categoryColors[c].bg,
+              borderWidth: 2,
+              borderColor: on ? t.text : 'transparent',
+            }}
+          >
+            <T variant="bodyStrong" style={{ color: categoryColors[c].fg }}>
+              {c}
+            </T>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+// A friend: initials on a sunken circle. Never a photo, and no contacts access (friends are just names).
+export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
+  const t = useTheme();
+  const initials = name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('');
+  return (
+    <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: t.surfaceSunken, alignItems: 'center', justifyContent: 'center' }}
+    >
+      <T variant="bodyStrong" style={{ fontSize: size * 0.4 }}>
+        {initials}
+      </T>
+    </View>
+  );
+}
+
+// Budget pace: fill colour carries the status, the label next to it says it in words (never colour alone).
+// tone="panel" sits on cobalt: a white 22% track, and coralLight for over (plain coral is 2.7:1 there).
+export function Progress({ value, status, tone }: { value: number; status: 'ok' | 'close' | 'over'; tone?: 'panel' }) {
+  const t = useTheme();
+  const onPanel = tone === 'panel';
+  const fill = { ok: t.goodFill, close: t.warnFill, over: onPanel ? palette.coralLight : t.badFill }[status];
   return (
     <View
       accessible
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: 100, now: Math.round(Math.min(1, value) * 100) }}
-      style={[s.track, { backgroundColor: t.surfaceSunken }]}
+      style={[s.track, { backgroundColor: onPanel ? 'rgba(255, 255, 255, 0.22)' : t.surfaceSunken }]}
     >
       <View style={[s.fill, { width: `${Math.min(100, Math.max(0, value * 100))}%`, backgroundColor: fill }]} />
     </View>
+  );
+}
+
+// A locked Pro option: grey chip with a lock. Opens the paywall; never hides the option it marks.
+export function ProLock({ onPress }: { onPress: () => void }) {
+  const c = categoryColors.Other;
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Senbud Pro, see plans" hitSlop={12}>
+      <View style={[s.chip, { backgroundColor: c.bg, flexDirection: 'row', alignItems: 'center', gap: space.xxs }]}>
+        <Icon name={{ ios: 'lock.fill', android: 'lock' }} size={12} color={c.fg} />
+        <T variant="caption" style={{ color: c.fg, fontWeight: '600' }}>
+          Pro
+        </T>
+      </View>
+    </Pressable>
   );
 }
 
@@ -222,6 +295,121 @@ export function Icon({ name, size = 24, color, label }: { name: IconName; size?:
       accessibilityElementsHidden={!label}
       importantForAccessibility={label ? 'yes' : 'no-hide-descendants'}
     />
+  );
+}
+
+// One row of an inset grouped list (Settings): label, optional value, chevron when it goes somewhere.
+// `first` drops the divider above it. `right` replaces value and chevron (a Switch, say).
+export function ListRow({ label, value, onPress, first, right, tone }: { label: string; value?: string; onPress?: () => void; first?: boolean; right?: ReactNode; tone?: Tone }) {
+  const t = useTheme();
+  const row: ViewStyle = { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: space.sm, borderTopWidth: first ? 0 : 1, borderColor: t.line };
+  // A row with its own control stays a plain View: a Pressable around it would swallow the Switch's
+  // touches and hide it from VoiceOver as a separate element.
+  if (right)
+    return (
+      <View style={row}>
+        <T tone={tone} style={{ flex: 1 }}>
+          {label}
+        </T>
+        {right}
+      </View>
+    );
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={value ? `${label}, ${value}` : label}
+      style={({ pressed }) => [row, { opacity: pressed ? 0.6 : 1 }]}
+    >
+      <T tone={tone} style={{ flex: 1 }}>
+        {label}
+      </T>
+      {value ? <T tone="textDim">{value}</T> : null}
+      {onPress ? <Icon name={{ ios: 'chevron.right', android: 'chevron_right' }} size={14} color={t.textDim} /> : null}
+    </Pressable>
+  );
+}
+
+// A titled group of ListRows on one card, with an optional footnote.
+export function ListGroup({ title, children, footer }: { title: string; children: ReactNode; footer?: string }) {
+  return (
+    <View style={{ gap: space.sm }}>
+      <T variant="label" tone="textDim">
+        {title}
+      </T>
+      <Card style={{ gap: 0, paddingVertical: space.xs }}>{children}</Card>
+      {footer ? (
+        <T variant="caption" tone="textDim">
+          {footer}
+        </T>
+      ) : null}
+    </View>
+  );
+}
+
+// The one AI switch, in Settings and again under "What gets sent".
+// The whole row is the control and the Switch only shows the state: on iOS 26 RN's Switch frame and
+// UIKit's drawing disagree, so taps on the drawn switch never reached it. Also one VoiceOver element.
+export function AiSwitch({ value, onChange, first = true }: { value: boolean; onChange: (on: boolean) => void; first?: boolean }) {
+  const t = useTheme();
+  const label = 'Use AI for photos and questions';
+  return (
+    <Pressable
+      onPress={() => onChange(!value)}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
+      accessibilityLabel={label}
+      style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: space.sm, borderTopWidth: first ? 0 : 1, borderColor: t.line, opacity: pressed ? 0.6 : 1 })}
+    >
+      <T style={{ flex: 1 }}>{label}</T>
+      <View pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+        <Switch value={value} trackColor={{ true: t.primary }} />
+      </View>
+    </Pressable>
+  );
+}
+
+// Light / Dark / System from Settings. 'unspecified' hands the choice back to the OS.
+export const applyTheme = (theme: 'system' | 'light' | 'dark') => Appearance.setColorScheme(theme === 'system' ? 'unspecified' : theme);
+
+// Centre of the tab bar: Bud on a raised cobalt circle (56 pt). Opens the assistant; never switches tabs.
+// In dark mode a periwinkle ring keeps the circle visible (cobalt on night is 2.4:1).
+export function BudTab({ onPress }: { onPress: () => void }) {
+  const t = useTheme();
+  const dark = useColorScheme() === 'dark';
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="Ask Bud"
+      style={({ pressed }) => ({ flex: 1, alignItems: 'center', opacity: pressed ? 0.8 : 1 })}
+    >
+      <View
+        style={{
+          width: 56,
+          height: 56,
+          // Raised 12 pt, not the spec's 22: touches above the tab bar's own bounds never reach the button.
+          marginTop: -12,
+          borderRadius: 28,
+          backgroundColor: t.panel,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: dark ? 1.5 : 0,
+          borderColor: t.onPanelDim,
+          shadowColor: '#000',
+          shadowOpacity: 0.2,
+          shadowRadius: 6,
+          shadowOffset: { width: 0, height: 3 },
+          elevation: 4,
+        }}
+      >
+        <Bud size={38} />
+      </View>
+      <T variant="label" tone="textDim" style={{ fontSize: 11, textTransform: 'none', letterSpacing: 0, marginTop: 2 }}>
+        Bud
+      </T>
+    </Pressable>
   );
 }
 
@@ -272,7 +460,8 @@ const s = StyleSheet.create({
   page: { padding: space.md, gap: space.md, flexGrow: 1 },
   card: { borderRadius: radius.md, padding: space.md, gap: space.sm },
   // Wraps so large accessibility text pushes items onto a new line instead of off screen.
-  row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
+  // alignContent: wrapped rows with a minHeight otherwise sit at the top of it.
+  row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', alignContent: 'center', gap: space.sm },
   button: { minHeight: touch.min, borderRadius: radius.sm, borderWidth: 1, paddingHorizontal: space.md, alignItems: 'center', justifyContent: 'center' },
   textButton: { minHeight: touch.min, justifyContent: 'center', paddingHorizontal: space.xs },
   input: { minHeight: touch.min, borderRadius: radius.sm, borderWidth: 1, paddingHorizontal: space.sm + space.xs },

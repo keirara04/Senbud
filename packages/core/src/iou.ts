@@ -38,3 +38,17 @@ export const settleUp = (ious: Iou[], friend: string) =>
 // IOUs still unpaid after `days` days (spec 5: nudge for one older than 7 days).
 export const staleIous = (ious: Iou[], today: IsoDate, days = 7) =>
   ious.filter((i) => !i.paid && daysBetween(i.date, today) > days);
+
+// Split step 2 (design system 4.5): each item belongs to the people who had it; shared items split
+// evenly among them. Leftover cents from uneven splits go to the payer, so shares add up exactly.
+export function splitByItems<P extends string>(items: { cents: number; owners: P[] }[], people: readonly P[], payer: P): Record<P, number> {
+  const out = Object.fromEntries(people.map((p) => [p, 0])) as Record<P, number>;
+  for (const it of items) {
+    const owners = it.owners.filter((o) => people.includes(o));
+    if (!owners.length) continue;
+    const each = Math.floor(it.cents / owners.length);
+    for (const o of owners) out[o] += each;
+    out[payer] += it.cents - each * owners.length;
+  }
+  return out;
+}

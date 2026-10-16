@@ -2,6 +2,7 @@
 export * from "./budget";
 export * from "./dates";
 export * from "./iou";
+export * from "./nudge";
 export * from "./subscriptions";
 export type * from "./types";
 
@@ -91,4 +92,39 @@ export function splitBill<P extends string>(
   for (const p of people) out[p] += each;
   out[payer] += shared - each * people.length;
   return out;
+}
+
+// "Export spending (CSV)": one row per expense, amounts in major units, labels quoted when they need it.
+const csvCell = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+export const toCsv = (txns: import("./types").Transaction[], currency: string) =>
+  ["date,amount,currency,label,category,source", ...txns.map((x) => [x.date, String(x.cents / 100), currency, csvCell(x.label), x.category, x.source ?? "manual"].join(","))].join("\n");
+
+// What Bud does with a line typed into the assistant, decided by rules, never by AI: a price check, a
+// look at the month, a split, quick adds, or a question that needs AI ("ask").
+export type Intent =
+  | { kind: "afford"; amount?: number; label: string }
+  | { kind: "month" }
+  | { kind: "split"; amount?: number; label: string; people: string[] }
+  | { kind: "add"; items: Item[] }
+  | { kind: "ask" };
+
+const article = (s: string) => s.replace(/^(a|an|the|my)\s+/i, "").replace(/^\p{L}/u, (c) => c.toUpperCase());
+const QUESTION = /\?\s*$|^(can|could|should|how|what|why|when|where|is|am|do|does|did|will)\b/i;
+
+export function readIntent(text: string): Intent {
+  const line = text.trim();
+  if (/\bafford\b|\b(can|could|should) i (buy|get)\b/i.test(line)) {
+    const [item] = parseSpending(line.replace(/\b(can|could|should)\s+i\s+(afford|buy|get)\b|\bafford\b/i, " "));
+    return item ? { kind: "afford", amount: item.amount, label: article(item.label) } : { kind: "afford", label: "" };
+  }
+  if (/\bsplit\b/i.test(line)) {
+    const [before, after = ""] = line.split(/\bwith\b/i);
+    const people = after.split(/,|\band\b|&/i).map((p) => p.replace(/[^\p{L}\s'-]/gu, "").trim()).filter(Boolean);
+    const [item] = parseSpending(before.replace(/\bsplit\b/gi, " "));
+    return { kind: "split", amount: item?.amount, label: item ? article(item.label) : "", people: people.map(article) };
+  }
+  if (/\bhow(['’]?s| is| am)\b.*\b(month|week|doing|budget)\b|\bwhere did\b.*\bgo\b|\bhow much (is )?left\b/i.test(line)) return { kind: "month" };
+  if (QUESTION.test(line)) return { kind: "ask" };
+  const items = parseSpending(line);
+  return items.length ? { kind: "add", items } : { kind: "ask" };
 }

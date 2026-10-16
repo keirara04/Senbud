@@ -16,6 +16,7 @@ import { Button, Card, CategoryChip, Row, Screen, T, UndoBar, useTheme } from '@
 type Step =
   | { kind: 'loading' }
   | { kind: 'pro' }
+  | { kind: 'aiOff' }
   | { kind: 'consent' }
   | { kind: 'pick'; error?: string }
   | { kind: 'reading' }
@@ -57,7 +58,7 @@ export default function ReceiptScreen() {
         } catch {}
       }
       setApp(a);
-      setStep(!a.pro ? { kind: 'pro' } : a.aiConsentAt ? { kind: 'pick' } : { kind: 'consent' });
+      setStep(!a.pro ? { kind: 'pro' } : !a.aiEnabled ? { kind: 'aiOff' } : a.aiConsentAt ? { kind: 'pick' } : { kind: 'consent' });
       })();
     }, [db, step.kind]),
   );
@@ -135,6 +136,16 @@ export default function ReceiptScreen() {
       </Screen>
     );
 
+  if (step.kind === 'aiOff')
+    return (
+      <Screen>
+        <T variant="title">AI is off</T>
+        <T tone="textDim">Reading a receipt needs AI. You turned it off in Settings, so nothing is sent.</T>
+        <Button title="Turn it on in Settings" onPress={() => router.navigate('/settings')} />
+        <Button title="Type it instead" variant="secondary" onPress={() => router.back()} />
+      </Screen>
+    );
+
   if (step.kind === 'consent')
     return (
       <Screen>
@@ -204,6 +215,20 @@ export default function ReceiptScreen() {
           title={kept.length ? `Add ${kept.length} ${kept.length === 1 ? 'item' : 'items'}, ${fmt(kept.reduce((s, i) => s + i.amount, 0))}` : 'Nothing selected'}
           disabled={!kept.length}
           onPress={() => save(receipt, keep)}
+        />
+        <Button
+          title="Split this with friends"
+          variant="secondary"
+          disabled={!kept.length}
+          onPress={() =>
+            router.push({
+              pathname: '/split',
+              params: {
+                merchant: receipt.merchant ?? undefined,
+                items: JSON.stringify(kept.map((i) => ({ label: i.label, cents: Math.round(i.amount * 100), category: i.category }))),
+              },
+            })
+          }
         />
         <Button title="Try another photo" variant="secondary" onPress={() => setStep({ kind: 'pick' })} />
       </Screen>
