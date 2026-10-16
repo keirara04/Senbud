@@ -36,7 +36,7 @@ export default function Home() {
   useEffect(() => () => clearTimeout(undoTimer.current), []);
 
   if (m === undefined) return null;
-  if (m === null) return <Redirect href="/setup" />;
+  if (m === null) return <Redirect href="/welcome" />;
 
   const { setup, txns, safe, status, fmt, day } = m;
   const { locale } = setup.profile;

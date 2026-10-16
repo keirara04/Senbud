@@ -22,10 +22,12 @@ export default function SetupScreen() {
   const [dueDay, setDueDay] = useState('1');
   const [currency, setCurrency] = useState(device.currencyCode ?? 'USD');
   const [errors, setErrors] = useState<Errors>({});
+  const [firstRun, setFirstRun] = useState(true);
 
   useEffect(() => {
     loadSetup(db).then((s) => {
       if (!s) return;
+      setFirstRun(false);
       setKind(s.budget.period.kind);
       setLimit(fromCents(s.budget.cents));
       setCurrency(s.profile.currency);
@@ -53,8 +55,8 @@ export default function SetupScreen() {
       rent: rentCents > 0 ? { name: 'Rent', cents: rentCents, dueDay: day } : null,
       profile: { currency: currency.toUpperCase(), locale: device.languageTag },
     });
-    // Opened from Home: go back. Redirected here on first run: there's nothing behind us.
-    if (router.canGoBack()) router.back();
+    // First run comes from Welcome, which mustn't stay behind Home. Otherwise go back to where we came from.
+    if (!firstRun && router.canGoBack()) router.back();
     else router.replace('/');
   }
 

@@ -2,25 +2,17 @@
 // No accounts: a backup file is how data moves to a new phone.
 import { money, toCsv } from '@senbud/core';
 import { space } from '@senbud/core/tokens';
-import { File, Paths } from 'expo-file-system';
 import { router, useFocusEffect } from 'expo-router';
-import * as Sharing from 'expo-sharing';
 import { useSQLiteContext } from 'expo-sqlite';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useState } from 'react';
 import { Alert, Linking, View } from 'react-native';
 import Purchases from 'react-native-purchases';
 
-import { type AppState, eraseAll, exportAll, importAll, listTransactions, loadApp, loadSetup, setAiEnabled, setPro, type Setup, setTheme, type Theme, today } from '@/db';
-import { hasPro, PRIVACY, purchasesReady, TERMS } from '@/purchases';
+import { restoreBackup, shareFile } from '@/backup';
+import { type AppState, eraseAll, exportAll, listTransactions, loadApp, loadSetup, setAiEnabled, type Setup, setTheme, type Theme, today } from '@/db';
+import { PRIVACY, purchasesReady, restorePro, TERMS } from '@/purchases';
 import { AiSwitch, applyTheme, Button, Card, ListGroup, ListRow, Row, Screen, Segmented, T, TextButton } from '@/ui';
-
-async function shareFile(name: string, content: string, mimeType: string, UTI: string) {
-  const file = new File(Paths.cache, name);
-  file.create({ overwrite: true });
-  await file.write(content);
-  await Sharing.shareAsync(file.uri, { mimeType, UTI, dialogTitle: name });
-}
 
 export default function Settings() {
   const db = useSQLiteContext();
@@ -65,44 +57,9 @@ export default function Settings() {
     await shareFile(`senbud-backup-${today()}.json`, JSON.stringify(await exportAll(db)), 'application/json', 'public.json');
   }
 
-  async function restoreBackup() {
-    const picked = await File.pickFileAsync({ mimeTypes: 'application/json' });
-    if (picked.canceled) return;
-    let data: unknown;
-    try {
-      data = JSON.parse(await picked.result.text());
-    } catch {
-      return Alert.alert('That file isn’t a Senbud backup', 'Pick the .json file from Back up everything.');
-    }
-    Alert.alert('Replace everything on this phone?', 'Your expenses, budget, IOUs and treats here are swapped for the ones in the backup.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Restore',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await importAll(db, data);
-          } catch (e) {
-            return Alert.alert('Couldn’t restore', e instanceof Error && e.message.includes('newer') ? 'This backup is from a newer Senbud. Update the app, then try again.' : 'That file isn’t a Senbud backup.');
-          }
-          applyTheme((await loadApp(db)).theme);
-          await load();
-          Alert.alert('Restored', 'Everything from the backup is on this phone now.');
-        },
-      },
-    ]);
-  }
-
   async function restorePurchases() {
-    if (!purchasesReady()) return Alert.alert('Not available', 'Purchases aren’t set up in this build.');
-    try {
-      const pro = hasPro(await Purchases.restorePurchases());
-      await setPro(db, pro);
-      await load();
-      Alert.alert(pro ? 'Senbud Pro restored' : 'Nothing to restore', pro ? undefined : 'No Senbud Pro purchase found on this Apple or Google account.');
-    } catch {
-      Alert.alert('Couldn’t reach the store', 'Try again in a moment.');
-    }
+    await restorePro(db);
+    await load();
   }
 
   function erase() {
@@ -151,7 +108,7 @@ export default function Settings() {
       <ListGroup title="Your data" footer="A backup is how your data moves to a new phone. Senbud has no account to sync.">
         <ListRow first label="Export spending (CSV)" onPress={exportCsv} />
         <ListRow label="Back up everything" onPress={backUp} />
-        <ListRow label="Restore from a backup" onPress={restoreBackup} />
+        <ListRow label="Restore from a backup" onPress={() => restoreBackup(db, load)} />
       </ListGroup>
 
       <View style={{ gap: space.sm }}>

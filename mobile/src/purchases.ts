@@ -1,10 +1,10 @@
 // Senbud Pro through RevenueCat (App Store / Play Billing). No accounts: RevenueCat makes an anonymous id,
 // and Restore works through the person's Apple or Google account. The `pro` column in SQLite is a cache
 // of the entitlement, so Pro keeps working offline.
-import { useSQLiteContext } from 'expo-sqlite';
+import { type SQLiteDatabase, useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Platform } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import Purchases, { type CustomerInfo, LOG_LEVEL } from 'react-native-purchases';
 
 import { loadApp, setPro } from '@/db';
@@ -57,6 +57,23 @@ export function ProSync() {
     };
   }, [db]);
   return null;
+}
+
+/** "Restore purchases" outside the paywall (Settings, Welcome): ask the store, cache it, say what happened. */
+export async function restorePro(db: SQLiteDatabase): Promise<boolean> {
+  if (!purchasesReady()) {
+    Alert.alert('Not available', 'Purchases aren’t set up in this build.');
+    return false;
+  }
+  try {
+    const pro = hasPro(await Purchases.restorePurchases());
+    await setPro(db, pro);
+    Alert.alert(pro ? 'Senbud Pro restored' : 'Nothing to restore', pro ? undefined : 'No Senbud Pro purchase found on this Apple or Google account.');
+    return pro;
+  } catch {
+    Alert.alert('Couldn’t reach the store', 'Try again in a moment.');
+    return false;
+  }
 }
 
 /** The cached Pro flag (kept fresh by ProSync), re-read whenever the screen gains focus. */
