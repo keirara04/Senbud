@@ -1,4 +1,9 @@
 // Senbud's shared money logic, used by web and mobile. Pure functions: no AI, no network, no platform APIs.
+export * from "./budget";
+export * from "./dates";
+export * from "./iou";
+export * from "./subscriptions";
+export type * from "./types";
 
 export type Category = "Food" | "Transport" | "Treat" | "Groceries" | "Subscription" | "Other";
 
