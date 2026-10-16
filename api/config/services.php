@@ -28,6 +28,13 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // Receipt reading. The key stays on this server; the app never sees it.
+    'openrouter' => [
+        'key' => env('OPENROUTER_API_KEY'),
+        'model' => env('OPENROUTER_MODEL', 'google/gemini-3-flash-preview'),
+        'url' => env('OPENROUTER_URL', 'https://openrouter.ai/api/v1/chat/completions'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
