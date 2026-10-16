@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { afford, hoursOfWork, parseSpending } from "./demo";
+import { afford, hoursOfWork, parseSpending, untilPayday } from "./demo";
 
 describe("parseSpending", () => {
   it("splits a quick-add line into categorised items", () => {
@@ -69,5 +69,24 @@ describe("splitBill", async () => {
   });
   it("splits by item with shared lines three ways", () => {
     expect(splitBill(bill, "items")).toEqual({ You: 1200 + 384, Jordan: 1000 + 383, Sarah: 383 });
+  });
+});
+
+describe("untilPayday", () => {
+  it("spreads what's left after bills and savings until payday", () => {
+    expect(untilPayday({ balance: 640, bills: 250, keep: 50, days: 14 })).toEqual({ days: 14, perDay: 24.28, perWeek: 170, short: 0 });
+  });
+
+  it("gives the total, not a weekly rate, when payday is under a week away", () => {
+    expect(untilPayday({ balance: 100, bills: 0, keep: 0, days: 3 })).toMatchObject({ perDay: 33.33, perWeek: 100 });
+  });
+
+  it("reports the shortfall instead of a negative budget", () => {
+    expect(untilPayday({ balance: 200, bills: 250, keep: 20, days: 10 })).toEqual({ days: 10, perDay: 0, perWeek: 0, short: 70 });
+  });
+
+  it("treats payday today or a fraction of a day as one day", () => {
+    expect(untilPayday({ balance: 50, bills: 0, keep: 0, days: 0 }).days).toBe(1);
+    expect(untilPayday({ balance: 50, bills: 0, keep: 0, days: 2.2 }).days).toBe(3);
   });
 });
