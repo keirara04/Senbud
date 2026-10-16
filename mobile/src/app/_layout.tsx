@@ -70,6 +70,11 @@ function ThemeSync() {
 export default function RootLayout() {
   const turn = useDatabaseTurn();
   const theme = useNavigationTheme();
+  // Web: the strip behind the iPhone status bar (see +html.tsx) is the page background, so it follows
+  // the app's Light / Dark choice rather than staying night.
+  useEffect(() => {
+    if (Platform.OS === 'web') document.body.style.backgroundColor = theme.colors.background;
+  }, [theme.colors.background]);
   if (turn !== 'mine') return turn === 'waiting' ? <OpenElsewhere /> : null;
   return (
     <ThemeProvider value={theme}>

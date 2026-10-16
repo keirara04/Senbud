@@ -1,4 +1,5 @@
 import { router, Tabs } from 'expo-router';
+import { Platform } from 'react-native';
 
 import { useLeftoverCheck } from '@/money';
 import { BudTab, Icon, type IconName, useTheme } from '@/ui';
@@ -19,7 +20,8 @@ export default function TabsLayout() {
         headerShadowVisible: false,
         tabBarActiveTintColor: t.accent,
         tabBarInactiveTintColor: t.textDim,
-        tabBarStyle: { backgroundColor: t.surface, borderTopColor: t.line },
+        // Web gets no safe-area inset from React Navigation, and its 49 pt default clips the labels.
+        tabBarStyle: { backgroundColor: t.surface, borderTopColor: t.line, ...(Platform.OS === 'web' && { height: 56 }) },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >
