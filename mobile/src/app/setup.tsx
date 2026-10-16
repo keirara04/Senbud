@@ -97,6 +97,9 @@ export default function SetupScreen() {
 
       <Card>
         <Field label="Currency" value={currency} onChangeText={setCurrency} autoCapitalize="characters" maxLength={3} error={errors.currency} />
+        <T variant="caption" tone="textDim">
+          Changing it relabels what you’ve saved; amounts aren’t converted.
+        </T>
       </Card>
 
       <Button title="Save" onPress={save} />

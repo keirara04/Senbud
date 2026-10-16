@@ -37,6 +37,8 @@ const MIGRATIONS = [
    ALTER TABLE app ADD COLUMN hourly_rate_cents INTEGER;
    ALTER TABLE app ADD COLUMN ai_enabled INTEGER NOT NULL DEFAULT 1;
    ALTER TABLE app ADD COLUMN theme TEXT NOT NULL DEFAULT 'system';`,
+  // 4: Dark is the default look; Light and System stay in Settings.
+  `UPDATE app SET theme = 'dark' WHERE theme = 'system';`,
 ];
 
 export async function migrate(db: SQLiteDatabase) {
@@ -107,7 +109,7 @@ export async function listTransactions(db: SQLiteDatabase, since?: IsoDate): Pro
 export const eraseAll = (db: SQLiteDatabase) =>
   db.execAsync(`DELETE FROM transactions; DELETE FROM budget; DELETE FROM bills; DELETE FROM profile; DELETE FROM app; ${NEW_APP_ROW}
     DELETE FROM category_limits; DELETE FROM treats; DELETE FROM treat_jar_history; DELETE FROM ious; DELETE FROM subscriptions; DELETE FROM rules;
-    UPDATE treat_jar SET balance_cents = 0, goal_name = NULL, goal_cents = NULL;`);
+    UPDATE treat_jar SET balance_cents = 0, goal_name = NULL, goal_cents = NULL; UPDATE app SET theme = 'dark';`);
 
 // "Back up everything": every user table as rows, plus the app settings. Not device_id (a new phone
 // gets its own) and not pro (the store owns that; Restore purchases brings it back).

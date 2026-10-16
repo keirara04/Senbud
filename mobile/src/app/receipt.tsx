@@ -141,7 +141,7 @@ export default function ReceiptScreen() {
       <Screen>
         <T variant="title">AI is off</T>
         <T tone="textDim">Reading a receipt needs AI. You turned it off in Settings, so nothing is sent.</T>
-        <Button title="Turn it on in Settings" onPress={() => router.replace('/settings')} />
+        <Button title="Turn it on in Settings" onPress={() => router.navigate('/settings')} />
         <Button title="Type it instead" variant="secondary" onPress={() => router.back()} />
       </Screen>
     );

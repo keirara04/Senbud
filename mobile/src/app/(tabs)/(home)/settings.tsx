@@ -113,7 +113,7 @@ export default function Settings() {
         style: 'destructive',
         onPress: async () => {
           await eraseAll(db);
-          applyTheme('system');
+          applyTheme('dark');
           router.replace('/');
         },
       },

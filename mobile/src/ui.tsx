@@ -302,23 +302,31 @@ export function Icon({ name, size = 24, color, label }: { name: IconName; size?:
 // `first` drops the divider above it. `right` replaces value and chevron (a Switch, say).
 export function ListRow({ label, value, onPress, first, right, tone }: { label: string; value?: string; onPress?: () => void; first?: boolean; right?: ReactNode; tone?: Tone }) {
   const t = useTheme();
+  const row: ViewStyle = { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: space.sm, borderTopWidth: first ? 0 : 1, borderColor: t.line };
+  // A row with its own control stays a plain View: a Pressable around it would swallow the Switch's
+  // touches and hide it from VoiceOver as a separate element.
+  if (right)
+    return (
+      <View style={row}>
+        <T tone={tone} style={{ flex: 1 }}>
+          {label}
+        </T>
+        {right}
+      </View>
+    );
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={value ? `${label}, ${value}` : label}
-      style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: space.sm, borderTopWidth: first ? 0 : 1, borderColor: t.line, opacity: pressed ? 0.6 : 1 })}
+      style={({ pressed }) => [row, { opacity: pressed ? 0.6 : 1 }]}
     >
       <T tone={tone} style={{ flex: 1 }}>
         {label}
       </T>
-      {right ?? (
-        <>
-          {value ? <T tone="textDim">{value}</T> : null}
-          {onPress ? <Icon name={{ ios: 'chevron.right', android: 'chevron_right' }} size={14} color={t.textDim} /> : null}
-        </>
-      )}
+      {value ? <T tone="textDim">{value}</T> : null}
+      {onPress ? <Icon name={{ ios: 'chevron.right', android: 'chevron_right' }} size={14} color={t.textDim} /> : null}
     </Pressable>
   );
 }
@@ -341,14 +349,24 @@ export function ListGroup({ title, children, footer }: { title: string; children
 }
 
 // The one AI switch, in Settings and again under "What gets sent".
+// The whole row is the control and the Switch only shows the state: on iOS 26 RN's Switch frame and
+// UIKit's drawing disagree, so taps on the drawn switch never reached it. Also one VoiceOver element.
 export function AiSwitch({ value, onChange, first = true }: { value: boolean; onChange: (on: boolean) => void; first?: boolean }) {
   const t = useTheme();
+  const label = 'Use AI for photos and questions';
   return (
-    <ListRow
-      first={first}
-      label="Use AI for photos and questions"
-      right={<Switch value={value} onValueChange={onChange} trackColor={{ true: t.primary }} accessibilityLabel="Use AI for photos and questions" />}
-    />
+    <Pressable
+      onPress={() => onChange(!value)}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
+      accessibilityLabel={label}
+      style={({ pressed }) => ({ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: space.sm, borderTopWidth: first ? 0 : 1, borderColor: t.line, opacity: pressed ? 0.6 : 1 })}
+    >
+      <T style={{ flex: 1 }}>{label}</T>
+      <View pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+        <Switch value={value} trackColor={{ true: t.primary }} />
+      </View>
+    </Pressable>
   );
 }
 

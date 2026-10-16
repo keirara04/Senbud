@@ -7,7 +7,9 @@ import { loadApp, migrate } from '@/db';
 import { ProSync } from '@/purchases';
 import { applyTheme, useNavigationTheme } from '@/ui';
 
-// The Light / Dark / System choice from Settings, applied at launch.
+// Dark by default, from the first frame. ThemeSync then applies the Light / Dark / System choice from Settings.
+applyTheme('dark');
+
 function ThemeSync() {
   const db = useSQLiteContext();
   useEffect(() => {
@@ -23,7 +25,7 @@ export default function RootLayout() {
         <StatusBar style="auto" />
         <ProSync />
         <ThemeSync />
-        <Stack screenOptions={{ headerShadowVisible: false }}>
+        <Stack screenOptions={{ headerShadowVisible: false, headerBackButtonDisplayMode: 'minimal' }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="setup" options={{ title: 'Budget and rent' }} />
           <Stack.Screen name="receipt" options={{ title: 'Receipt' }} />
