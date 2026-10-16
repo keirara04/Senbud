@@ -401,8 +401,8 @@ The voice is a friendly older cousin who's good with money.
 - **Plain words, no finance jargon:** "safe to spend", not "discretionary balance".
 - **Never shames:**
   - "$12 over, no stress."
-  - "Cook tonight? 🍳"
-  - At most one emoji in a line, and only where the spec has one.
+  - "Cook tonight?"
+- **No emoji.** Not in app copy, notifications, share images or docs. Words carry the tone; where a picture helps, use a system icon (SF Symbols via `expo-symbols`, Material on Android) with an accessibility label. Spec copy that has emoji is written without them here.
 - **Numbers carry the message.** Format them through `money(cents / 100, currency, locale)` from the profile, never by hand.
 
 ## 6. Accessibility checklist (every screen)
@@ -417,7 +417,7 @@ The voice is a friendly older cousin who's good with money.
 ## 7. Not done yet (on purpose)
 
 - **Dotted-notebook background and torn receipt edges.** They need `react-native-svg`, which isn't worth adding for decoration yet. Revisit for Wrapped share images.
-- **No custom font, icon set or illustration style yet.** Use emoji sparingly and system symbols when an icon set is chosen. `expo-symbols` is already installed for SF Symbols on iOS.
+- **No custom font, icon set or illustration style yet.** Use system symbols (never emoji) until an icon set is chosen. `expo-symbols` is already installed for SF Symbols on iOS.
 - **In dark mode, `primary` and `highlight` buttons look the same** (both highlighter yellow), so the "single most important action" emphasis disappears at night. Accepted for now. If a screen ever needs both, give dark `primary` its own fill.
 - **Large text checked on iOS only.** At the largest accessibility size on the iPhone 17 simulator, Home and Activity wrap correctly. That's after three fixes: `Row` wraps, inputs drop their fixed line height, and the hero number is capped at 1.3× and shrinks to fit. Android at large font scale is not checked yet.
 - **`money` minor digits:** verified on iOS Hermes (KRW). Android is inferred, since it matched Node in every Phase 0 `Intl` probe.
