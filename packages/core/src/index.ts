@@ -63,9 +63,12 @@ export function afford(price: number, opts: { left: number; daysLeft: number; we
 // Price in hours of work, rounded to the nearest half hour.
 export const hoursOfWork = (price: number, hourly: number) => Math.round((price / hourly) * 2) / 2;
 
+// Whole amounts drop the decimals ("$12"); others show the currency's own minor digits ("$4.50", but
+// "¥5" and "₩33", since JPY and KRW have none).
 export const money = (value: number, currency: string, locale: string) => {
-  const n = Math.round(value * 100) / 100; // float sums like 11.999999999999998 -> 12
-  return n.toLocaleString(locale, { style: "currency", currency, minimumFractionDigits: n % 1 ? 2 : 0 });
+  const digits = new Intl.NumberFormat(locale, { style: "currency", currency }).resolvedOptions().maximumFractionDigits ?? 2;
+  const n = Math.round(value * 10 ** digits) / 10 ** digits; // float sums like 11.999999999999998 -> 12
+  return n.toLocaleString(locale, { style: "currency", currency, minimumFractionDigits: n % 1 ? digits : 0, maximumFractionDigits: digits });
 };
 
 export type BillItem<P extends string> = { label: string; cents: number; owner: P | "Shared" };
