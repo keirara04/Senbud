@@ -117,6 +117,8 @@ export default function Assistant() {
     if (soon) chips.push({ title: 'Next bill?', hint: `${soon.b.name} is due soon`, text: 'When’s the next bill?', send: true });
     if (safe.perDay * periodDays < setup.budget.cents / 2) chips.push({ title: 'Can I afford 20?', hint: 'Today’s a tight one', text: 'Can I afford 20?', send: true });
     if (top && top[1] > 0) chips.push({ title: `How much on ${top[0].toLowerCase()}?`, hint: `This ${unit} so far`, text: `How much on ${top[0].toLowerCase()}?`, send: true });
+    // Two state chips at most, so "How's my month?" always has a place.
+    chips.splice(2);
     chips.push(
       { title: 'Can I afford…', hint: 'Check a price before you pay', text: 'Can I afford ', send: false },
       { title: `How’s my ${unit}?`, hint: 'Where it went, what’s left', text: `How’s my ${unit}?`, send: true },
