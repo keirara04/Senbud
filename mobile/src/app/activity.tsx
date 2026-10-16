@@ -1,14 +1,16 @@
 import { money } from '@senbud/core';
+import { space } from '@senbud/core/tokens';
 import { useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
-import { FlatList, Pressable, Text, View } from 'react-native';
+import { FlatList, Pressable, View } from 'react-native';
 
 import { deleteTransactions, listTransactions, loadSetup, type Profile, type Txn } from '@/db';
-import { c, ui } from '@/ui';
+import { Card, CategoryChip, Row, T, useTheme } from '@/ui';
 
 export default function Activity() {
   const db = useSQLiteContext();
+  const t = useTheme();
   const [txns, setTxns] = useState<Txn[]>([]);
   const [profile, setProfile] = useState<Profile>({ currency: 'USD', locale: 'en-US' });
 
@@ -31,24 +33,44 @@ export default function Activity() {
 
   return (
     <FlatList
+      style={{ backgroundColor: t.bg }}
       contentInsetAdjustmentBehavior="automatic"
-      contentContainerStyle={ui.page}
+      contentContainerStyle={{ padding: space.md, gap: space.sm, flexGrow: 1 }}
       data={txns}
-      keyExtractor={(t) => String(t.id)}
-      ListEmptyComponent={<Text style={ui.dim}>Nothing yet. Type “lunch 12” on Home to add your first expense.</Text>}
+      keyExtractor={(x) => String(x.id)}
+      ListEmptyComponent={
+        <T tone="textDim" style={{ textAlign: 'center', marginTop: space.xl }}>
+          Nothing yet. Type “lunch 12” on Home to add your first expense.
+        </T>
+      }
       renderItem={({ item }) => (
-        <View style={[ui.card, ui.row]}>
-          <View style={{ flex: 1 }}>
-            <Text style={ui.text}>{item.label}</Text>
-            <Text style={ui.dim}>
-              {item.category} · {item.date}
-            </Text>
-          </View>
-          <Text style={[ui.text, { fontVariant: ['tabular-nums'] }]}>{money(item.cents / 100, profile.currency, profile.locale)}</Text>
-          <Pressable onPress={() => remove(item.id)} accessibilityRole="button" accessibilityLabel={`Delete ${item.label}`} hitSlop={12}>
-            <Text style={{ color: c.coral, fontSize: 18 }}>✕</Text>
-          </Pressable>
-        </View>
+        <Card>
+          <Row>
+            <View style={{ flex: 1, gap: space.xs }}>
+              <T variant="bodyStrong">{item.label}</T>
+              <Row style={{ justifyContent: 'flex-start' }}>
+                <CategoryChip category={item.category} />
+                <T variant="caption" tone="textDim">
+                  {item.date}
+                </T>
+              </Row>
+            </View>
+            <T variant="bodyStrong" money>
+              {money(item.cents / 100, profile.currency, profile.locale)}
+            </T>
+            <Pressable
+              onPress={() => remove(item.id)}
+              accessibilityRole="button"
+              accessibilityLabel={`Delete ${item.label}`}
+              hitSlop={14}
+              style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1, padding: space.xs })}
+            >
+              <T variant="heading" tone="bad">
+                ✕
+              </T>
+            </Pressable>
+          </Row>
+        </Card>
       )}
     />
   );

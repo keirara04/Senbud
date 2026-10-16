@@ -8,21 +8,22 @@ import {
   safeToSpend,
   type Transaction,
 } from '@senbud/core';
-import { Link, Redirect, useFocusEffect } from 'expo-router';
+import { motion } from '@senbud/core/tokens';
+import { Redirect, router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { addTransactions, deleteTransactions, listTransactions, loadSetup, type Setup, today, type Txn } from '@/db';
-import { c, ui } from '@/ui';
+import { Card, Field, Progress, Row, Screen, T, TextButton, UndoBar } from '@/ui';
 
-const STATUS_COLOR = { ok: c.mint, close: '#f5c542', over: c.coral };
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export default function Home() {
   const db = useSQLiteContext();
   const [setup, setSetup] = useState<Setup | null | undefined>(undefined);
   const [txns, setTxns] = useState<Txn[]>([]);
   const [text, setText] = useState('');
+  const [hint, setHint] = useState('');
   const [undo, setUndo] = useState<{ ids: number[]; summary: string } | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -45,20 +46,25 @@ export default function Home() {
   const { currency, locale } = setup.profile;
   const fmt = (cents: number) => money(cents / 100, currency, locale);
   const day = today();
-  const safe = safeToSpend({
-    limit: setup.budget.cents,
-    period: setup.budget.period,
-    transactions: txns,
-    bills: setup.rent ? [setup.rent] : [],
-    today: day,
-  });
-  const status = budgetStatus(safe.spent, setup.budget.cents);
-  const fast = aheadOfPace(safe.spent, setup.budget.cents, safe, day);
+  const limit = setup.budget.cents;
+  const unit = setup.budget.period.kind;
+  const safe = safeToSpend({ limit, period: setup.budget.period, transactions: txns, bills: setup.rent ? [setup.rent] : [], today: day });
+  const status = budgetStatus(safe.spent, limit);
   const rent = setup.rent && { ...setup.rent, ...billCountdown(setup.rent, day) };
+
+  // Pace copy from spec 4.2: quiet while on track, a nudge when it isn't.
+  const pace =
+    status === 'over'
+      ? `${fmt(safe.spent - limit)} over, no stress.`
+      : status === 'close'
+        ? `${fmt(limit - safe.spent)} left. Cook tonight? 🍳`
+        : aheadOfPace(safe.spent, limit, safe, day)
+          ? `${fmt(safe.spent)} of ${fmt(limit)} gone and it’s only ${WEEKDAYS[new Date().getDay()]}.`
+          : 'On track.';
 
   async function add() {
     const items = parseSpending(text);
-    if (!items.length) return;
+    if (!items.length) return setHint('Add an amount, like “lunch 12”.');
     const rows: Transaction[] = items.map((i) => ({
       date: day,
       cents: Math.round(i.amount * 100),
@@ -68,9 +74,11 @@ export default function Home() {
     }));
     const ids = await addTransactions(db, rows);
     setText('');
+    setHint('');
     clearTimeout(undoTimer.current);
-    setUndo({ ids, summary: `Added ${rows.length} · ${fmt(rows.reduce((s, r) => s + r.cents, 0))}` });
-    undoTimer.current = setTimeout(() => setUndo(null), 5000);
+    const total = fmt(rows.reduce((s, r) => s + r.cents, 0));
+    setUndo({ ids, summary: rows.length === 1 ? `Added ${rows[0].label}, ${total}` : `Added ${rows.length} items, ${total}` });
+    undoTimer.current = setTimeout(() => setUndo(null), motion.undoMs);
     load();
   }
 
@@ -83,74 +91,63 @@ export default function Home() {
   }
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled">
-      <View style={[ui.card, { backgroundColor: c.panel }]}>
-        <Text style={[ui.label, { color: c.onPanelDim }]}>Safe to spend today</Text>
-        <Text style={{ color: c.hl, fontSize: 48, fontWeight: '800', fontVariant: ['tabular-nums'] }} accessibilityRole="header">
+    <Screen>
+      <Card tone="panel">
+        <T variant="label" tone="onPanelDim">
+          Safe to spend today
+        </T>
+        <T variant="hero" tone="highlight" money accessibilityRole="header">
           {fmt(safe.perDay)}
-        </Text>
-        <Text style={{ color: c.onPanelDim, fontSize: 15 }}>
+        </T>
+        <T variant="caption" tone="onPanelDim">
           {fmt(Math.max(0, safe.left))} left for {safe.daysLeft} {safe.daysLeft === 1 ? 'day' : 'days'}
-        </Text>
-      </View>
+        </T>
+      </Card>
 
       {rent && (
-        <View style={ui.card}>
-          <Text style={ui.text}>
-            🏠 Rent {fmt(rent.cents)} {rent.days === 0 ? 'due today' : `in ${rent.days} ${rent.days === 1 ? 'day' : 'days'}`}
+        <Card>
+          <T>
+            🏠 Rent {fmt(rent.cents)} {rent.days === 0 ? 'is due today' : `in ${rent.days} ${rent.days === 1 ? 'day' : 'days'}`}
             {safe.covered ? ' — you’re covered.' : ' — not covered yet.'}
-          </Text>
-        </View>
+          </T>
+        </Card>
       )}
 
-      <View style={ui.card}>
-        <View style={ui.row}>
-          <Text style={ui.text}>
-            {fmt(safe.spent)} of {fmt(setup.budget.cents)} this {setup.budget.period.kind}
-          </Text>
-          <Text style={ui.dim}>{status === 'over' ? 'Over' : status === 'close' ? 'Close' : 'On track'}</Text>
-        </View>
-        <View style={{ height: 10, borderRadius: 5, backgroundColor: '#e6e8f0', overflow: 'hidden' }}>
-          <View
-            style={{
-              height: 10,
-              width: `${Math.min(100, (safe.spent / setup.budget.cents) * 100)}%`,
-              backgroundColor: STATUS_COLOR[status],
-            }}
-          />
-        </View>
-        {fast && status === 'ok' && <Text style={ui.dim}>Spending is running ahead of the {setup.budget.period.kind}.</Text>}
-      </View>
+      <Card>
+        <Row>
+          <T variant="bodyStrong" money>
+            {fmt(safe.spent)} of {fmt(limit)}
+          </T>
+          <T variant="caption" tone="textDim">
+            this {unit}
+          </T>
+        </Row>
+        <Progress value={safe.spent / limit} status={status} />
+        <T variant="caption" tone={status === 'over' ? 'bad' : status === 'close' ? 'warn' : 'textDim'}>
+          {pace}
+        </T>
+      </Card>
 
-      <View style={ui.card}>
-        <Text style={ui.label}>Quick add</Text>
-        <TextInput
-          style={ui.input}
+      <Card>
+        <Field
+          label="What did you spend?"
           value={text}
-          onChangeText={setText}
+          onChangeText={(v) => {
+            setText(v);
+            setHint('');
+          }}
           onSubmitEditing={add}
           returnKeyType="done"
           placeholder="lunch 12, uber 8"
-          accessibilityLabel="Type what you spent"
+          error={hint}
         />
-        {undo && (
-          <View style={ui.row}>
-            <Text style={ui.dim}>{undo.summary}</Text>
-            <Pressable onPress={undoAdd} accessibilityRole="button" hitSlop={12}>
-              <Text style={ui.link}>Undo</Text>
-            </Pressable>
-          </View>
-        )}
-      </View>
+        {undo && <UndoBar message={undo.summary} onUndo={undoAdd} />}
+      </Card>
 
-      <View style={[ui.row, { justifyContent: 'space-around' }]}>
-        <Link href="/activity" style={ui.link}>
-          Activity
-        </Link>
-        <Link href="/setup" style={ui.link}>
-          Budget & rent
-        </Link>
-      </View>
-    </ScrollView>
+      <Row style={{ justifyContent: 'space-around' }}>
+        <TextButton title="Activity" onPress={() => router.push('/activity')} />
+        <TextButton title="Budget & rent" onPress={() => router.push('/setup')} />
+      </Row>
+    </Screen>
   );
 }
