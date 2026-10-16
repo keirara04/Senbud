@@ -1,0 +1,11 @@
+{
+  "name": "senbud-beta-teaser",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes hyperframes@0.8.165 preview",
+    "check": "npx --yes hyperframes@0.8.165 check",
+    "render": "npx --yes hyperframes@0.8.165 render -o renders/senbud-beta-teaser-9x16.mp4",
+    "sfx": "python3 scripts/make_sfx.py"
+  }
+}
