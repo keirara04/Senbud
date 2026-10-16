@@ -257,6 +257,72 @@ The NativeWind trial is kept on branch `claude/nativewind-v5-trial` (not for mer
 - **App store setup:** the privacy manifest and both stores' data forms.
 - **Google Play closed test:** 12+ testers for 14 days, started as soon as there's a usable build.
 
+### Phase 2 results (16 October 2026)
+Branch `claude/senbud-phase2`.
+
+**Done when:** a receipt photo goes through the consent screen, Laravel and the model, comes back as items, and saves to Activity; Laravel tests pass; the privacy manifest and data-form answers exist; RevenueCat and the closed test are recorded as blocked.
+- **Met on the iOS simulator and the Android emulator,** with one big caveat: the model was a **local stub**, not real OpenRouter (see "Not verified").
+
+**Built**
+- **API: `POST /v1/agent/receipt`** (`api/app/Http/Controllers/ReceiptController.php`, 7 feature tests, 20/20 API tests pass).
+  - **Input:** a JSON body with a base64 image. Not multipart, because a multipart upload makes PHP write a temp file to disk.
+  - **Checks:** JPEG, PNG or WebP only (checked from the bytes); about 4 MB at most.
+  - **Model call:** sent to OpenRouter with a strict JSON schema and `provider: {zdr: true, data_collection: "deny", require_parameters: true}`.
+  - **Output is cleaned** before it reaches the app: unknown categories become Other, bad dates and currencies become null, zero or negative amounts are dropped.
+  - **Rate limits:** 6 a minute and 60 a day per anonymous device id, 200 a day per IP. Laravel hashes the keys.
+  - **Failures:** 503 without a key. 502 on upstream failure, which logs the HTTP status only.
+  - **Default model `google/gemini-3.8-flash`.** Checked against `GET https://openrouter.ai/api/v1/endpoints/zdr`: it has a ZDR endpoint that supports `response_format` and `structured_outputs`. Its ZDR endpoints don't list `temperature`, so the request sends none. Otherwise `require_parameters` would leave nowhere to route and every call would 502. **Re-check this list when you change `OPENROUTER_MODEL`.**
+- **App: the `/receipt` flow** (`mobile/src/app/receipt.tsx`).
+  1. Pro gate.
+  2. Consent screen on first use (App Store 5.1.2). It names Senbud's server, OpenRouter and Google Gemini, and the time of consent is stored.
+  3. Camera, or the system photo picker.
+  4. Resize to 1280 px JPEG with `ImageManipulator.manipulate().resize().renderAsync()` (this also turns HEIC into JPEG).
+  5. Review: tap an item to leave it out. A warning shows when the receipt's currency differs from the profile's.
+  6. Save with `source: "photo"`, using the printed date when it's plausible (within the last 62 days), then show Undo.
+- **Supporting pieces:**
+  - Migration 2 adds an `app` row: an anonymous v4 device id from SQLite's `randomblob`, so no native crypto module is needed; the AI consent time; and `pro`.
+  - "Erase all data" makes a new device id.
+  - A dev-only Pro switch on Setup stands in for RevenueCat.
+- **Store:**
+  - `expo.ios.privacyManifests` in `mobile/app.json`.
+  - Draft privacy-label and Data safety answers in `docs/senbud-store-data-forms.md`.
+
+**Findings**
+- **`expo run:ios` doesn't re-run prebuild when `ios/` exists.** New config-plugin settings (here, the image picker's permission strings) never reached `Info.plist`. The app crashed when it opened the picker: *"attempted to access privacy-sensitive data without a usage description"*. After changing plugins or `app.json`, run `npx expo prebuild -p ios` (or `--clean`) before building. Android's `npx expo prebuild -p android` step already covers it.
+- **The system photo picker needs no photo-library permission** on iOS 14+ or Android 13+, because it shares only the chosen photo. Asking anyway made iOS show a full-library prompt, so the app now asks only for the camera.
+- **Port 8000 was taken on this Mac,** so Laravel ran on 8010 and Metro started with `EXPO_PUBLIC_API_URL=http://localhost:8010`. Android reaches it through `adb reverse tcp:8010 tcp:8010`.
+- **Privacy-manifest reasons** were collected from every installed library's manifest. Re-run this after adding native modules:
+  ```bash
+  find node_modules -name PrivacyInfo.xcprivacy | python3 -c "
+  import sys, plistlib, collections
+  agg = collections.defaultdict(set)
+  for f in sys.stdin.read().split():
+      for t in plistlib.load(open(f, 'rb')).get('NSPrivacyAccessedAPITypes', []):
+          agg[t['NSPrivacyAccessedAPIType']].update(t.get('NSPrivacyAccessedAPITypeReasons', []))
+  for k in sorted(agg): print(k, sorted(agg[k]))"
+  ```
+
+**Not verified**
+- **Real OpenRouter was never called,** because no `OPENROUTER_API_KEY` exists yet. Tests and simulators used a local stub that checks the request shape (`zdr`, data URL) and returns fixed items.
+  - Still unknown: real model accuracy on Malaysian receipts, whether the strict schema is honoured, latency, and cost per receipt (a rough guide is the per-token prices on OpenRouter's models page).
+  - To test, put the key in the **main checkout's** `api/.env` and make sure `OPENROUTER_URL` is unset there.
+- No camera capture: the simulator has no camera. Only the picker path is checked.
+
+**Blocked on accounts**
+- **C. Paywall and restore (RevenueCat).**
+  - RevenueCat's **Test Store** needs no Apple or Google accounts, only a RevenueCat project.
+  - **Plan, once its Test Store key is in `mobile/.env.local` as `EXPO_PUBLIC_RC_TEST_KEY`:**
+    1. `npx expo install react-native-purchases react-native-purchases-ui`. Needs 9.5.4 or newer for the Test Store, plus a full native rebuild.
+    2. Call `Purchases.configure()` once in `_layout`, without an `appUserID`, only when a key exists. Use the **Test Store key only under `__DEV__`**: a release build with it crashes on purpose.
+    3. Add a customer-info listener: `entitlements.active.pro` → `setPro`.
+    4. The "Pro is coming soon" card becomes `RevenueCatUI.presentPaywall()` plus a Restore button.
+    5. Set price, renewal wording and the `/terms` and `/privacy` links in RevenueCat's paywall editor.
+    6. Remove the dev Pro switch.
+  - **Later, for the real stores:**
+    - Apple: an In-App Purchase key (.p8 and Issuer ID) and the Paid Apps agreement.
+    - Google: a service account with Play Console permissions (up to 36 hours to activate) and an uploaded signed build.
+- **E. Google Play closed test:** needs the Play Console account, an EAS build and 12+ testers. It's for you to start.
+
 ### Phase 3: native extras
 - iOS and Android widgets
 - Remote push through Laravel and the Expo push service
@@ -267,7 +333,7 @@ The NativeWind trial is kept on branch `claude/nativewind-v5-trial` (not for mer
 ## 6. Gaps the audit found
 - **The spec contradicts itself.** `docs/senbud-spec.md` section 10 still plans the main app as Next.js `/app/*` with Dexie, Serwist PWA and Web Push. With Expo as the app, those rows are deferred. **Option, not decision:** SDK 58 bundles react-native-web 0.21, so the Expo app could also produce the web version, which would avoid building `/app` twice. The landing page stays in Next.js either way.
 - **Mobile analytics is unresolved.** Plausible has no React Native SDK, and `web/lib/track.ts` is web-only. Pick a privacy-respecting option for the app before launch (**UNVERIFIED** which).
-- **The AI proxy doesn't exist yet.** Phase 2 depends on Laravel's `/v1/agent` endpoint (OpenRouter proxy, no image retention, rate limits), which hasn't been built.
+- ~~**The AI proxy doesn't exist yet.**~~ Built in Phase 2 as `POST /v1/agent/receipt`. It hasn't run against real OpenRouter yet (no key).
 
 ## 7. Open decisions for you
 1. **Styling:** ~~NativeWind v5 or shared tokens plus StyleSheet?~~ Phase 0 recommends shared tokens plus `StyleSheet` (see Phase 0 results). Overrule it if Tailwind class parity with web matters more to you than avoiding the release candidate.
