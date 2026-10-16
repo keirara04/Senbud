@@ -1,4 +1,4 @@
-import { aheadOfPace, billCountdown, type IsoDate, type Nudge, parseSpending, pickNudge, type Transaction } from '@senbud/core';
+import { aheadOfPace, billCountdown, isQuestion, nudgeKey, readIntent, type Transaction } from '@senbud/core';
 import { motion, radius, space } from '@senbud/core/tokens';
 import { Redirect, router, Stack } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -6,35 +6,24 @@ import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { addTransactions, deleteTransactions, listIous, listTreats } from '@/db';
+import { addTransactions, deleteTransactions } from '@/db';
 import { useMoney } from '@/money';
+import { NoteCard, useBudNotes } from '@/notes';
 import { Button, Card, Icon, Progress, Row, T, TextButton, UndoBar, useTheme } from '@/ui';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-// Words that start a question rather than a list of spending ("can I afford…", "how's my month?").
-const QUESTION = /\?\s*$|^(can|could|should|how|what|why|when|is|am|do|does|will)\b/i;
-
-// "Not today" holds for the rest of the day (spec 5: one nudge a day at most); resets on relaunch.
-let nudgeDismissedOn: IsoDate | null = null;
 
 export default function Home() {
   const db = useSQLiteContext();
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const { money: m, reload } = useMoney();
-  const [nudge, setNudge] = useState<Nudge | null>(null);
   const [text, setText] = useState('');
   const [hint, setHint] = useState('');
   const [undo, setUndo] = useState<{ ids: number[]; summary: string } | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  useEffect(() => {
-    if (!m || nudgeDismissedOn === m.day) return setNudge(null);
-    Promise.all([listIous(db), listTreats(db)]).then(([ious, treats]) =>
-      setNudge(pickNudge({ today: m.day, subscriptions: m.subscriptions, ious, treats, safe: m.safe, onTrack: m.onTrack })),
-    );
-  }, [db, m]);
+  const { notes, homeHidden, dismiss } = useBudNotes(m);
   useEffect(() => () => clearTimeout(undoTimer.current), []);
 
   if (m === undefined) return null;
@@ -45,6 +34,8 @@ export default function Home() {
   const limit = setup.budget.cents;
   const unit = setup.budget.period.kind;
   const rent = setup.rent && { ...setup.rent, ...billCountdown(setup.rent, day) };
+  // One note on Home at most (spec 5), and not rent: it has its own card. "Not today" hides Home's for the day.
+  const note = homeHidden ? undefined : notes.find((n) => !(n.kind === 'bill' && n.bill.name === 'Rent'));
   const now = new Date();
   const dateLabel = now.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'short' });
 
@@ -61,15 +52,15 @@ export default function Home() {
   async function submit() {
     const line = text.trim();
     if (!line) return;
-    const items = parseSpending(line);
-    if (!items.length) {
-      if (QUESTION.test(line)) {
-        setText('');
-        return router.push({ pathname: '/assistant', params: { q: line } });
-      }
-      return setHint('Add an amount, like “nasi lemak 6.50”.');
+    // Same rules as Bud: anything but a quick add goes to Bud ("who won the cup in 2022" isn't a 2022
+    // expense); a line that's neither gets a hint.
+    const intent = readIntent(line);
+    if (intent.kind !== 'add') {
+      if (intent.kind === 'ask' && !isQuestion(line)) return setHint('Add an amount, like “nasi lemak 6.50”.');
+      setText('');
+      return router.push({ pathname: '/assistant', params: { q: line } });
     }
-    const rows: Transaction[] = items.map((i) => ({ date: day, cents: Math.round(i.amount * 100), label: i.label, category: i.category, source: 'text' }));
+    const rows: Transaction[] = intent.items.map((i) => ({ date: day, cents: Math.round(i.amount * 100), label: i.label, category: i.category, source: 'text' }));
     const ids = await addTransactions(db, rows);
     setText('');
     setHint('');
@@ -157,16 +148,7 @@ export default function Home() {
           </Row>
         </Card>
 
-        {nudge && (
-          <NudgeCard
-            nudge={nudge}
-            fmt={fmt}
-            onDismiss={() => {
-              nudgeDismissedOn = day;
-              setNudge(null);
-            }}
-          />
-        )}
+        {note && <NoteCard note={note} fmt={fmt} unit={unit} onDismiss={() => dismiss(['home', nudgeKey(note)])} />}
 
         {!txns.length && <T tone="textDim">Type what you spent below, like “nasi lemak 6.50”. Senbud does the rest.</T>}
         <TextButton title="Can I afford it?" onPress={() => router.push('/afford')} />
@@ -215,29 +197,5 @@ export default function Home() {
         </View>
       </View>
     </KeyboardAvoidingView>
-  );
-}
-
-// Today's nudge, priorities 3–5 of spec 5. One sentence, at most two actions.
-function NudgeCard({ nudge, fmt, onDismiss }: { nudge: Nudge; fmt: (c: number) => string; onDismiss: () => void }) {
-  const body =
-    nudge.kind === 'renewal'
-      ? `${nudge.subscription.merchant} renews tomorrow: ${fmt(nudge.subscription.cents)}.`
-      : nudge.kind === 'iou'
-        ? `${nudge.iou.friend} still owes you ${fmt(nudge.iou.cents)} for ${nudge.iou.note}.`
-        : `${fmt(nudge.treat.lastCents)} for ${nudge.treat.name} fits today. Treat yourself?`;
-  const action =
-    nudge.kind === 'iou' ? ['Remind', '/friends'] : nudge.kind === 'treat' ? ['See treats', '/treats'] : ['See budgets', '/budgets'];
-  return (
-    <Card>
-      <T variant="label" tone="textDim">
-        Today
-      </T>
-      <T>{body}</T>
-      <Row style={{ justifyContent: 'flex-start' }}>
-        <TextButton title={action[0]} onPress={() => router.push(action[1] as '/friends')} />
-        <TextButton title="Not today" tone="textDim" onPress={onDismiss} />
-      </Row>
-    </Card>
   );
 }

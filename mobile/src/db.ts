@@ -44,6 +44,8 @@ const MIGRATIONS = [
   `ALTER TABLE app ADD COLUMN period_handled TEXT;`,
   // 6: consent to send questions to Bud's AI, apart from the receipt-photo consent.
   `ALTER TABLE app ADD COLUMN ask_consent_at TEXT;`,
+  // 7: Bud's notes dismissed with "Not today", by note key (and "home" for Home's card), until tomorrow.
+  `CREATE TABLE nudge_dismissals (key TEXT PRIMARY KEY, date TEXT NOT NULL);`,
 ];
 
 export async function migrate(db: SQLiteDatabase) {
@@ -120,10 +122,11 @@ export async function listTransactions(db: SQLiteDatabase, since?: IsoDate): Pro
 // "Erase all data": every row gone, schema kept. A fresh device id too, so nothing links the old data to the new.
 export const eraseAll = (db: SQLiteDatabase) =>
   db.execAsync(`DELETE FROM transactions; DELETE FROM budget; DELETE FROM bills; DELETE FROM profile; DELETE FROM app; ${NEW_APP_ROW}
-    DELETE FROM category_limits; DELETE FROM treats; DELETE FROM treat_jar_history; DELETE FROM ious; DELETE FROM subscriptions; DELETE FROM rules;
+    DELETE FROM category_limits; DELETE FROM treats; DELETE FROM treat_jar_history; DELETE FROM ious; DELETE FROM subscriptions; DELETE FROM rules; DELETE FROM nudge_dismissals;
     UPDATE treat_jar SET balance_cents = 0, goal_name = NULL, goal_cents = NULL; UPDATE app SET theme = 'dark';`);
 
-// "Back up everything": every user table as rows, plus the app settings. Not device_id (a new phone
+// "Back up everything": every user table as rows, plus the app settings. Not nudge_dismissals: they
+// only last a day. Not device_id (a new phone
 // gets its own) and not pro (the store owns that; Restore purchases brings it back).
 const BACKUP_TABLES = ['transactions', 'budget', 'bills', 'profile', 'category_limits', 'treats', 'treat_jar', 'treat_jar_history', 'ious', 'subscriptions', 'rules'];
 const BACKUP_SETTINGS = ['hourly_rate_cents', 'ai_enabled', 'theme', 'ai_consent_at', 'ask_consent_at'];
@@ -253,3 +256,9 @@ export function today(): IsoDate {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+
+// "Not today" on one of Bud's notes. Only today's rows matter; older ones are overwritten or ignored.
+export const dismissNudge = (db: SQLiteDatabase, key: string, day: IsoDate) =>
+  db.runAsync('INSERT OR REPLACE INTO nudge_dismissals (key, date) VALUES (?, ?)', key, day);
+export const dismissedToday = async (db: SQLiteDatabase, day: IsoDate) =>
+  new Set((await db.getAllAsync<{ key: string }>('SELECT key FROM nudge_dismissals WHERE date = ?', day)).map((r) => r.key));

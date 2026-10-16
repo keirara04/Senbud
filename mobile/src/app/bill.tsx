@@ -1,5 +1,5 @@
 // Add a fixed bill (Budgets → Rent and bills). Set aside before anything counts as spendable.
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useState } from 'react';
 
@@ -10,8 +10,10 @@ const toCents = (s: string) => Math.round(Number(s.trim().replace(',', '.')) * 1
 
 export default function BillSheet() {
   const db = useSQLiteContext();
-  const [name, setName] = useState('');
-  const [amount, setAmount] = useState('');
+  // Bud can open this prefilled with a bill it spotted.
+  const params = useLocalSearchParams<{ name?: string; amount?: string }>();
+  const [name, setName] = useState(params.name ?? '');
+  const [amount, setAmount] = useState(params.amount ?? '');
   const [day, setDay] = useState('');
   const [errors, setErrors] = useState<{ name?: string; amount?: string; day?: string }>({});
 

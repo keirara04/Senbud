@@ -22,7 +22,8 @@ export default function WhatGetsSent() {
       </Card>
       <Card>
         <T variant="bodyStrong">When you ask a question</T>
-        <T>Your question, plus a short summary: this month’s totals, your budget and rent, and your last 20 expenses. Never your full history.</T>
+        <T>Your question and your last few questions and answers in this chat, plus a short summary: this month’s totals, your budget and rent, and your last 20 expenses. Never your full history.</T>
+        <T>It goes to Senbud’s server and on to an AI model (currently Anthropic’s Claude Haiku, run by Google) through OpenRouter. Senbud doesn’t store or log it, and only providers that keep no data are used.</T>
       </Card>
       <Card>
         <T variant="bodyStrong">Never leaves the phone</T>
