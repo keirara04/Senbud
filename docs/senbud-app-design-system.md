@@ -425,15 +425,23 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 ### 4.9 Assistant
 
 - **`BudTab`:** Bud (4.0) on a raised cobalt circle in the middle of the tab bar. On Home the capture bar's text field also opens the sheet when you type a question.
-- **Sheet:**
-  - Native form sheet at the medium detent; drag up for full height.
-  - Bud (32 pt, its face matches the state: thinking while loading, oops when offline or AI is off), title "Ask Senbud", and Close.
-  - Chat bubbles.
-  - Suggestion picks: "How's my week?", "Can I afford…", "Set a budget".
-  - Input row: camera, field "Ask or add…", and a send button that is `accent` when there's text and `surfaceSunken` when empty.
-- **Answers reuse the rules.** "Can I afford" gives the same verdict and copy as 4.4. A quick add answers "Added 2 items, RM 16.50. Undo". In the sheet nothing is in highlighter; the screen behind keeps its hero.
-- **Asks first when unsure:** "Split RM 32 evenly? You'd spend RM 16, and Aiman would owe you RM 16." with `secondary` "Just mine" / `primary` "Yes, split it".
-- **AI off:** "AI is off, so I can't answer questions. Quick adds still work, like 'kopi 4.50'." with `secondary` "Turn on AI in Settings". The camera button is hidden, and the field's placeholder becomes "kopi 4.50, grab 12".
+- **Sheet:** a native form sheet, opening near full height so the conversation has room.
+  - **Background:** dotted notebook paper (the web's dot grid, 18 pt).
+  - **Header:** `Bud` (36 pt, its face matches the state), "Bud" with "Your money buddy" under it, and Close.
+  - **When it opens:** not an empty chat. Bud at 96 pt, "What's up?", one line ("Ask me anything about your money, or tell me what you spent."), and four starter cards in a 2×2 grid ("Can I afford…", "How's my month?", "Split a bill", "Add a few things"), each with a one-line hint. Tapping one fills the box.
+  - **Your messages:** `NoteBubble`, short cobalt notes on the right.
+  - **Bud's replies:** `BudSlip`. Bud is a receipt, so it prints its answers as small torn-edge receipt slips with Bud's face beside them:
+    - a mono header ("Can I afford it?", "Added", "Split this?")
+    - dotted-leader lines and a total
+    - one number marked with the highlighter stroke (the screen behind is dimmed, so it doesn't compete with that screen's hero)
+    - actions under the slip
+  - **While loading,** the slip starts "printing": the header plus shimmering placeholder lines, and Bud's thinking face. With Reduce Motion it shows static lines.
+  - **Input row:** camera, the field "Ask or add…", and a send button that is `accent` when there's text and `surfaceSunken` when empty.
+- **Answers reuse the rules.**
+  - "Can I afford" gives the same verdict as 4.4: "Concert ticket RM 45.00", then "Yes. RM 22.75 a day after", "till the 31st, rent still covered · 4.5 hrs of work", with actions "I bought it" and "Open in Can I afford it?".
+  - A quick add prints an "Added" slip with each line and "Today RM 16.50", with Undo and Edit.
+- **Asks first when unsure:** a "Split this?" slip showing exactly what would be saved ("Badminton court RM 32.00", "You RM 16.00", "Aiman owes you RM 16.00"), then `secondary` "Just mine" / `primary` "Yes, split it".
+- **AI off:** an "AI is off" slip with Bud's oops face: "AI is off, so I can't answer questions. Quick adds still work, like 'kopi 4.50'." with `secondary` "Turn on AI in Settings". The camera button is hidden, and the field's placeholder becomes "kopi 4.50, grab 12".
 - **Offline:** "Can't reach Senbud right now. Anything you add is still saved on your phone." with a "Try again" `TextButton`. Plain text, never red.
 
 ### 4.10 Proposed components
@@ -461,7 +469,8 @@ These are additions to `ui.tsx` for the screens above. Each takes colours from `
 | `BarChart` | `data: {category, share}[]` (≤ 6) | Horizontal, sorted, with the % as text on every bar. Fill is the category **ink** on white or a receipt, and the category **tint** on a dark `surface`. |
 | `ReceiptCard` | `children` | White in both schemes with zig-zag torn edges (the web's `.receipt`), via `react-native-svg`. The share image is captured with `react-native-view-shot` and sent to the native share sheet. |
 | `ProLock` | `onPress` | Grey `Other`-style chip with a lock and "Pro" next to a locked option. Opens the paywall (`pro.tsx`). It never hides the option. |
-| `ChatBubble` | `from: 'me' \| 'senbud'` | Yours: `panel` fill, `onPanel` text, right-aligned (cobalt in both schemes; `accent` would turn every bubble yellow in dark mode). Senbud's: `bg` fill, left-aligned. Inline actions are `TextButton`s; confirmations are a `Button` pair under the bubble. |
+| `BudSlip` | `title`, `lines`, `total?`, `marked?`, `actions`, `state: 'ready' \| 'printing'` | Bud's reply: a `ReceiptCard` slip (8 pt teeth) in mono, with `Bud` beside it. One highlighter-marked number at most. Actions sit under the slip. Printing shows placeholder lines, which are static under Reduce Motion. Read by screen readers as one sentence. |
+| `NoteBubble` | `text` | Your message: `panel` fill, `onPanel` text, right-aligned, corner tucked at the bottom right. Cobalt in both schemes. |
 
 **Contrast added by these components** (add to 2.2 when built):
 

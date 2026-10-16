@@ -226,6 +226,21 @@ body {
 .claimbox { width: 28px; height: 28px; border-radius: 8px; border: 2px solid rgba(26,28,46,.3); display: grid; place-items: center; flex: none; }
 .claimbox.on { background: #1f3fd8; border-color: #1f3fd8; color: #f4f6ff; }
 .radio.sel { border: 7px solid var(--accent); }
+.notebook { background-color: var(--bg); background-image: radial-gradient(var(--dot) 1px, transparent 1.4px); background-size: 18px 18px; }
+.note-me { align-self: flex-end; max-width: 78%; background: var(--panel); color: var(--on-panel); padding: 8px 12px; border-radius: 14px 14px 4px 14px; font-size: 15px; line-height: 20px; }
+.bud-msg { display: flex; gap: 8px; align-items: flex-start; }
+.bud-msg > .bud { margin-top: 2px; }
+.slip-wrap { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.slip { --tooth: 8px; padding: 12px 12px 14px; display: grid; gap: 4px; font-size: 13px; line-height: 18px; }
+.slip-h { font: 700 11px/14px var(--mono); letter-spacing: 1.2px; text-transform: uppercase; color: var(--receipt-dim); }
+.slip-rule { border-top: 1px dashed rgba(26,28,46,.3); margin: 4px 0; }
+.slip-big { font: 700 17px/24px var(--sans); }
+.slip-acts { display: flex; gap: 14px; padding-left: 4px; }
+.slip.printing i { display: block; height: 10px; border-radius: 3px; background: linear-gradient(90deg, #e6e8f0, #f5f6fa, #e6e8f0); margin-top: 4px; }
+.starters { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.starter { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; min-height: 64px; }
+.starter b { font-size: 15px; line-height: 20px; }
+.composer { display: flex; align-items: center; gap: 4px; }
 .bud-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; padding-block: 24px; }
 .bud-tile { background: var(--surface); border-radius: 16px; padding: 20px; display: grid; justify-items: center; align-content: center; gap: 8px; min-height: 220px; }
 .bud-tile.panel { background: var(--panel); }
@@ -1429,112 +1444,114 @@ body {
   <section class="sec" id="assistant">
     <div class="sec-head">
       <div>
-        <span class="eyebrow">Screen 8 · on every screen, phase 2</span>
+        <span class="eyebrow">Screen 8 · from Bud in the tab bar, phase 2</span>
         <h2>Assistant</h2>
-        <p class="job">Ask or add in plain words, from anywhere.</p>
+        <p class="job">Ask or add in plain words. It should feel like talking to Bud, not a chat app.</p>
       </div>
       <ul class="decide">
-        <li><b>Bud in the middle of the tab bar:</b> raised 56 pt cobalt circle with Bud inside, a shadow because it rises above the bar, and a 1.5 pt <code>onPanelDim</code> ring in dark mode (cobalt on night is only 2.4:1). Tap opens the sheet; the label under it is “Bud”, VoiceOver reads “Ask Bud”.</li>
-        <li><b>Bottom sheet</b> (<code>radius.lg</code>) at the medium detent, drag up for full height. Native form sheet, so VoiceOver focus and swipe-to-close come for free.</li>
-        <li><b>Answers reuse the app’s rules:</b> “can I afford” runs the same verdict as screen 3; quick text saves with Undo inline. Rules decide; the AI only writes the sentence.</li>
-        <li><b>Asks first when unsure</b> (splits, odd amounts), as the spec says, with two buttons instead of guessing.</li>
-        <li><b>AI off and offline</b> still accept quick adds; the sheet says so plainly instead of going dead.</li>
+        <li><b>Bud prints its answers.</b> Bud is a receipt, so replies come out as small torn-edge receipt slips in mono type: a header (“Can I afford it?”, “Added”, “Split this?”), dotted-leader lines, a total, then actions under the slip. Your messages stay short cobalt notes on the right. Nobody mistakes it for WhatsApp.</li>
+        <li><b>Notebook paper behind the chat</b> (the dotted background from the web, now that <code>react-native-svg</code> is in), and Bud’s face beside each slip shows its state: happy, thinking, oops.</li>
+        <li><b>Opening it isn’t an empty chat.</b> Bud says “What’s up?” and offers four starter cards for the things it does best. Tapping one fills the box.</li>
+        <li><b>One marked number per slip</b> with the highlighter stroke, like the share image. The screen behind is dimmed, so it doesn’t compete with that screen’s hero.</li>
+        <li><b>Rules decide, AI writes the words.</b> Can I afford it uses screen 3’s verdict; quick adds save with Undo on the slip; unsure splits ask first. AI off and offline still take quick adds.</li>
       </ul>
     </div>
     <div class="shots">
       <figure class="shot">
-        <figcaption><b>Chat.</b> A question answered by the rules, then a quick add with Undo.</figcaption>
+        <figcaption><b>Open.</b> Bud says hi and offers four things it’s good at. No empty chat window.</figcaption>
         <div class="phone">
           <div class="sb"><span>9:41</span><i></i></div>
-          <h3 class="lt" style="padding-top:48px">Budgets</h3>
-          <div class="scroll"><div class="card panel"><span class="lab">October · monthly</span><span class="hero">RM&nbsp;902</span></div></div>
+          <h3 class="lt" style="padding-top:48px">Home</h3>
           <div class="scrim"></div>
-          <div class="sheet" style="top:200px;padding-bottom:30px">
+          <div class="sheet notebook" style="top:96px;padding-bottom:30px">
             <div class="grab"></div>
-            <div class="row"><span class="row start" style="gap:10px;flex-wrap:nowrap"><svg class="bud" width="32" height="32" aria-hidden="true"><use href="#bud"/></svg><span class="heading">Ask Senbud</span></span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
-            <div class="chat">
-              <span class="bubble me">can I afford a RM 45 ticket on saturday?</span>
-              <span class="bubble bot">Yes! You’d still have <b class="money">RM 22.75</b> a day till the 31st.<br><span class="cap dim">= 4.5 hours of work</span></span>
-              <span class="bubble me">kopi 4.50 grab 12</span>
-              <span class="bubble bot">Added 2 items, <span class="money">RM 16.50</span>. <b class="acc">Undo</b></span>
+            <div class="row" style="flex-wrap:nowrap"><span class="row start" style="gap:10px;flex-wrap:nowrap"><svg class="bud" width="36" height="36" aria-hidden="true"><use href="#bud"/></svg><span class="stack" style="gap:0"><span class="heading">Bud</span><span class="cap dim">Your money buddy</span></span></span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
+            <div style="flex:1;display:grid;align-content:center;justify-items:center;gap:6px;text-align:center">
+              <svg class="bud" width="96" height="96" aria-hidden="true"><use href="#bud"/></svg>
+              <span class="title" style="font-size:24px;line-height:30px">What’s up?</span>
+              <span class="dim">Ask me anything about your money, or tell me what you spent.</span>
             </div>
-            <div class="row start" style="gap:8px;flex-wrap:nowrap;overflow:hidden"><span class="pick">How’s my week?</span><span class="pick">Can I afford…</span><span class="pick">Set a budget</span></div>
-            <div class="row" style="flex-wrap:nowrap;gap:4px">
-              <span class="ibtn" aria-label="Snap a receipt"><svg class="ic"><use href="#i-camera"/></svg></span>
-              <span class="input grow" style="border-radius:24px;background:var(--bg);border-color:transparent"><span class="ph">Ask or add…</span></span>
-              <span class="ibtn" aria-label="Send" style="background:var(--accent);color:var(--on-accent)"><svg class="ic"><use href="#i-send"/></svg></span>
+            <div class="starters">
+              <span class="starter"><b>Can I afford…</b><span class="cap dim">Check a price before you pay</span></span>
+              <span class="starter"><b>How’s my month?</b><span class="cap dim">Where it went, what’s left</span></span>
+              <span class="starter"><b>Split a bill</b><span class="cap dim">Snap it, tap who had what</span></span>
+              <span class="starter"><b>Add a few things</b><span class="cap dim">“kopi 4.50 grab 12”</span></span>
             </div>
+            <div class="composer"><span class="ibtn" aria-label="Snap a receipt"><svg class="ic"><use href="#i-camera"/></svg></span><span class="input grow" style="border-radius:24px;background:var(--surface);border-color:var(--line)"><span class="ph">Ask or add…</span></span><span class="ibtn" aria-label="Send" style="background:var(--sunken);color:var(--dim)"><svg class="ic"><use href="#i-send"/></svg></span></div>
           </div>
         </div>
       </figure>
 
       <figure class="shot">
-        <figcaption><b>Asks first.</b> A split it isn’t sure about gets two buttons, not a guess.</figcaption>
+        <figcaption><b>Answers print as slips.</b> Bud is a receipt, so its replies come out as receipts: lines, totals, one marked number, actions underneath.</figcaption>
+        <div class="phone">
+          <div class="sb"><span>9:41</span><i></i></div>
+          <h3 class="lt" style="padding-top:48px">Budgets</h3>
+          <div class="scrim"></div>
+          <div class="sheet notebook" style="top:96px;padding-bottom:30px">
+            <div class="grab"></div>
+            <div class="row" style="flex-wrap:nowrap"><span class="row start" style="gap:10px;flex-wrap:nowrap"><svg class="bud" width="36" height="36" aria-hidden="true"><use href="#bud"/></svg><span class="stack" style="gap:0"><span class="heading">Bud</span><span class="cap dim">Your money buddy</span></span></span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
+            <div class="chat">
+              <span class="note-me">can I afford a RM 45 ticket on saturday?</span>
+              <div class="bud-msg"><svg class="bud" width="30" height="30" aria-hidden="true"><use href="#bud"/></svg><div class="slip-wrap"><div class="receipt slip mono"><div class="slip-h">Can I afford it?</div><div class="rc-row"><span>Concert ticket</span><span class="leader"></span><span>RM 45.00</span></div><div class="slip-rule"></div><div class="slip-big">Yes. <span class="mk">RM 22.75</span> a day after</div><div class="rdim" style="font-size:12px">till the 31st, rent still covered · 4.5 hrs of work</div></div><div class="slip-acts"><span class="tbtn cap" style="font-size:14px">I bought it</span><span class="tbtn cap" style="font-size:14px">Open in Can I afford it?</span></div></div></div>
+              <span class="note-me">kopi 4.50 grab 12</span>
+              <div class="bud-msg"><svg class="bud" width="30" height="30" aria-hidden="true"><use href="#bud"/></svg><div class="slip-wrap"><div class="receipt slip mono"><div class="slip-h">Added</div><div class="rc-row"><span>Kopi</span><span class="leader"></span><span>4.50</span></div><div class="rc-row"><span>Grab</span><span class="leader"></span><span>12.00</span></div><div class="slip-rule"></div><div class="rc-row strong"><span>Today</span><span class="leader"></span><span>RM 16.50</span></div></div><div class="slip-acts"><span class="tbtn cap" style="font-size:14px">Undo</span><span class="tbtn cap" style="font-size:14px">Edit</span></div></div></div>
+            </div>
+            <div class="composer"><span class="ibtn" aria-label="Snap a receipt"><svg class="ic"><use href="#i-camera"/></svg></span><span class="input grow" style="border-radius:24px;background:var(--surface);border-color:var(--line)"><span class="ph">Ask or add…</span></span><span class="ibtn" aria-label="Send" style="background:var(--sunken);color:var(--dim)"><svg class="ic"><use href="#i-send"/></svg></span></div>
+          </div>
+        </div>
+      </figure>
+
+      <figure class="shot">
+        <figcaption><b>Thinking.</b> The slip starts printing while the answer loads; Bud’s face says it’s working.</figcaption>
+        <div class="phone">
+          <div class="sb"><span>9:41</span><i></i></div>
+          <h3 class="lt" style="padding-top:48px">Budgets</h3>
+          <div class="scrim"></div>
+          <div class="sheet notebook" style="top:96px;padding-bottom:30px">
+            <div class="grab"></div>
+            <div class="row" style="flex-wrap:nowrap"><span class="row start" style="gap:10px;flex-wrap:nowrap"><svg class="bud" width="36" height="36" aria-hidden="true"><use href="#bud-think"/></svg><span class="stack" style="gap:0"><span class="heading">Bud</span><span class="cap dim">Your money buddy</span></span></span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
+            <div class="chat">
+              <span class="note-me">how much did i spend on grab this month?</span>
+              <div class="bud-msg"><svg class="bud" width="30" height="30" aria-hidden="true"><use href="#bud-think"/></svg><div class="slip-wrap"><div class="receipt slip mono printing"><div class="slip-h">Checking October…</div><i></i><i style="width:70%"></i><i style="width:85%"></i></div></div></div>
+            </div>
+            <div class="composer"><span class="ibtn" aria-label="Snap a receipt"><svg class="ic"><use href="#i-camera"/></svg></span><span class="input grow" style="border-radius:24px;background:var(--surface);border-color:var(--line)"><span class="ph">Ask or add…</span></span><span class="ibtn" aria-label="Send" style="background:var(--sunken);color:var(--dim)"><svg class="ic"><use href="#i-send"/></svg></span></div>
+          </div>
+        </div>
+      </figure>
+
+      <figure class="shot">
+        <figcaption><b>Asks first.</b> Not sure it’s a split? The slip shows exactly what would be saved, with two buttons.</figcaption>
         <div class="phone">
           <div class="sb"><span>9:41</span><i></i></div>
           <h3 class="lt" style="padding-top:48px">Friends</h3>
-          <div class="scroll"><div class="card panel"><span class="lab">Owed to you</span><span class="hero">RM&nbsp;30</span></div></div>
           <div class="scrim"></div>
-          <div class="sheet" style="top:200px;padding-bottom:30px">
+          <div class="sheet notebook" style="top:96px;padding-bottom:30px">
             <div class="grab"></div>
-            <div class="row"><span class="row start" style="gap:10px;flex-wrap:nowrap"><svg class="bud" width="32" height="32" aria-hidden="true"><use href="#bud-think"/></svg><span class="heading">Ask Senbud</span></span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
+            <div class="row" style="flex-wrap:nowrap"><span class="row start" style="gap:10px;flex-wrap:nowrap"><svg class="bud" width="36" height="36" aria-hidden="true"><use href="#bud"/></svg><span class="stack" style="gap:0"><span class="heading">Bud</span><span class="cap dim">Your money buddy</span></span></span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
             <div class="chat">
-              <span class="bubble me">badminton court 32 split with aiman</span>
-              <span class="bubble bot">Split <span class="money">RM 32</span> evenly? You’d spend <span class="money">RM 16</span>, and Aiman would owe you <span class="money">RM 16</span>.</span>
-              <div class="row" style="flex-wrap:nowrap;align-self:stretch"><div class="btn secondary grow">Just mine</div><div class="btn primary grow">Yes, split it</div></div>
+              <span class="note-me">badminton court 32 split with aiman</span>
+              <div class="bud-msg"><svg class="bud" width="30" height="30" aria-hidden="true"><use href="#bud-think"/></svg><div class="slip-wrap"><div class="receipt slip mono"><div class="slip-h">Split this?</div><div class="rc-row"><span>Badminton court</span><span class="leader"></span><span>RM 32.00</span></div><div class="slip-rule"></div><div class="rc-row"><span>You</span><span class="leader"></span><span>RM 16.00</span></div><div class="rc-row"><span>Aiman owes you</span><span class="leader"></span><span>RM 16.00</span></div></div><div class="row" style="flex-wrap:nowrap;margin-top:8px"><div class="btn secondary grow">Just mine</div><div class="btn primary grow">Yes, split it</div></div></div></div>
             </div>
-            <div class="row" style="flex-wrap:nowrap;gap:4px">
-              <span class="ibtn" aria-label="Snap a receipt"><svg class="ic"><use href="#i-camera"/></svg></span>
-              <span class="input grow" style="border-radius:24px;background:var(--bg);border-color:transparent"><span class="ph">Ask or add…</span></span>
-              <span class="ibtn" aria-label="Send" style="background:var(--sunken);color:var(--dim)"><svg class="ic"><use href="#i-send"/></svg></span>
-            </div>
+            <div class="composer"><span class="ibtn" aria-label="Snap a receipt"><svg class="ic"><use href="#i-camera"/></svg></span><span class="input grow" style="border-radius:24px;background:var(--surface);border-color:var(--line)"><span class="ph">Ask or add…</span></span><span class="ibtn" aria-label="Send" style="background:var(--sunken);color:var(--dim)"><svg class="ic"><use href="#i-send"/></svg></span></div>
           </div>
         </div>
       </figure>
 
       <figure class="shot">
-        <figcaption><b>AI off.</b> Quick adds still work locally; questions explain how to turn AI on.</figcaption>
+        <figcaption><b>AI off or offline.</b> Bud looks sorry, says what still works, and the box keeps taking quick adds.</figcaption>
         <div class="phone">
           <div class="sb"><span>9:41</span><i></i></div>
           <h3 class="lt" style="padding-top:48px">Treats</h3>
-          <div class="scroll"><div class="card panel"><span class="lab">Treat jar</span><span class="hero">RM&nbsp;46.50</span></div></div>
           <div class="scrim"></div>
-          <div class="sheet" style="top:330px;padding-bottom:30px">
+          <div class="sheet notebook" style="top:220px;padding-bottom:30px">
             <div class="grab"></div>
-            <div class="row"><span class="row start" style="gap:10px;flex-wrap:nowrap"><svg class="bud" width="32" height="32" aria-hidden="true"><use href="#bud-oops"/></svg><span class="heading">Ask Senbud</span></span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
+            <div class="row" style="flex-wrap:nowrap"><span class="row start" style="gap:10px;flex-wrap:nowrap"><svg class="bud" width="36" height="36" aria-hidden="true"><use href="#bud-oops"/></svg><span class="stack" style="gap:0"><span class="heading">Bud</span><span class="cap dim">Your money buddy</span></span></span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
             <div class="chat">
-              <span class="bubble me">how much on grab this month</span>
-              <span class="bubble bot">AI is off, so I can’t answer questions. Quick adds still work, like “kopi 4.50”.</span>
+              <span class="note-me">how much on grab this month</span>
+              <div class="bud-msg"><svg class="bud" width="30" height="30" aria-hidden="true"><use href="#bud-oops"/></svg><div class="slip-wrap"><div class="receipt slip mono"><div class="slip-h">AI is off</div><div style="font-family:var(--sans);font-size:14px;line-height:19px">I can’t answer questions right now, but quick adds still work, like “kopi 4.50”. Offline looks the same, with “Try again”.</div></div><div class="slip-acts"><span class="tbtn cap" style="font-size:14px">Turn on AI in Settings</span></div></div></div>
             </div>
-            <div class="btn secondary">Turn on AI in Settings</div>
-            <div class="row" style="flex-wrap:nowrap;gap:4px">
-              <span class="input grow" style="border-radius:24px;background:var(--bg);border-color:transparent"><span class="ph">kopi 4.50, grab 12</span></span>
-              <span class="ibtn" aria-label="Send" style="background:var(--sunken);color:var(--dim)"><svg class="ic"><use href="#i-send"/></svg></span>
-            </div>
-          </div>
-        </div>
-      </figure>
-
-      <figure class="shot">
-        <figcaption><b>Offline.</b> Says what still works and offers a retry. Plain text, no red.</figcaption>
-        <div class="phone">
-          <div class="sb"><span>9:41</span><i></i></div>
-          <h3 class="lt" style="padding-top:48px">Budgets</h3>
-          <div class="scroll"><div class="card panel"><span class="lab">October · monthly</span><span class="hero">RM&nbsp;902</span></div></div>
-          <div class="scrim"></div>
-          <div class="sheet" style="top:330px;padding-bottom:30px">
-            <div class="grab"></div>
-            <div class="row"><span class="row start" style="gap:10px;flex-wrap:nowrap"><svg class="bud" width="32" height="32" aria-hidden="true"><use href="#bud-oops"/></svg><span class="heading">Ask Senbud</span></span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
-            <div class="chat">
-              <span class="bubble me">how much on grab this month</span>
-              <span class="bubble bot">Can’t reach Senbud right now. Anything you add is still saved on your phone.</span>
-              <span class="tbtn" style="align-self:flex-start">Try again</span>
-            </div>
-            <div class="row" style="flex-wrap:nowrap;gap:4px">
-              <span class="ibtn" aria-label="Snap a receipt"><svg class="ic"><use href="#i-camera"/></svg></span>
-              <span class="input grow" style="border-radius:24px;background:var(--bg);border-color:transparent"><span class="ph">Ask or add…</span></span>
-              <span class="ibtn" aria-label="Send" style="background:var(--sunken);color:var(--dim)"><svg class="ic"><use href="#i-send"/></svg></span>
-            </div>
+            <div class="composer"><span class="input grow" style="border-radius:24px;background:var(--surface);border-color:var(--line)"><span class="ph">kopi 4.50, grab 12</span></span><span class="ibtn" aria-label="Send" style="background:var(--sunken);color:var(--dim)"><svg class="ic"><use href="#i-send"/></svg></span></div>
           </div>
         </div>
       </figure>
@@ -1633,8 +1650,8 @@ body {
         <div class="demo"><span class="chip c-other" style="justify-self:start"><svg class="ic" style="width:14px;height:14px"><use href="#i-lock"/></svg>Pro</span></div>
       </div>
       <div class="spec">
-        <h3><code>ChatBubble</code></h3>
-        <p>Yours: <code>panel</code> fill, <code>onPanel</code> text, right (cobalt in both schemes, so dark mode doesn’t fill the sheet with yellow). Senbud’s: <code>bg</code> fill on the sheet, left. Inline actions (Undo, Try again) are <code>TextButton</code>s; confirmations are a pair of <code>Button</code>s under the bubble.</p>
+        <h3><code>BudSlip</code> + <code>NoteBubble</code></h3>
+        <p>Bud’s replies are <code>ReceiptCard</code> slips: mono header, dotted-leader lines, optional total, one highlighter-marked number, actions as <code>TextButton</code>s or a <code>Button</code> pair under the slip, Bud’s face beside it. A “printing” state shows placeholder lines while loading. Your messages are <code>NoteBubble</code>s: short cobalt notes on the right. The sheet behind them is dotted notebook paper.</p>
       </div>
     </div>
   </section>
