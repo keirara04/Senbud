@@ -11,5 +11,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE}/student-budget-calculator`, priority: 0.8 },
     { url: `${SITE}/alternatives`, priority: 0.7 },
     ...ALTERNATIVES.map((a) => ({ url: `${SITE}/alternatives/${a.slug}`, priority: 0.6 })),
+    { url: `${SITE}/play`, priority: 0.5 },
+    { url: `${SITE}/privacy`, priority: 0.3 },
+    { url: `${SITE}/terms`, priority: 0.3 },
   ];
 }
