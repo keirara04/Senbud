@@ -65,6 +65,8 @@ jobs:
       - name: Type checks
         run: |
           npx tsc -p mobile --noEmit
+          # Next.js generates PageProps / LayoutProps into .next/types; a fresh checkout has none.
+          (cd web && npx next typegen)
           npx tsc -p web --noEmit
 
   changes:
