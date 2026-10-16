@@ -6,7 +6,7 @@ import { useCallback, useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 
 import { deleteTransactions, listTransactions, loadSetup, type Profile, today, type Txn } from '@/db';
-import { Card, CategoryChip, Row, T, useTheme } from '@/ui';
+import { Card, CategoryChip, Icon, Row, T, useTheme } from '@/ui';
 
 // "Today", "Yesterday", else a short local date ("Oct 14"). Dates are local calendar days, read at noon UTC
 // so no time zone can shift them.
@@ -75,9 +75,7 @@ export default function Activity() {
               hitSlop={14}
               style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1, padding: space.xs })}
             >
-              <T variant="heading" tone="bad">
-                ✕
-              </T>
+              <Icon name={{ ios: 'trash', android: 'delete' }} size={20} color={t.bad} />
             </Pressable>
           </Row>
         </Card>

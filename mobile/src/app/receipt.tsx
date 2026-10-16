@@ -2,18 +2,21 @@ import { daysBetween, money, type Transaction } from '@senbud/core';
 import { motion, space } from '@senbud/core/tokens';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
+import Purchases from 'react-native-purchases';
 
 import { type Receipt, readReceipt } from '@/api';
-import { addTransactions, type AppState, deleteTransactions, giveAiConsent, loadApp, loadSetup, type Profile, today } from '@/db';
+import { addTransactions, type AppState, deleteTransactions, giveAiConsent, loadApp, loadSetup, type Profile, setPro, today } from '@/db';
+import { hasPro, purchasesReady } from '@/purchases';
 import { Button, Card, CategoryChip, Row, Screen, T, UndoBar, useTheme } from '@/ui';
 
 type Step =
   | { kind: 'loading' }
   | { kind: 'pro' }
+  | { kind: 'aiOff' }
   | { kind: 'consent' }
   | { kind: 'pick'; error?: string }
   | { kind: 'reading' }
@@ -35,16 +38,30 @@ export default function ReceiptScreen() {
   const [step, setStep] = useState<Step>({ kind: 'loading' });
   const undoTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  useEffect(() => {
-    (async () => {
+  useEffect(() => () => clearTimeout(undoTimer.current), []);
+
+  // On focus, so coming back from the paywall re-checks Pro. Only from the gate or first load:
+  // returning from the photo picker mustn't reset a flow in progress.
+  useFocusEffect(
+    useCallback(() => {
+      if (step.kind !== 'loading' && step.kind !== 'pro') return;
+      (async () => {
       const a = await loadApp(db);
       const s = await loadSetup(db);
       if (s) setProfile(s.profile);
+      // Ask RevenueCat when it's set up: on a fresh launch the cached flag may not be synced yet.
+      // Offline, fall back to the cache so Pro keeps working.
+      if (purchasesReady()) {
+        try {
+          a.pro = hasPro(await Purchases.getCustomerInfo());
+          await setPro(db, a.pro);
+        } catch {}
+      }
       setApp(a);
-      setStep(!a.pro ? { kind: 'pro' } : a.aiConsentAt ? { kind: 'pick' } : { kind: 'consent' });
-    })();
-    return () => clearTimeout(undoTimer.current);
-  }, [db]);
+      setStep(!a.pro ? { kind: 'pro' } : !a.aiEnabled ? { kind: 'aiOff' } : a.aiConsentAt ? { kind: 'pick' } : { kind: 'consent' });
+      })();
+    }, [db, step.kind]),
+  );
 
   const fmt = (n: number) => money(n, profile.currency, profile.locale);
 
@@ -101,13 +118,31 @@ export default function ReceiptScreen() {
       <Screen>
         <T variant="title">Snap a receipt</T>
         <T tone="textDim">Senbud reads the shop, items and prices from a photo, so you don’t type them. It’s part of Senbud Pro.</T>
-        <Card>
-          <T variant="bodyStrong">Pro is coming soon</T>
-          <T variant="caption" tone="textDim">
-            Until then, type what you spent on Home, like “lunch 12, uber 8”.
-          </T>
-        </Card>
-        <Button title="Back" variant="secondary" onPress={() => router.back()} />
+        {purchasesReady() ? (
+          <>
+            <Button title="See Senbud Pro" variant="highlight" onPress={() => router.push('/pro')} />
+          </>
+        ) : (
+          <Card>
+            <T variant="bodyStrong">Pro is coming soon</T>
+            <T variant="caption" tone="textDim">
+              Until then, type what you spent on Home, like “lunch 12, uber 8”.
+            </T>
+          </Card>
+        )}
+        <T variant="caption" tone="textDim">
+          Typing expenses, budgets and rent stay free.
+        </T>
+      </Screen>
+    );
+
+  if (step.kind === 'aiOff')
+    return (
+      <Screen>
+        <T variant="title">AI is off</T>
+        <T tone="textDim">Reading a receipt needs AI. You turned it off in Settings, so nothing is sent.</T>
+        <Button title="Turn it on in Settings" onPress={() => router.navigate('/settings')} />
+        <Button title="Type it instead" variant="secondary" onPress={() => router.back()} />
       </Screen>
     );
 
@@ -180,6 +215,20 @@ export default function ReceiptScreen() {
           title={kept.length ? `Add ${kept.length} ${kept.length === 1 ? 'item' : 'items'}, ${fmt(kept.reduce((s, i) => s + i.amount, 0))}` : 'Nothing selected'}
           disabled={!kept.length}
           onPress={() => save(receipt, keep)}
+        />
+        <Button
+          title="Split this with friends"
+          variant="secondary"
+          disabled={!kept.length}
+          onPress={() =>
+            router.push({
+              pathname: '/split',
+              params: {
+                merchant: receipt.merchant ?? undefined,
+                items: JSON.stringify(kept.map((i) => ({ label: i.label, cents: Math.round(i.amount * 100), category: i.category }))),
+              },
+            })
+          }
         />
         <Button title="Try another photo" variant="secondary" onPress={() => setStep({ kind: 'pick' })} />
       </Screen>

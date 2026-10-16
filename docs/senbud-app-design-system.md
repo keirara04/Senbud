@@ -48,7 +48,8 @@ There are three layers. Screens use only the top two, through `useTheme()` and t
 | `text` | `#1a1c2e` | `#eef0ff` | Body text |
 | `textDim` | `#565b75` | `#a8b0d8` | Secondary text, labels |
 | `line` | ink 12% | white 10% | Borders, dividers |
-| `accent` | `#1f3fd8` cobalt | `#eeff5a` highlighter | Links, selected states, primary buttons |
+| `accent` | `#1f3fd8` cobalt | `#eeff5a` highlighter | Links, selected states, tab tint |
+| `primary` / `primaryPressed` / `onPrimary` | cobalt / cobaltDeep / `#f4f6ff` | periwinkle `#c9d2ff` / `#b3bff5` / ink | Primary button fill. Its own token so in dark mode the one `highlight` button stays the only yellow (decided 16 Oct 2026). |
 | `panel` / `onPanel` / `onPanelDim` | cobalt / `#f4f6ff` / `#c9d2ff` | same | The hero card. It stays cobalt in dark mode, as on the web. |
 | `highlight` / `onHighlight` | `#eeff5a` / ink | same | Key number, marker, highlight button |
 | `good` / `goodFill` | `#155a44` / `#4fd1a5` | `#4fd1a5` / same | "On track" text / fill |
@@ -74,6 +75,8 @@ There are three layers. Screens use only the top two, through `useTheme()` and t
 | dark: textDim on night2 | 7.7 |
 | dark: coralLight on night2 | 7.2 |
 | dark: mint on night2 | 8.6 |
+| dark: ink on periwinkle (primary button) | 11.3 |
+| dark: cobalt on moon (`UndoBar` action) | 6.7 |
 | category chips (tint + ink) | 4.97–7.8 |
 
 ### 2.3 Category colours
@@ -133,7 +136,16 @@ Dynamic Type and font scaling stay on (React Native's default). Layouts must sur
 | `CategoryChip` | `category` | Pill, caption size, colours from 2.3. |
 | `Progress` | `value` (0–1+), `status` | Fill colour shows the status. **Always paired with words** ("On track", "$10 left…"), so colour is never the only signal. Exposes `progressbar` and a value to screen readers. |
 | `Marker` | children | Highlighter stroke behind a phrase, as on the web's `.marker`. Use once per screen at most. |
-| `UndoBar` | `message`, `onUndo` | Ink bar with a highlighter "Undo". Shows for `motion.undoMs` (5 s) after any reversible write. Announced politely to screen readers. |
+| `UndoBar` | `message`, `onUndo` | Ink bar with a highlighter "Undo" (cobalt in dark mode, where the bar is moon). Shows for `motion.undoMs` (5 s) after any reversible write. Announced politely to screen readers. |
+| `ListRow` / `ListGroup` | `label`, `value`, `onPress`, `first`, `right` / `title`, `footer` | Settings rows: min 52 pt, hairline between rows, chevron when it goes somewhere. A row with its own control (`right`) is a plain View. |
+| `AiSwitch` | `value`, `onChange` | The whole row is the control and the RN `Switch` only shows the state: on iOS 26 taps on RN's `Switch` never land (its frame and UIKit's drawing disagree). One VoiceOver element with `role="switch"`. |
+| `CategoryPicker` | `value`, `onChange` | Chips for the six categories, radio semantics. |
+| `ProLock` | `onPress` | Grey "Pro" chip with a lock. Opens the paywall; never hides the option it marks. |
+| `Avatar` | `name`, `size` | Initial on a colour picked from the name. Friends are just names. |
+| `Icon` | `name` ({ios, android}), `size`, `color`, `label` | SF Symbols / Material Symbols via `expo-symbols`, never emoji. Decorative unless labelled. |
+| `BudTab` | `onPress` | See 4.10. Raised 12 pt, not 22: RN doesn't deliver touches outside a parent's bounds, so a higher circle had an untappable top. |
+| `Bud`, `TreatJar`, `ReceiptCard` (`art.tsx`) | `face` / `share` / children | SVG art. `ReceiptCard` is the torn-edge white slip used by Budgets' StampLedger, Split and the assistant's slips. |
+| `applyTheme(theme)` | `'system' \| 'light' \| 'dark'` | `Appearance.setColorScheme`; System passes `'unspecified'`. Dark is the default (16 Oct 2026). |
 | `useNavigationTheme()` | – | React Navigation theme built from ours, passed to `ThemeProvider` in `_layout.tsx`. Headers, back buttons and screen backgrounds follow the system scheme live. |
 
 **Building new components:** compose these first. If something new is needed, put it in `ui.tsx`, take colours from `useTheme()`, and add a row to this table.
@@ -146,18 +158,18 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 
 | Screen | Hero (one per screen) | Content, top to bottom | Status |
 |---|---|---|---|
-| **Welcome** (first launch) | Bud and one line: "Your money buddy" | Logo, Bud, one sentence, three promises (no bank login, no account, stays on your phone), `primary` "Get started", "I've used Senbud before" | Concept |
-| **Setup** (first run, later "Budget and rent") | `title`: "How much can you spend?" | Period `Segmented`, budget `Field`, rent amount and due day, currency, `Save`, `danger` "Erase all data" | Built |
+| **Welcome** (first launch) | Bud and one line: "Your money buddy" | Logo, Bud, one sentence, three promises (no bank login, no account, stays on your phone), `primary` "Get started", "I've used Senbud before" | Built (`welcome.tsx`) |
+| **Setup** (first run, later "Budget and rent") | `title`: "How much can you spend?" | Period `Segmented`, budget `Field`, rent amount and due day, currency (with a "relabels, doesn't convert" note after first run), `Save`. Erase moved to Settings. | Built |
 | **Home** | `panel` with `hero` safe-to-spend in highlighter | Rent card, pace card, today's nudge, pinned `CaptureBar` (see 4.2) | Built; v2 concept |
 | **Activity** | none; it's a list | Cards with label, `CategoryChip`, date, amount, delete. Later: filter chips, including "added by assistant". | Built |
-| **Budgets** | `panel` with what's left in highlighter and `Progress tone="panel"` | `StampLedger` by category; rent and bills list with due days; detected subscriptions | Concept |
-| **Can I afford it?** | `panel`: verdict in words, key number in highlighter | Price `Field`, optional "What is it?", treat price picks, hours of work under a hairline | Concept |
-| **Friends** | Net balance `hero` in highlighter, direction in words | Per-friend rows; friend sheet with "Send on WhatsApp", "Other apps", "Copy" and "Mark paid"; 3-step split flow with `PersonTabs` and `ClaimRow` | Concept |
-| **Treats** | `TreatJar` filling toward a goal, total in highlighter, `highlight` "Add to jar" inside the panel | Treat list with "every N days" and status, short history, month-end leftover sheet | Concept |
+| **Budgets** | `panel` with what's left in highlighter and `Progress tone="panel"` | `StampLedger` by category; rent and bills list with due days; detected subscriptions | Built |
+| **Can I afford it?** | `panel`: verdict in words, key number in highlighter | Price `Field`, optional "What is it?", treat price picks, hours of work under a hairline | Built |
+| **Friends** | Net balance `hero` in highlighter, direction in words | Per-friend rows; friend sheet with "Send on WhatsApp", "Other apps", "Copy" and "Mark paid"; 3-step split flow with `PersonTabs` and `ClaimRow` | Built; WhatsApp path untested (not installed on simulators) |
+| **Treats** | `TreatJar` filling toward a goal, total in highlighter, `highlight` "Add to jar" inside the panel | Treat list with "every N days" and status, short history, month-end leftover sheet | Built, except the month-end leftover sheet (needs a period-end trigger) |
 | **Wrapped** | One stat per page, full-bleed `panel` | `StoryPager`, `BarChart` on a `ReceiptCard`, share image | Concept (later phase) |
-| **Settings** | none | Grouped `ListRow`s: Money, AI, Look, Your data, Senbud Pro, then `danger` Erase | Concept |
-| **Senbud Pro paywall** | selected plan as `panel`; the buy button is the one `highlight` | Title, three benefits, plan radio group, buy button, small print with Terms, Privacy, Restore (see 4.8b) | Concept; code in `pro.tsx` on `claude/senbud-pro` |
-| **Assistant** | – | `BudTab`, the middle of the tab bar, opens a native form sheet with chat | Concept (Phase 2) |
+| **Settings** | none | Grouped `ListRow`s: Money, AI, Look, Your data, Senbud Pro, then `danger` Erase | Built, plus "Restore from a backup" and a pushed "What gets sent" screen |
+| **Senbud Pro paywall** | selected plan as `panel`; the buy button is the one `highlight` | Title, three benefits, plan radio group, buy button, small print with Terms, Privacy, Restore (see 4.8b) | Built (`pro.tsx`) |
+| **Assistant** | – | `BudTab`, the middle of the tab bar, opens the assistant with chat | Built, local only: rules answer (afford, month, split, quick add); free-text questions say AI is coming. A `modal`, not a form sheet: RNScreens' formSheet mis-lays a ScrollView with a pinned input row. |
 
 **Empty states:**
 - One sentence with a concrete example of what to do: "Type 'lunch 12' on Home to add your first expense."
@@ -463,7 +475,7 @@ These are additions to `ui.tsx` for the screens above. Each takes colours from `
 | `TreatJar` | `cents`, `goalCents?` | `react-native-svg` jar on `panel`: `onPanel` outline, highlighter fill with coin outlines and a wavy top, quarter ticks, dashed goal line. It overflows a little past 100%. Decorative; the numbers next to it carry the meaning. |
 | `Bud` | `face: 'happy' \| 'thinking' \| 'oops' \| 'yay'`, `size` | The assistant mascot (4.0). `react-native-svg`, the same drawing in both themes, decorative. |
 | `Avatar` | `name` | 40 pt initials circle on `surfaceSunken`. Never a photo; no contacts access. |
-| `BudTab` | `onPress` | Centre slot of the tab bar: 56 pt `panel` circle raised 22 pt above the bar, `Bud` (38 pt) inside, label "Bud" under it, shadow, 1.5 pt `onPanelDim` ring in dark mode. Opens the assistant sheet (`tabPress` → `preventDefault`), never navigates. Role button, label "Ask Bud". Idle wobble off under Reduce Motion. |
+| `BudTab` | `onPress` | Centre slot of the tab bar: 56 pt `panel` circle raised 12 pt above the bar (22 left its top untappable), `Bud` (38 pt) inside, label "Bud" under it, shadow, 1.5 pt `onPanelDim` ring in dark mode. Opens the assistant sheet (`tabPress` → `preventDefault`), never navigates. Role button, label "Ask Bud". Idle wobble off under Reduce Motion. |
 | `StoryPager` | `pages`, `onClose` | Full-bleed `panel` pages with segment bars. Tap the halves to move, swipe down to close, no autoplay, cuts under Reduce Motion. Each page is one accessibility element read as a sentence. |
 | `StampLedger` | `rows: {category, spentCents, limitCents?}[]` | Budgets by category (4.3). `ReceiptCard`, dotted leaders, 10 stamps per limit in category ink, words for left/close/over, a coral stamp outside the ten when over. Each row is one 48 pt button labelled "Food, RM 248 of 400, RM 152 left". |
 | `BarChart` | `data: {category, share}[]` (≤ 6) | Horizontal, sorted, with the % as text on every bar. Fill is the category **ink** on white or a receipt, and the category **tint** on a dark `surface`. |
@@ -518,8 +530,8 @@ The voice is a friendly older cousin who's good with money.
 
 - **Dotted-notebook background.** Still left out. `react-native-svg` is needed from Phase 1 anyway, for `Bud`, `TreatJar` and the torn edges on `ReceiptCard`, so add it then; the background can follow if it's worth it.
 - **No custom font or icon set yet.** Use system symbols (never emoji) until an icon set is chosen. The one illustration is Bud (4.0); don't add others without a reason. `expo-symbols` is already installed for SF Symbols on iOS.
-- **In dark mode, `primary` and `highlight` buttons look the same** (both highlighter yellow), so the "single most important action" emphasis disappears at night. Accepted for now. If a screen ever needs both, give dark `primary` its own fill.
 - **Large text checked on iOS only.** At the largest accessibility size on the iPhone 17 simulator, Home and Activity wrap correctly. That's after three fixes: `Row` wraps, inputs drop their fixed line height, and the hero number is capped at 1.3× and shrinks to fit. Android at large font scale is not checked yet.
 - **`money` minor digits:** verified on iOS Hermes (KRW). Android is inferred, since it matched Node in every Phase 0 `Intl` probe.
-- **No user-selectable theme.** The app follows the system setting (`userInterfaceStyle: automatic`). Settings gets a light/dark/system choice in Phase 1. Drawn in 4.8.
-- **`UndoBar` action is unreadable in dark mode.** The bar fills with `text` (moon, `#eef0ff`) and the "Undo" button uses `highlight` (`#eeff5a`): 1.0:1. Light mode is fine (15:1 on ink). Fix: in dark mode, use `accent`'s light value, cobalt (6.7:1 on moon). The concepts page already draws it that way. Not changed in `ui.tsx` yet.
+- **Android cold start shows one light frame** before Dark applies (likely Android recreating the activity on the night-mode change). iOS starts dark. Not fixed.
+- **Month-end leftover sheet and Wrapped** are not built.
+- **Assistant keyboard layout** not checked with a full soft keyboard (the iOS simulator uses the hardware keyboard; the Android emulator's is in floating stylus mode).

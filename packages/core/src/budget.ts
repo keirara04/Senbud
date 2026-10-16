@@ -99,3 +99,18 @@ export function treatNudge(treat: Treat, safe: { perDay: number; covered: boolea
   const waited = !treat.lastDate || daysBetween(treat.lastDate, today) >= treat.minDaysBetween;
   return safe.covered && treat.lastCents <= safe.perDay && waited;
 }
+
+// Budgets StampLedger: 10 stamps per limit, each 10% (rounded). Over the limit, all ten fill and one
+// extra "over" stamp shows outside them. No limit: nothing to stamp.
+export function stamps(spent: number, limit: number | undefined) {
+  if (!limit || limit <= 0) return null;
+  const filled = Math.min(10, Math.round((Math.max(0, spent) / limit) * 10));
+  return { filled, over: spent > limit, left: limit - spent, status: budgetStatus(spent, limit) };
+}
+
+// Treat jar fill toward its goal. Past 100% it may overflow a little (the drawing caps at 110%).
+export function jarFill(balance: number, goal: number | undefined) {
+  if (!goal || goal <= 0) return null;
+  const share = Math.max(0, balance) / goal;
+  return { share, percent: Math.min(100, Math.floor(share * 100)), reached: balance >= goal, toGo: Math.max(0, goal - balance) };
+}
