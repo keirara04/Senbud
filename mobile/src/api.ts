@@ -89,7 +89,7 @@ export type BudAction =
 
 export type BudReply = { answer: string; actions: BudAction[]; offTopic: boolean };
 
-const COOLDOWN = 'Let’s stick to your money today. Quick adds, “can I afford…” and “how’s my month?” still work.';
+export const COOLDOWN = 'Let’s stick to your money today. Quick adds, “can I afford…” and “how’s my month?” still work.';
 
 export async function askBud(question: string, about: AskSummary, deviceId: string, turns: Turn[] = []): Promise<BudReply> {
   const abort = new AbortController();

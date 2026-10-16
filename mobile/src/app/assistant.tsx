@@ -10,7 +10,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View 
 import Animated, { FadeIn, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { Bud, type BudFace, ReceiptCard } from '@/art';
-import { askBud, type AskSummary, type BudAction, type Turn, WEB } from '@/api';
+import { askBud, type AskSummary, type BudAction, COOLDOWN, type Turn, WEB } from '@/api';
 import { type AppState, addTransactions, deleteTransactions, giveAskConsent, loadApp } from '@/db';
 import { useMoney } from '@/money';
 import { Button, CATEGORIES, Icon, Marker, T, TextButton, useTheme } from '@/ui';
@@ -198,7 +198,10 @@ export default function Assistant() {
 
   // Bud's suggestions open a prefilled screen; nothing changes until the person saves it there.
   function actionButton(a: BudAction, i: number) {
-    const go = (path: string, params: Record<string, string> = {}) => () => router.push(`${path}?${new URLSearchParams(params)}` as never);
+    const go = (path: string, params: Record<string, string> = {}) => () => {
+      const query = new URLSearchParams(params).toString();
+      router.push((query ? `${path}?${query}` : path) as never);
+    };
     if (a.type === 'set_limit' && CATEGORIES.includes(a.category))
       return <Button key={i} variant="secondary" title={`Set a ${a.category} limit${a.amount ? ` of ${fmt(Math.round(a.amount * 100))}` : ''}`} onPress={go('/limit', { category: a.category, ...(a.amount ? { amount: String(a.amount) } : {}) })} />;
     if (a.type === 'add_bill' && a.label && a.amount > 0)
@@ -262,7 +265,9 @@ export default function Assistant() {
       const buttons = r.actions.map(actionButton).filter((b) => b !== null);
       replace(id, { face: 'happy', title: 'Bud', note: r.answer, actions: buttons.length ? <View style={{ gap: space.xs }}>{buttons}</View> : undefined });
     } catch (e) {
-      replace(id, { face: 'oops', title: 'Bud', note: e instanceof Error ? e.message : String(e), actions: <TextButton title="Try again" onPress={() => ask(line, id)} /> });
+      const note = e instanceof Error ? e.message : String(e);
+      // No "Try again" when questions are paused for the day: it can't work until tomorrow.
+      replace(id, { face: 'oops', title: 'Bud', note, actions: note === COOLDOWN ? undefined : <TextButton title="Try again" onPress={() => ask(line, id)} /> });
     }
   }
 
