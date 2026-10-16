@@ -9,7 +9,8 @@ import { ActivityIndicator, Pressable, View } from 'react-native';
 import Purchases from 'react-native-purchases';
 
 import { type Receipt, readReceipt, WEB, WEB_FREE } from '@/api';
-import { addTransactions, type AppState, deleteTransactions, giveAiConsent, loadApp, loadSetup, type Profile, setPro, today } from '@/db';
+import { addTransactions, type AppState, deleteTransactions, loadApp, loadSetup, type Profile, setPro, today } from '@/db';
+import { askAiConsent } from '@/consent';
 import { hasPro, purchasesReady } from '@/purchases';
 import { Button, Card, CategoryChip, Row, Screen, T, UndoBar, useTheme } from '@/ui';
 
@@ -17,7 +18,8 @@ type Step =
   | { kind: 'loading' }
   | { kind: 'pro' }
   | { kind: 'aiOff' }
-  | { kind: 'consent' }
+  | { kind: 'asking' }
+  | { kind: 'declined' }
   | { kind: 'pick'; error?: string }
   | { kind: 'reading' }
   | { kind: 'review'; receipt: Receipt; keep: boolean[] }
@@ -59,16 +61,21 @@ export default function ReceiptScreen() {
       }
       setApp(a);
       // The web app can't sell Pro yet; it gets a few free receipts a day instead (the API counts them).
-      setStep(!a.pro && !WEB ? { kind: 'pro' } : !a.aiEnabled ? { kind: 'aiOff' } : a.aiConsentAt ? { kind: 'pick' } : { kind: 'consent' });
+      if (!a.pro && !WEB) return setStep({ kind: 'pro' });
+      if (!a.aiEnabled) return setStep({ kind: 'aiOff' });
+      if (!a.aiConsentAt) return allowAi();
+      setStep({ kind: 'pick' });
       })();
     }, [db, step.kind]),
   );
 
   const fmt = (n: number) => money(n, profile.currency, profile.locale);
 
-  async function consent() {
-    await giveAiConsent(db);
-    setStep({ kind: 'pick' });
+  // First AI use: the one "Bud uses AI" sheet. 'asking' keeps the focus effect from asking again when
+  // the sheet closes.
+  async function allowAi() {
+    setStep({ kind: 'asking' });
+    setStep({ kind: (await askAiConsent()) ? 'pick' : 'declined' });
   }
 
   async function pick(source: 'camera' | 'library') {
@@ -114,7 +121,7 @@ export default function ReceiptScreen() {
     setStep({ kind: 'pick' });
   }
 
-  if (step.kind === 'loading') return null;
+  if (step.kind === 'loading' || step.kind === 'asking') return null;
 
   if (step.kind === 'pro')
     return (
@@ -149,19 +156,13 @@ export default function ReceiptScreen() {
       </Screen>
     );
 
-  if (step.kind === 'consent')
+  if (step.kind === 'declined')
     return (
       <Screen>
-        <T variant="title">Before your first receipt</T>
-        <Card>
-          <T>To read a receipt, Senbud sends the photo to its server and on to an AI model (currently Google Gemini) through OpenRouter.</T>
-          <T>The photo is used only to read this receipt. Senbud doesn’t store or log it, and only providers that keep no data are used.</T>
-          <T tone="textDim" variant="caption">
-            Everything else stays on your phone. You can still add expenses by typing.
-          </T>
-        </Card>
-        <Button title="Allow and continue" onPress={consent} />
-        <Button title="Not now" variant="secondary" onPress={() => router.back()} />
+        <T variant="title">Reading a receipt needs AI</T>
+        <T tone="textDim">Nothing was sent. You can type what you spent instead.</T>
+        <Button title="Type it instead" onPress={() => router.back()} />
+        <Button title="Use AI" variant="secondary" onPress={allowAi} />
       </Screen>
     );
 

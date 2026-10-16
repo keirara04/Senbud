@@ -11,7 +11,8 @@ import Animated, { FadeIn, useAnimatedStyle, useReducedMotion, useSharedValue, w
 
 import { Bud, type BudFace, ReceiptCard } from '@/art';
 import { askBud, type AskSummary, type BudAction, COOLDOWN, type Turn, WEB } from '@/api';
-import { type AppState, addTransactions, deleteTransactions, giveAskConsent, listTransactions, loadApp } from '@/db';
+import { askAiConsent } from '@/consent';
+import { type AppState, addTransactions, deleteTransactions, listTransactions, loadApp } from '@/db';
 import { useMoney } from '@/money';
 import { NoteCard, useBudNotes } from '@/notes';
 import { Button, CATEGORIES, Icon, Marker, T, TextButton, useTheme } from '@/ui';
@@ -308,20 +309,13 @@ export default function Assistant() {
         note: `Questions in your own words come with Senbud Pro. “How’s my ${unit}?”, “can I afford 45” and quick adds stay free.`,
         actions: <Button title="See plans" variant="secondary" onPress={() => router.push('/pro')} />,
       });
-    if (!a.askConsentAt)
+    // First AI use: the one "Bud uses AI" sheet. Not now leaves the question unanswered.
+    if (!a.aiConsentAt && !(await askAiConsent()))
       return replace(id, {
         face: 'thinking',
-        title: 'Before your first question',
-        note: 'To answer, Senbud sends your question, your last few questions and answers in this chat, and a short summary (this month’s totals, your budget and rent, and your last 20 expenses) to its server and on to an AI model (currently Anthropic’s Claude Haiku, run by Google) through OpenRouter. It isn’t stored or logged, and only providers that keep no data are used.'.replace('month', unit),
-        actions: (
-          <Button
-            title="Allow and ask"
-            onPress={async () => {
-              await giveAskConsent(db);
-              ask(line, id);
-            }}
-          />
-        ),
+        title: 'Bud',
+        note: 'Okay, no AI. Quick adds and “How’s my ' + unit + '?” still work without it.',
+        actions: <Button title="Ask with AI" variant="secondary" onPress={() => ask(line, id)} />,
       });
     replace(id, { face: 'thinking', title: 'Bud', printing: true });
     try {
