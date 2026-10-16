@@ -491,6 +491,57 @@ td:first-child { font-weight: 650; white-space: nowrap; }
   .way:hover *, .way:hover .way-demo::after { animation-play-state: paused !important; }
 }
 
+/* ---------- pricing v2 ---------- */
+.prices2 { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.25fr); gap: 24px; align-items: center; }
+@media (max-width: 900px) { .prices2 { grid-template-columns: 1fr; } .pro-wrap { order: -1; } }
+.price-card.free { background: var(--bg); padding: 30px; }
+.price-card.free .price { font-size: 56px; }
+.pro-wrap { position: relative; border-radius: 28px; padding: 2px; background: conic-gradient(from var(--spin, 0deg), #eeff5a, #4fd1a5, #1f3fd8, #eeff5a); box-shadow: 0 30px 70px rgba(31,63,216,.35); }
+.price-card.pro { position: relative; border-radius: 26px; padding: 34px; gap: 14px; background: linear-gradient(160deg, #2a4ae6 0%, #1f3fd8 45%, #1733b5 100%); border: 0; overflow: visible; }
+.price-card.pro:hover { transform: none; }
+.pro-bud { position: absolute; top: -44px; right: 26px; filter: drop-shadow(0 10px 18px rgba(0,0,0,.3)); }
+.pro .price { font-size: 64px; }
+.pro .price .per { font: 500 18px var(--sans); color: var(--on-panel-dim); letter-spacing: 0; }
+.save { background: #c4efdd; color: #155a44; font: 700 13px/1 var(--sans); padding: 7px 10px; border-radius: 999px; margin-bottom: 12px; }
+.save[hidden] { display: none; }
+.plus { font: 700 12px/16px var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--on-panel-dim); margin-top: 6px; }
+.perks { display: grid; gap: 10px; }
+.perk { display: grid; grid-template-columns: minmax(0, 1fr) 170px; gap: 14px; align-items: center; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); border-radius: 16px; padding: 14px; }
+@media (max-width: 520px) { .perk { grid-template-columns: 1fr; } }
+.perk-txt { display: grid; gap: 2px; }
+.perk-txt b { font-size: 17px; }
+.perk-txt span { font-size: 14px; line-height: 19px; color: var(--on-panel-dim); }
+.perk-demo { font-size: 12px; }
+.perk-demo.receipt { --tooth: 7px; padding: 9px 10px 11px; display: grid; gap: 2px; transform: rotate(1.5deg); }
+.perk-found { margin-top: 4px; font: 700 11px/14px var(--sans); color: #155a44; background: #c4efdd; border-radius: 4px; padding: 2px 6px; justify-self: start; }
+.meter { display: grid; gap: 8px; color: var(--on-panel); }
+.m-row { display: grid; grid-template-columns: 30px 1fr 58px; gap: 8px; align-items: center; font: 600 12px/1 var(--sans); }
+.m-row > span:last-child { text-align: right; color: var(--on-panel-dim); }
+.m-bar { height: 8px; border-radius: 999px; background: rgba(255,255,255,.18); overflow: hidden; display: block; }
+.m-bar i { display: block; height: 100%; border-radius: 999px; background: #ff8a7d; }
+.m-bar i.inf { width: 100%; background: repeating-linear-gradient(90deg, #4fd1a5 0 14px, #c4efdd 14px 28px); background-size: 28px 100%; }
+.pro-row > span:last-child { color: #4fd1a5; }
+.note-demo { display: grid; gap: 1px; background: #ffffff; color: #1a1c2e; border-radius: 12px; padding: 10px 12px; box-shadow: 0 8px 18px rgba(0,0,0,.18); }
+.note-demo .cap { color: #565b75 !important; }
+.worth { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; background: rgba(11,16,51,.28); border-radius: 16px; padding: 16px 18px; font-size: 15px; line-height: 21px; color: var(--on-panel-dim); }
+.worth-n { font: 800 30px/1 var(--display); color: var(--on-panel); letter-spacing: -.02em; }
+@media (max-width: 520px) { .worth { grid-template-columns: 1fr; } }
+.compare-wrap { margin-top: 36px; overflow-x: auto; border-radius: 20px; border: 1px solid var(--line); background: var(--bg); }
+.compare { min-width: 640px; font-size: 15px; line-height: 21px; }
+.compare th, .compare td { padding: 14px 18px; }
+.compare td:first-child { font-weight: 650; }
+.compare .pro-col { background: rgba(31,63,216,.07); color: var(--text); font-weight: 600; }
+.compare th.pro-col { color: var(--accent); }
+.compare .dimcell { color: var(--dim); }
+@property --spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes spinborder { to { --spin: 360deg; } }
+@keyframes flow { from { background-position: 0 0; } to { background-position: 28px 0; } }
+@media (prefers-reduced-motion: no-preference) {
+  .pro-wrap { animation: spinborder 8s linear infinite; }
+  .m-bar i.inf { animation: flow 1.2s linear infinite; }
+  .pro-bud { animation: bob 5s ease-in-out infinite; }
+}
+
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -751,23 +802,67 @@ td:first-child { font-weight: 650; white-space: nowrap; }
 <!-- PRICING -->
 <section class="band paper alt" id="pricing">
   <div class="cwrap">
-    <div class="sec-intro"><h2>Free stays free. <span class="mk">Pro does the typing.</span></h2><p>Exporting your data is never behind a paywall.</p></div>
-    <div class="prices">
-      <div class="price-card">
+    <div class="sec-intro"><h2>Free stays free. <span class="mk">Pro does the typing.</span></h2><p>Everything you need to stay on budget is free. Pro takes the typing off your hands and catches the money that slips away.</p></div>
+    <div class="prices2">
+      <div class="price-card free">
         <span class="lab">Free</span>
-        <div class="price">$0 <span>forever, no card needed</span></div>
-        <ul class="plist"><li>Type or tap in your spending</li><li>One budget with reminders</li><li>Safe to spend today, rent countdown, Can I afford it?</li><li>Treat jar and hours of work</li><li>Split bills by hand and track IOUs</li><li>Bud, 10 questions a day</li><li>Export everything, any time</li></ul>
-        <a class="pill out wide" href="#join">Join the waitlist</a>
+        <div class="price">$0</div>
+        <span class="cap dim">forever, no card needed</span>
+        <ul class="plist"><li>Type or tap in your spending</li><li>One budget with reminders</li><li>Safe to spend today and rent countdown</li><li>Can I afford it? and hours of work</li><li>Treat jar</li><li>Split bills by hand and track IOUs</li><li>Bud, 10 questions a day</li><li>Export everything, any time</li></ul>
+        <a class="pill out wide" href="#join">Start free</a>
       </div>
-      <div class="price-card pro">
-        <div class="row" style="flex-wrap:nowrap"><span class="lab" style="color:var(--on-panel-dim)">Senbud Pro</span><span class="seg-mini" role="group" aria-label="Billing"><button type="button" class="on" id="bill-y" aria-pressed="true">Yearly</button><button type="button" id="bill-m" aria-pressed="false">Monthly</button></span></div>
-        <h3 class="pro-title">Senbud Pro does the typing for you</h3>
-        <div class="price"><span class="pnum" id="pro-price">$3.25</span> <span id="pro-sub">a month, billed $39 a year</span></div>
-        <span class="cap" style="color:var(--on-panel-dim)" id="pro-alt">Or $4.99 month to month.</span>
-        <ul class="plist on-c"><li><b>Snap receipts</b> and screenshots</li><li><b>Unlimited Bud</b>, ask as much as you like</li><li><b>Subscription reminders</b> before they renew</li></ul>
-        <a class="pill hl wide" href="#join">Join the waitlist</a>
-        <span class="cap" style="color:var(--on-panel-dim);text-align:center">Join now and your founding price stays the same when Pro opens.</span>
+
+      <div class="pro-wrap">
+        <div class="price-card pro">
+          <svg class="bud pro-bud" width="72" height="72" aria-hidden="true"><use href="#bud-yay"/></svg>
+          <div class="row" style="flex-wrap:nowrap;align-items:center"><span class="lab" style="color:var(--on-panel-dim)">Senbud Pro</span><span class="seg-mini" role="group" aria-label="Billing"><button type="button" class="on" id="bill-y" aria-pressed="true">Yearly</button><button type="button" id="bill-m" aria-pressed="false">Monthly</button></span></div>
+          <h3 class="pro-title">Senbud Pro does the typing for you</h3>
+          <div class="row start" style="gap:12px;align-items:flex-end">
+            <div class="price"><span class="pnum" id="pro-price">$3.25</span><span class="per"> / month</span></div>
+            <span class="save" id="pro-save">Save $20.88 a year</span>
+          </div>
+          <span class="cap" style="color:var(--on-panel-dim)" id="pro-sub">Billed $39 once a year. Or $4.99 month to month.</span>
+
+          <span class="plus">Everything in Free, plus</span>
+          <div class="perks">
+            <div class="perk">
+              <div class="perk-txt"><b>Snap receipts</b><span>Photo in, items out. No more typing every coffee.</span></div>
+              <div class="receipt perk-demo mono"><div class="slip-h">Corner Deli</div><div class="rc-row"><span>Bagel</span><span class="leader"></span><span>3.75</span></div><div class="rc-row"><span>Iced coffee</span><span class="leader"></span><span>4.25</span></div><div class="perk-found">2 items found, ready to check</div></div>
+            </div>
+            <div class="perk">
+              <div class="perk-txt"><b>Unlimited Bud</b><span>Ask as much as you like. Free stops at 10 a day.</span></div>
+              <div class="perk-demo meter"><div class="m-row"><span>Free</span><span class="m-bar"><i style="width:100%"></i></span><span>10/day</span></div><div class="m-row pro-row"><span>Pro</span><span class="m-bar"><i class="inf"></i></span><span>No limit</span></div></div>
+            </div>
+            <div class="perk">
+              <div class="perk-txt"><b>Subscription reminders</b><span>Senbud spots repeat charges and warns you the day before.</span></div>
+              <div class="perk-demo note-demo"><span class="cap" style="color:var(--on-panel-dim)">Tomorrow</span><b>Spotify renews</b><span class="money">$5.99</span></div>
+            </div>
+          </div>
+
+          <div class="worth">
+            <span class="worth-n">$119.88</span>
+            <span>is what one forgotten $9.99 subscription costs in a year. Pro is $39. Catch one and it has paid for itself three times over.</span>
+          </div>
+
+          <a class="pill hl wide" href="#join">Join the Pro waitlist</a>
+          <span class="cap" style="color:var(--on-panel-dim);text-align:center">Founding price stays the same when Pro opens. Cancel any time in your App Store settings.</span>
+        </div>
       </div>
+    </div>
+
+    <div class="compare-wrap">
+      <table class="compare">
+        <thead><tr><th>What you get</th><th>Free</th><th class="pro-col">Pro</th></tr></thead>
+        <tbody>
+          <tr><td>Add spending</td><td>Type or tap</td><td class="pro-col">Plus snap receipts and screenshots</td></tr>
+          <tr><td>Bud, the assistant</td><td>10 questions a day</td><td class="pro-col">No limit</td></tr>
+          <tr><td>Budgets</td><td>One overall budget</td><td class="pro-col">Several, category limits, until payday</td></tr>
+          <tr><td>Splitting with friends</td><td>By hand, with IOUs</td><td class="pro-col">Item by item from the receipt</td></tr>
+          <tr><td>Subscriptions</td><td class="dimcell">Not included</td><td class="pro-col">Spotted for you, reminders before renewal</td></tr>
+          <tr><td>Wrapped</td><td>Monthly basics</td><td class="pro-col">Full story, share cards, year-end edition</td></tr>
+          <tr><td>Export and privacy</td><td>Everything, any time</td><td class="pro-col">Same. Never behind a paywall</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
@@ -871,7 +966,7 @@ td:first-child { font-weight: 650; white-space: nowrap; }
         <tr><td>Friends</td><td>Diner receipt split and a reminder “ready to paste”</td><td>Three numbered steps and the phone’s Send on WhatsApp sheet</td><td>Matches the redesigned 3-step split and the new one-tap reminder</td></tr>
         <tr><td>Privacy</td><td>Animated phone-to-AI diagram</td><td>Three cards: on your phone, only if AI is on, back on your phone</td><td>Same story, says “no account” too, and works without motion</td></tr>
         <tr><td>Wrapped, game</td><td>Two full sections</td><td>Folded into one “Also in the app” strip with subscriptions and rent</td><td>The page is about a quarter shorter (7,900 px vs 10,300 px at 1440 wide), and the extras stay visible</td></tr>
-        <tr><td>Pricing</td><td>Same prices, longer Pro list</td><td>Pro card uses the paywall copy word for word: three benefits, yearly first</td><td>Website and in-app paywall say the same thing</td></tr>
+        <tr><td>Pricing</td><td>Two plain cards with a long Pro list</td><td>Pro is the hero card: the paywall’s three benefits each shown working, the yearly saving, a “what it’s worth” line, and a Free vs Pro table under it</td><td>Shows why Pro is worth paying for, and the website and in-app paywall say the same thing</td></tr>
         <tr><td>FAQ</td><td>Browser storage answers</td><td>Account-free, phone storage, backups, what the AI sees, when it’s out</td><td>Answers the questions the app now raises</td></tr>
         <tr><td>Footer</td><td>Receipt footer</td><td>Kept, with Bud added to the line items</td><td>It’s the most on-brand thing on the current page</td></tr>
       </tbody>
@@ -918,8 +1013,8 @@ try { const saved = localStorage.getItem('senbud-concepts-theme'); if (saved) se
     y.classList.toggle('on', yearly); m.classList.toggle('on', !yearly);
     y.setAttribute('aria-pressed', yearly); m.setAttribute('aria-pressed', !yearly);
     document.getElementById('pro-price').textContent = yearly ? '$3.25' : '$4.99';
-    document.getElementById('pro-sub').textContent = yearly ? 'a month, billed $39 a year' : 'a month, cancel any time';
-    document.getElementById('pro-alt').textContent = yearly ? 'Or $4.99 month to month.' : 'Or $39 a year, about $3.25 a month.';
+    document.getElementById('pro-sub').textContent = yearly ? 'Billed $39 once a year. Or $4.99 month to month.' : 'Billed monthly, cancel any time. Yearly works out to $3.25 a month.';
+    document.getElementById('pro-save').hidden = !yearly;
   };
   y.addEventListener('click', () => set(true)); m.addEventListener('click', () => set(false));
 })();
