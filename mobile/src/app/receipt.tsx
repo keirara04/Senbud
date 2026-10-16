@@ -43,6 +43,14 @@ export default function ReceiptScreen() {
       const a = await loadApp(db);
       const s = await loadSetup(db);
       if (s) setProfile(s.profile);
+      // Ask RevenueCat when it's set up: on a fresh launch the cached flag may not be synced yet.
+      // Offline, fall back to the cache so Pro keeps working.
+      if (purchasesReady()) {
+        try {
+          a.pro = hasPro(await Purchases.getCustomerInfo());
+          await setPro(db, a.pro);
+        } catch {}
+      }
       setApp(a);
       setStep(!a.pro ? { kind: 'pro' } : a.aiConsentAt ? { kind: 'pick' } : { kind: 'consent' });
     })();
