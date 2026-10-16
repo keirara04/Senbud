@@ -57,7 +57,7 @@ export default function Home() {
     status === 'over'
       ? `${fmt(safe.spent - limit)} over, no stress.`
       : status === 'close'
-        ? `${fmt(limit - safe.spent)} left. Cook tonight? 🍳`
+        ? `${fmt(limit - safe.spent)} left. Cook tonight?`
         : aheadOfPace(safe.spent, limit, safe, day)
           ? `${fmt(safe.spent)} of ${fmt(limit)} gone and it’s only ${WEEKDAYS[new Date().getDay()]}.`
           : 'On track.';
@@ -107,7 +107,7 @@ export default function Home() {
       {rent && (
         <Card>
           <T>
-            🏠 Rent {fmt(rent.cents)} {rent.days === 0 ? 'is due today' : `in ${rent.days} ${rent.days === 1 ? 'day' : 'days'}`}
+            Rent {fmt(rent.cents)} {rent.days === 0 ? 'is due today' : `in ${rent.days} ${rent.days === 1 ? 'day' : 'days'}`}
             {safe.covered ? ' — you’re covered.' : ' — not covered yet.'}
           </T>
         </Card>
@@ -142,7 +142,7 @@ export default function Home() {
           error={hint}
         />
         {undo && <UndoBar message={undo.summary} onUndo={undoAdd} />}
-        <TextButton title="📸 Snap a receipt instead" onPress={() => router.push('/receipt')} />
+        <TextButton title="Snap a receipt instead" onPress={() => router.push('/receipt')} />
       </Card>
 
       <Row style={{ justifyContent: 'space-around' }}>
