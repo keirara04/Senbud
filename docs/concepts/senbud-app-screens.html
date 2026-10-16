@@ -339,7 +339,7 @@ body {
       </div>
       <ul class="decide">
         <li><b>Made from the brand’s own parts:</b> receipt-white body with torn edges, ink outline, two printed lines for a fringe, coral blush. No highlighter on Bud, so it never competes with a screen’s key number.</li>
-        <li><b>Four faces, each with a job:</b> happy (default, the assistant button), thinking (an answer is loading), oops (offline or AI off) and yay (Pro unlocked, Wrapped, a goal reached).</li>
+        <li><b>Four faces, each with a job:</b> happy (default, the assistant button), thinking (an answer is loading), oops (offline or AI off) and yay (Pro unlocked, a jar goal reached).</li>
         <li><b>Where it shows:</b> the assistant button (38 pt inside the 56 pt cobalt circle), the assistant sheet header, the welcome screen, and empty states. Never inside copy, and it doesn’t replace words.</li>
         <li><b>Decorative for screen readers.</b> The button keeps its label “Ask Senbud”. A small idle wobble on the button turns off with Reduce Motion.</li>
         <li>Same drawing in light and dark: the white body reads on paper, night and cobalt.</li>
@@ -834,7 +834,7 @@ body {
       <ul class="decide">
         <li><b>Hero:</b> the net balance on the cobalt panel, in highlighter <i>both ways</i>. The words say the direction (“owed to you” / “you owe overall”), so “you owe” isn’t painted coral. <b>This changes the section 4 table</b>, which said good/bad colour.</li>
         <li><b>One row per friend</b> with initials (no contacts access, no photos), the latest note and date, and the amount with “owes you” in good ink or “you owe” in plain dim text.</li>
-        <li><b>IOUs older than 7 days</b> show “Remind” right on the row, which opens the friend sheet. <b>“Send on WhatsApp” opens WhatsApp with the message already written</b>; you pick the chat and tap send, so Senbud still never sends anything itself and never needs contacts. “Other apps” opens the share sheet (Telegram, Messages); “Copy” copies it. “Mark paid” has Undo.</li>
+        <li><b>IOUs older than 7 days</b> show “Remind” right on the row, which opens the friend sheet. <b>“Send on WhatsApp” opens WhatsApp with the message already written</b>; you pick the chat and tap send, so Senbud still never sends anything itself and never needs contacts. If WhatsApp isn’t installed, that button is hidden and “Other apps” becomes the main one. “Other apps” opens the share sheet (Telegram, Messages); “Copy” copies it. “Mark paid” has Undo.</li>
         <li><b>Split is three short steps</b> instead of one crowded grid: 1) who was there, who paid, by item or evenly; 2) pick a person, then tap their items on the receipt (tabs show running totals; “1 item left” until every item has an owner); 3) check everyone’s share and save. Evenly skips step 2. By item is Pro.</li>
       </ul>
     </div>
@@ -1418,7 +1418,7 @@ body {
           <div class="navbar" style="justify-content:flex-end"><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
           <div class="scroll" style="gap:16px;justify-content:center">
             <div class="card panel" style="gap:10px">
-              <span class="lab">Senbud Pro</span>
+              <div class="row"><span class="lab">Senbud Pro</span><svg class="bud" width="56" height="56" aria-hidden="true"><use href="#bud-yay"/></svg></div>
               <span class="hero" style="font-size:44px;line-height:50px">You’re in.</span>
               <span class="cap pdim">Yearly, renews 16 Oct 2027. Manage it any time in your App Store settings.</span>
             </div>

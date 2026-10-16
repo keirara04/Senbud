@@ -175,7 +175,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
   - happy (default)
   - thinking (an answer is loading)
   - oops (offline or AI off)
-  - yay (Pro unlocked, Wrapped, a jar goal reached)
+  - yay (Pro unlocked, a jar goal reached)
 - **Where it shows:** inside `AssistantFab` (38 pt), the assistant sheet header (32 pt), Welcome (about 170 pt) and empty states. It's never in copy, and it never replaces words. Smallest size is 24 pt.
 - **Accessibility:** decorative (`accessibilityElementsHidden` / `importantForAccessibility="no"`). The button keeps its label "Ask Senbud". An idle wobble on the button is off under Reduce Motion.
 - **Same drawing in both themes:** the white body reads on paper, night and cobalt. It's drawn with `react-native-svg`.
@@ -509,7 +509,7 @@ The voice is a friendly older cousin who's good with money.
 
 ## 7. Not done yet (on purpose)
 
-- **Dotted-notebook background and torn receipt edges.** They need `react-native-svg`, which isn't worth adding for decoration yet. Revisit for Wrapped share images.
+- **Dotted-notebook background.** Still left out. `react-native-svg` is needed from Phase 1 anyway, for `Bud`, `TreatJar` and the torn edges on `ReceiptCard`, so add it then; the background can follow if it's worth it.
 - **No custom font or icon set yet.** Use system symbols (never emoji) until an icon set is chosen. The one illustration is Bud (4.0); don't add others without a reason. `expo-symbols` is already installed for SF Symbols on iOS.
 - **In dark mode, `primary` and `highlight` buttons look the same** (both highlighter yellow), so the "single most important action" emphasis disappears at night. Accepted for now. If a screen ever needs both, give dark `primary` its own fill.
 - **Large text checked on iOS only.** At the largest accessibility size on the iPhone 17 simulator, Home and Activity wrap correctly. That's after three fixes: `Row` wraps, inputs drop their fixed line height, and the hero number is capped at 1.3× and shrinks to fit. Android at large font scale is not checked yet.
