@@ -19,7 +19,8 @@ import {
   View,
   type ViewStyle,
 } from 'react-native';
-import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeOut, LinearTransition, useReducedMotion } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 
 import { Bud } from '@/art';
@@ -328,6 +329,159 @@ export function ListRow({ label, value, onPress, first, right, tone }: { label: 
       {value ? <T tone="textDim">{value}</T> : null}
       {onPress ? <Icon name={{ ios: 'chevron.right', android: 'chevron_right' }} size={14} color={t.textDim} /> : null}
     </Pressable>
+  );
+}
+
+// Minor digits of a currency, from Intl (0 for KRW/JPY, 2 for most).
+export const digitsOf = (currency: string, locale: string) =>
+  new Intl.NumberFormat(locale, { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? 2;
+
+// 3×4 keypad for an amount typed as a string ("12.5"). The decimal key is hidden for zero-decimal
+// currencies. Keys are buttons, ⌫ is "Delete", and each press gives a light tick.
+export function AmountPad({ value, onChange, digits }: { value: string; onChange: (v: string) => void; digits: number }) {
+  const t = useTheme();
+  function press(key: string) {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    if (key === 'del') return onChange(value.slice(0, -1));
+    if (key === '.' && (value.includes('.') || digits === 0)) return;
+    const next = value === '0' && key !== '.' ? key : value + key;
+    const [, dec = ''] = next.split('.');
+    if (dec.length > digits || next.replace('.', '').length > 7) return;
+    onChange(next);
+  }
+  const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', digits ? '.' : '', '0', 'del'];
+  return (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+      {keys.map((k, i) =>
+        k ? (
+          <Pressable
+            key={k}
+            onPress={() => press(k)}
+            accessibilityRole="button"
+            accessibilityLabel={k === 'del' ? 'Delete' : k === '.' ? 'Decimal point' : k}
+            style={({ pressed }) => ({ flexBasis: '30%', flexGrow: 1, minHeight: touch.min + 8, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? t.surfaceSunken : t.surface })}
+          >
+            {k === 'del' ? <Icon name={{ ios: 'delete.left', android: 'backspace' }} /> : <T variant="title">{k}</T>}
+          </Pressable>
+        ) : (
+          <View key={`blank-${i}`} style={{ flexBasis: '30%', flexGrow: 1 }} />
+        ),
+      )}
+    </View>
+  );
+}
+
+// A row of 48 pt amount chips (radio). Scrolls sideways at large text instead of shrinking.
+export function QuickPicks({ options, value, onChange, label }: { options: { value: number; label: string }[]; value: number | null; onChange: (v: number) => void; label: string }) {
+  const t = useTheme();
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" accessibilityLabel={label} contentContainerStyle={{ gap: space.sm }}>
+      {options.map((o) => {
+        const on = o.value === value;
+        return (
+          <Pressable
+            key={o.value}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+              onChange(o.value);
+            }}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: on }}
+            style={({ pressed }) => ({ minHeight: touch.min, paddingHorizontal: space.md, borderRadius: radius.pill, justifyContent: 'center', borderWidth: 1.5, borderColor: on ? t.accent : t.line, backgroundColor: on ? t.surfaceSunken : pressed ? t.surfaceSunken : t.surface })}
+          >
+            <T variant="bodyStrong" tone={on ? 'accent' : 'text'} money>
+              {o.label}
+            </T>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
+// Days 1–31 as 48 pt circles (radiogroup), scrolled so the chosen day is in view.
+export function DayStrip({ value, onChange, ordinal }: { value: number; onChange: (d: number) => void; ordinal: (d: number) => string }) {
+  const t = useTheme();
+  const size = touch.min;
+  const step = size + space.sm;
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      accessibilityRole="radiogroup"
+      accessibilityLabel={`Rent due on the ${ordinal(value)}`}
+      contentContainerStyle={{ gap: space.sm }}
+      contentOffset={{ x: Math.max(0, (value - 3) * step), y: 0 }}
+    >
+      {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => {
+        const on = d === value;
+        return (
+          <Pressable
+            key={d}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+              onChange(d);
+            }}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: on }}
+            accessibilityLabel={`The ${ordinal(d)}`}
+            style={{ width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? t.primary : t.surface, borderWidth: on ? 0 : 1, borderColor: t.line }}
+          >
+            <T variant="bodyStrong" style={{ color: on ? t.onPrimary : t.text }}>
+              {d}
+            </T>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
+// A big either/or answer (radio), 64 pt or taller.
+export function ChoiceCard({ title, hint, selected, onPress }: { title: string; hint?: string; selected: boolean; onPress: () => void }) {
+  const t = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="radio"
+      accessibilityState={{ checked: selected }}
+      accessibilityLabel={hint ? `${title}, ${hint}` : title}
+      style={({ pressed }) => ({ flex: 1, minHeight: 64, padding: space.md, gap: space.xxs, borderRadius: radius.md, borderWidth: 2, borderColor: selected ? t.accent : t.line, backgroundColor: pressed ? t.surfaceSunken : t.surface, justifyContent: 'center' })}
+    >
+      <T variant="bodyStrong" tone={selected ? 'accent' : 'text'}>
+        {title}
+      </T>
+      {hint ? (
+        <T variant="caption" tone="textDim">
+          {hint}
+        </T>
+      ) : null}
+    </Pressable>
+  );
+}
+
+// Back, a segmented progress bar and Skip when the step is optional. `step` is 1-based.
+export function StepHeader({ step, total, onBack, onSkip }: { step: number; total: number; onBack?: () => void; onSkip?: () => void }) {
+  const t = useTheme();
+  const reduce = useReducedMotion();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: touch.min }}>
+      <View style={{ width: touch.min }}>
+        {onBack ? (
+          <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Back" hitSlop={8} style={{ width: touch.min, height: touch.min, justifyContent: 'center' }}>
+            <Icon name={{ ios: 'chevron.left', android: 'arrow_back' }} color={t.text} />
+          </Pressable>
+        ) : null}
+      </View>
+      <View style={{ flex: 1, flexDirection: 'row', gap: space.xs }} accessibilityRole="progressbar" accessibilityLabel={`Step ${step} of ${total}`}>
+        {Array.from({ length: total }, (_, i) => (
+          <View key={i} style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: t.surfaceSunken, overflow: 'hidden' }}>
+            <Animated.View layout={reduce ? undefined : LinearTransition.duration(250)} style={{ height: 6, width: i < step ? '100%' : '0%', backgroundColor: t.accent }} />
+          </View>
+        ))}
+      </View>
+      <View style={{ width: touch.min + space.md, alignItems: 'flex-end' }}>{onSkip ? <TextButton title="Skip" tone="textDim" onPress={onSkip} /> : null}</View>
+    </View>
   );
 }
 

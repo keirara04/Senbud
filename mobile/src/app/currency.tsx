@@ -7,36 +7,9 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { CURRENCIES } from '@/currencies';
 import { loadProfile, setCurrency } from '@/db';
 import { Card, Field, Icon, Screen, T, useTheme } from '@/ui';
-
-// ponytail: a fixed list, Southeast Asia first. Add codes here when someone asks for one.
-const CURRENCIES: [string, string][] = [
-  ['MYR', 'Malaysian ringgit'],
-  ['SGD', 'Singapore dollar'],
-  ['IDR', 'Indonesian rupiah'],
-  ['THB', 'Thai baht'],
-  ['PHP', 'Philippine peso'],
-  ['VND', 'Vietnamese dong'],
-  ['BND', 'Brunei dollar'],
-  ['USD', 'US dollar'],
-  ['GBP', 'British pound'],
-  ['EUR', 'Euro'],
-  ['AUD', 'Australian dollar'],
-  ['NZD', 'New Zealand dollar'],
-  ['CAD', 'Canadian dollar'],
-  ['JPY', 'Japanese yen'],
-  ['KRW', 'South Korean won'],
-  ['CNY', 'Chinese yuan'],
-  ['HKD', 'Hong Kong dollar'],
-  ['TWD', 'New Taiwan dollar'],
-  ['INR', 'Indian rupee'],
-  ['PKR', 'Pakistani rupee'],
-  ['BDT', 'Bangladeshi taka'],
-  ['AED', 'UAE dirham'],
-  ['SAR', 'Saudi riyal'],
-  ['CHF', 'Swiss franc'],
-];
 
 export default function CurrencySheet() {
   const db = useSQLiteContext();

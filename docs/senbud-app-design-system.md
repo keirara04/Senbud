@@ -145,6 +145,12 @@ Dynamic Type and font scaling stay on (React Native's default). Layouts must sur
 | `Icon` | `name` ({ios, android}), `size`, `color`, `label` | SF Symbols / Material Symbols via `expo-symbols`, never emoji. Decorative unless labelled. |
 | `BudTab` | `onPress` | See 4.10. Raised 12 pt, not 22: RN doesn't deliver touches outside a parent's bounds, so a higher circle had an untappable top. |
 | `Bud`, `TreatJar`, `ReceiptCard` (`art.tsx`) | `face` / `share` / children | SVG art. `ReceiptCard` is the torn-edge white slip used by Budgets' StampLedger, Split and the assistant's slips. |
+| `AmountPad` | `value`, `onChange`, `digits` | 3×4 keys at 56 pt; the decimal key is hidden for zero-decimal currencies; ⌫ is "Delete"; light haptic per key. Used by Add by hand and the Budget step. |
+| `QuickPicks` | `options`, `value`, `onChange`, `label` | 48 pt chips, radio; scrolls sideways at large text. Shown only for currencies on a student scale (`SMALL_UNIT` in `currencies.ts`). |
+| `DayStrip` | `value`, `onChange`, `ordinal` | Days 1–31 as 48 pt circles, radiogroup "Rent due on the 28th", scrolled to the chosen day. |
+| `ChoiceCard` | `title`, `hint`, `selected`, `onPress` | 64 pt or taller, radio. |
+| `StepHeader` | `step`, `total`, `onBack`, `onSkip` | Back, segmented progress (role progressbar, "Step 1 of 2") that fills with a 250 ms layout transition, Skip when optional. |
+| `PrintingBud`, `useCountUp` (`art.tsx`) | `face`, `budSize`, `width`, children, `onPrinted` | Bud as a thermal printer: the `ReceiptCard` feeds out from under Bud in three pushes (1.3 s) while Bud buzzes ±1.5 pt, then springs to a −2° tilt. The number counts up 800 ms after. Reduce Motion: already printed, final value. |
 | `applyTheme(theme)` | `'system' \| 'light' \| 'dark'` | `Appearance.setColorScheme`; System passes `'unspecified'`. Dark is the default (16 Oct 2026). |
 | `useNavigationTheme()` | – | React Navigation theme built from ours, passed to `ThemeProvider` in `_layout.tsx`. Headers, back buttons and screen backgrounds follow the system scheme live. |
 
@@ -158,8 +164,8 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 
 | Screen | Hero (one per screen) | Content, top to bottom | Status |
 |---|---|---|---|
-| **Welcome** (first launch) | Bud and one line: "Your money buddy" | Wordmark, Bud holding a sample receipt, headline, one line, three promise pills, `primary` "Get started", "I've used Senbud before" (sheet) | Built (`welcome.tsx`); v2 concept (4.1b) |
-| **Setup** (first run, later "Budget and rent") | One question per step: the budget amount, then rent | Built today as one five-field page. Concept 4.1c: two steps (budget, rent) and a "You're set" receipt; currency from the phone | Built; v2 concept (4.1c) |
+| **Welcome** (first launch) | Bud and one line: "Your money buddy" | Wordmark, Bud holding a sample receipt, headline, one line, three promise pills, `primary` "Get started", "I've used Senbud before" (sheet) | Built v2 (`welcome.tsx`, `welcome-back.tsx` sheet) |
+| **Onboarding** (first run) | One question per step: the budget amount, then rent | Two steps (budget, rent) and a "You're set" receipt Bud prints; currency from the phone. Settings opens the same steps as the Budget and Rent sheets. | Built v2 (`onboarding.tsx`, steps in `src/onboarding.tsx`, sheets `edit-budget` / `edit-rent`); the five-field Setup page is gone |
 | **Home** | `panel` with `hero` safe-to-spend in highlighter | Rent card, pace card, today's nudge, pinned `CaptureBar` (see 4.2) | Built; v2 concept |
 | **Activity** | none; it's a list | Cards with label, `CategoryChip`, date, amount, delete. Later: filter chips, including "added by assistant". | Built |
 | **Budgets** | `panel` with what's left in highlighter and `Progress tone="panel"` | `StampLedger` by category; rent and bills list with due days; detected subscriptions | Built |

@@ -28,7 +28,10 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShadowVisible: false, headerBackButtonDisplayMode: 'minimal' }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="welcome" options={{ headerShown: false }} />
-          <Stack.Screen name="setup" options={{ title: 'Budget and rent' }} />
+          <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
+          <Stack.Screen name="welcome-back" options={{ title: 'Welcome back', presentation: 'formSheet', sheetAllowedDetents: [0.6], sheetGrabberVisible: true }} />
+          <Stack.Screen name="edit-budget" options={{ title: 'Budget', presentation: 'formSheet', sheetAllowedDetents: [0.92], sheetGrabberVisible: true }} />
+          <Stack.Screen name="edit-rent" options={{ title: 'Rent', presentation: 'formSheet', sheetAllowedDetents: [0.92], sheetGrabberVisible: true }} />
           <Stack.Screen name="receipt" options={{ title: 'Receipt' }} />
           <Stack.Screen name="limit" options={{ title: 'Category limit', presentation: 'formSheet', sheetAllowedDetents: [0.92], sheetGrabberVisible: true }} />
           <Stack.Screen name="bill" options={{ title: 'Add a bill', presentation: 'formSheet', sheetAllowedDetents: [0.92], sheetGrabberVisible: true }} />

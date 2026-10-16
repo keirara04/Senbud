@@ -1,8 +1,9 @@
 // Senbud's drawings (react-native-svg), ported from docs/concepts/senbud-app-screens.html.
 // Bud is the assistant: a receipt with a face. Same drawing in both themes, always decorative.
 import { palette } from '@senbud/core/tokens';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { type LayoutChangeEvent, type StyleProp, View, type ViewStyle } from 'react-native';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming, ZoomIn } from 'react-native-reanimated';
 import Svg, { Circle, ClipPath, Defs, Ellipse, G, Path, Polygon, Rect } from 'react-native-svg';
 
 const INK = palette.ink;
@@ -128,4 +129,70 @@ export function ReceiptCard({ children, style }: { children: React.ReactNode; st
       {width > 0 && <Teeth width={width} up={false} />}
     </View>
   );
+}
+
+// Bud as a thermal printer (onboarding, design system 4.1b/4.1c): the receipt feeds out from under Bud
+// in three pushes with short pauses (1.3 s) while Bud buzzes, then swings to a slight tilt. Once.
+// Under Reduce Motion everything is already in place. `onPrinted` fires when the paper stops.
+const PUSHES = [
+  [0.33, 364],
+  [0.7, 338],
+  [1, 234],
+] as const;
+const PAUSE = 104;
+export const PRINT_MS = 1300;
+
+export function PrintingBud({ face = 'happy', budSize = 96, width = 240, children, onPrinted }: { face?: BudFace; budSize?: number; width?: number; children: React.ReactNode; onPrinted?: () => void }) {
+  const reduce = useReducedMotion();
+  const [h, setH] = useState(0);
+  const feed = useSharedValue(reduce ? 1 : 0); // 0 = inside Bud, 1 = fully out
+  const tilt = useSharedValue(reduce ? -2 : 0);
+  const buzz = useSharedValue(0);
+
+  useEffect(() => {
+    if (!h) return;
+    if (reduce) return onPrinted?.();
+    feed.value = withSequence(...PUSHES.map(([to, ms], i) => (i ? withDelay(PAUSE, withTiming(to, { duration: ms })) : withTiming(to, { duration: ms }))));
+    buzz.value = withSequence(withRepeat(withSequence(withTiming(1.5, { duration: 45 }), withTiming(-1.5, { duration: 45 })), 12, true), withTiming(0, { duration: 60 }));
+    tilt.value = withDelay(PRINT_MS - 150, withSpring(-2, { damping: 7, stiffness: 120 }));
+    const done = setTimeout(() => onPrinted?.(), PRINT_MS);
+    return () => clearTimeout(done);
+    // Once per mount: the sequence starts when the receipt has been measured.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [h, reduce]);
+
+  const paper = useAnimatedStyle(() => ({ transform: [{ translateY: -h * (1 - feed.value) }, { rotate: `${tilt.value}deg` }] }));
+  const bud = useAnimatedStyle(() => ({ transform: [{ translateX: buzz.value }] }));
+  const slot = budSize * 0.3; // the clip's top edge sits behind Bud's lower third, like a printer slot
+
+  return (
+    <View style={{ alignItems: 'center' }}>
+      <Animated.View entering={reduce ? undefined : ZoomIn.springify().duration(450)} style={[{ zIndex: 2 }, bud]}>
+        <Bud face={face} size={budSize} />
+      </Animated.View>
+      {/* The paper rests a little under Bud's torn bottom edge, so it reads as coming out of Bud. */}
+      <View style={{ marginTop: -slot, paddingTop: slot * 0.35, paddingHorizontal: 16, paddingBottom: 16, overflow: 'hidden', width: width + 32 }}>
+        <Animated.View onLayout={(e) => setH(e.nativeEvent.layout.height)} style={[{ width, opacity: h ? 1 : 0, shadowColor: INK, shadowOpacity: 0.14, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } }, paper]}>
+          <ReceiptCard>{children}</ReceiptCard>
+        </Animated.View>
+      </View>
+    </View>
+  );
+}
+
+// A number that counts up from 0 once `start` turns true (800 ms, ease-out); final value at once under Reduce Motion.
+export function useCountUp(target: number, start: boolean) {
+  const reduce = useReducedMotion();
+  const [value, setValue] = useState(reduce ? target : 0);
+  useEffect(() => {
+    if (!start || reduce) return setValue(start || reduce ? target : 0);
+    const t0 = Date.now();
+    const id = setInterval(() => {
+      const p = Math.min(1, (Date.now() - t0) / 800);
+      setValue(Math.round(target * (1 - (1 - p) ** 3)));
+      if (p === 1) clearInterval(id);
+    }, 16);
+    return () => clearInterval(id);
+  }, [target, start, reduce]);
+  return value;
 }
