@@ -117,7 +117,7 @@ export function Button({
         { backgroundColor: pressed ? v.pressed : v.bg, borderColor: v.border ?? 'transparent', opacity: disabled ? 0.4 : 1 },
       ]}
     >
-      <T variant="bodyStrong" style={{ color: v.fg }}>
+      <T variant="bodyStrong" style={{ color: v.fg, textAlign: 'center' }}>
         {title}
       </T>
     </Pressable>
