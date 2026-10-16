@@ -51,8 +51,9 @@ export async function readReceipt(base64: string, currency: string | undefined, 
   }
 }
 
-// Exactly what the "What gets sent" screen promises: the question, this period's totals, budget and
-// rent, and at most the last 20 expenses. Amounts in major units.
+// Exactly what the "What gets sent" screen promises: the question, up to 4 earlier questions and answers
+// from the same chat, this period's totals, budget and rent, and at most the last 20 expenses. Amounts in
+// major units.
 export type AskSummary = {
   currency: string;
   summary: {
@@ -76,15 +77,29 @@ const ASK_MESSAGES: Record<number, string> = {
 // Design system 4.9's offline slip.
 const OFFLINE = 'Can’t reach Senbud right now. Anything you add is still saved on your phone.';
 
-export async function askBud(question: string, about: AskSummary, deviceId: string): Promise<string> {
+// One earlier question and Bud's answer from the same chat, so follow-ups like "and last week?" work.
+export type Turn = { q: string; a: string };
+
+// What Bud may offer under an answer. Each one only opens a prefilled screen; the person saves it there.
+export type BudAction =
+  | { type: 'set_limit'; category: Category; amount: number | null }
+  | { type: 'add_bill'; label: string; amount: number }
+  | { type: 'open_jar' }
+  | { type: 'open_budgets' };
+
+export type BudReply = { answer: string; actions: BudAction[]; offTopic: boolean };
+
+const COOLDOWN = 'Let’s stick to your money today. Quick adds, “can I afford…” and “how’s my month?” still work.';
+
+export async function askBud(question: string, about: AskSummary, deviceId: string, turns: Turn[] = []): Promise<BudReply> {
   const abort = new AbortController();
-  const timer = setTimeout(() => abort.abort(), 40_000);
+  const timer = setTimeout(() => abort.abort(), 25_000);
   let res: Response;
   try {
     res = await fetch(`${API_URL}/v1/agent/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Device-Id': deviceId },
-      body: JSON.stringify({ question, ...about }),
+      body: JSON.stringify({ question, turns: turns.slice(-4).map((t) => ({ q: t.q.slice(0, 300), a: t.a.slice(0, 300) })), ...about }),
       signal: abort.signal,
     });
   } catch {
@@ -92,10 +107,11 @@ export async function askBud(question: string, about: AskSummary, deviceId: stri
   } finally {
     clearTimeout(timer);
   }
+  const body = (await res.json().catch(() => ({}))) as { answer?: unknown; actions?: unknown; off_topic?: unknown; error?: unknown };
+  if (res.status === 429 && body.error === 'off_topic_cooldown') throw new Error(COOLDOWN);
   if (res.status === 429 && usedUpToday(res))
     throw new Error(WEB ? `That’s today’s ${WEB_FREE.questions} free questions on the web. Ask again tomorrow; quick adds still work.` : 'That’s a lot of questions for one day. Ask again tomorrow; quick adds still work.');
   if (!res.ok) throw new Error(ASK_MESSAGES[res.status] ?? OFFLINE);
-  const { answer } = (await res.json().catch(() => ({}))) as { answer?: unknown };
-  if (typeof answer !== 'string' || !answer) throw new Error(OFFLINE);
-  return answer;
+  if (typeof body.answer !== 'string' || !body.answer) throw new Error(OFFLINE);
+  return { answer: body.answer, actions: Array.isArray(body.actions) ? (body.actions as BudAction[]) : [], offTopic: body.off_topic === true };
 }

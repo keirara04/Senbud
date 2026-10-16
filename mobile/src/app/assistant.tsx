@@ -7,10 +7,10 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { type ComponentRef, type ReactNode, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { Bud, type BudFace, ReceiptCard } from '@/art';
-import { askBud, type AskSummary, WEB } from '@/api';
+import { askBud, type AskSummary, type BudAction, type Turn, WEB } from '@/api';
 import { type AppState, addTransactions, deleteTransactions, giveAskConsent, loadApp } from '@/db';
 import { useMoney } from '@/money';
 import { Button, CATEGORIES, Icon, Marker, T, TextButton, useTheme } from '@/ui';
@@ -41,6 +41,8 @@ export default function Assistant() {
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   const askedQ = useRef(false);
+  // Earlier questions and answers in this chat, sent along so follow-ups work. Never saved.
+  const turns = useRef<Turn[]>([]);
   const viewH = useRef(0);
 
   useEffect(() => {
@@ -194,6 +196,18 @@ export default function Assistant() {
     };
   }
 
+  // Bud's suggestions open a prefilled screen; nothing changes until the person saves it there.
+  function actionButton(a: BudAction, i: number) {
+    const go = (path: string, params: Record<string, string> = {}) => () => router.push(`${path}?${new URLSearchParams(params)}` as never);
+    if (a.type === 'set_limit' && CATEGORIES.includes(a.category))
+      return <Button key={i} variant="secondary" title={`Set a ${a.category} limit${a.amount ? ` of ${fmt(Math.round(a.amount * 100))}` : ''}`} onPress={go('/limit', { category: a.category, ...(a.amount ? { amount: String(a.amount) } : {}) })} />;
+    if (a.type === 'add_bill' && a.label && a.amount > 0)
+      return <Button key={i} variant="secondary" title={`Add ${a.label} as a bill`} onPress={go('/bill', { name: a.label, amount: String(a.amount) })} />;
+    if (a.type === 'open_jar') return <Button key={i} variant="secondary" title="Open the treat jar" onPress={go('/jar')} />;
+    if (a.type === 'open_budgets') return <Button key={i} variant="secondary" title="See Budgets" onPress={() => router.navigate('/budgets')} />;
+    return null;
+  }
+
   // A question in your own words. Same gates as receipts, read fresh so a purchase or a Settings change
   // made since the sheet opened counts.
   async function ask(line: string, id: number) {
@@ -218,7 +232,7 @@ export default function Assistant() {
       return replace(id, {
         face: 'thinking',
         title: 'Before your first question',
-        note: 'To answer, Senbud sends your question and a short summary (this month’s totals, your budget and rent, and your last 20 expenses) to its server and on to an AI model (currently Google Gemini) through OpenRouter. It isn’t stored or logged, and only providers that keep no data are used.'.replace('month', unit),
+        note: 'To answer, Senbud sends your question, your last few questions and answers in this chat, and a short summary (this month’s totals, your budget and rent, and your last 20 expenses) to its server and on to an AI model (currently Anthropic’s Claude Haiku, run by Google) through OpenRouter. It isn’t stored or logged, and only providers that keep no data are used.'.replace('month', unit),
         actions: (
           <Button
             title="Allow and ask"
@@ -231,7 +245,22 @@ export default function Assistant() {
       });
     replace(id, { face: 'thinking', title: 'Bud', printing: true });
     try {
-      replace(id, { face: 'happy', title: 'Bud', note: await askBud(line, summary(), a.deviceId) });
+      const r = await askBud(line, summary(), a.deviceId, turns.current);
+      if (r.offTopic)
+        return replace(id, {
+          face: 'thinking',
+          title: 'Bud',
+          note: r.answer,
+          actions: (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.md }}>
+              <TextButton title={`How’s my ${unit}?`} onPress={() => send(`How’s my ${unit}?`)} />
+              <TextButton title="Can I afford 20?" onPress={() => send('Can I afford 20?')} />
+            </View>
+          ),
+        });
+      turns.current = [...turns.current, { q: line, a: r.answer }].slice(-4);
+      const buttons = r.actions.map(actionButton).filter((b) => b !== null);
+      replace(id, { face: 'happy', title: 'Bud', note: r.answer, actions: buttons.length ? <View style={{ gap: space.xs }}>{buttons}</View> : undefined });
     } catch (e) {
       replace(id, { face: 'oops', title: 'Bud', note: e instanceof Error ? e.message : String(e), actions: <TextButton title="Try again" onPress={() => ask(line, id)} /> });
     }
@@ -361,19 +390,35 @@ function SlipView({ slip }: { slip: Slip }) {
   );
 }
 
-// The slip "printing" while an answer loads: placeholder lines that shimmer, still under Reduce Motion.
+// The slip "printing" while an answer loads: what Bud is doing, a step at a time, over placeholder lines
+// that shimmer. It stops on the last step rather than loop, so a slow answer doesn't look stuck in a
+// circle. Steps still change under Reduce Motion; only the fade and shimmer stop.
+const THINKING = ['Going through your spending…', 'Checking rent and bills…', 'Counting what’s left…', 'Writing it down…'];
+
 function PrintingLines() {
   const reduce = useReducedMotion();
   const opacity = useSharedValue(0.5);
+  const [step, setStep] = useState(0);
   useEffect(() => {
     if (!reduce) opacity.value = withRepeat(withTiming(0.15, { duration: 700 }), -1, true);
   }, [reduce, opacity]);
+  useEffect(() => {
+    const id = setInterval(() => setStep((n) => Math.min(n + 1, THINKING.length - 1)), 700);
+    return () => clearInterval(id);
+  }, []);
   const style = useAnimatedStyle(() => ({ opacity: opacity.value }));
   return (
-    <Animated.View style={[{ gap: space.xs, paddingVertical: space.xxs }, style]} accessible accessibilityLabel="Bud is thinking">
-      {['90%', '70%', '45%'].map((w) => (
-        <View key={w} style={{ width: w as `${number}%`, height: 12, borderRadius: 3, backgroundColor: palette.inkDim }} />
-      ))}
-    </Animated.View>
+    <View style={{ gap: space.xs }} accessible accessibilityLabel="Bud is thinking">
+      <Animated.View key={step} entering={reduce ? undefined : FadeIn.duration(200)}>
+        <T variant="caption" style={{ color: palette.inkDim, fontFamily: MONO }}>
+          {THINKING[step]}
+        </T>
+      </Animated.View>
+      <Animated.View style={[{ gap: space.xs, paddingVertical: space.xxs }, style]}>
+        {['90%', '70%', '45%'].map((w) => (
+          <View key={w} style={{ width: w as `${number}%`, height: 12, borderRadius: 3, backgroundColor: palette.inkDim }} />
+        ))}
+      </Animated.View>
+    </View>
   );
 }

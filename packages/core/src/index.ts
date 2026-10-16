@@ -110,7 +110,9 @@ export type Intent =
   | { kind: "ask" };
 
 const article = (s: string) => s.replace(/^(a|an|the|my)\s+/i, "").replace(/^\p{L}/u, (c) => c.toUpperCase());
-const QUESTION = /\?\s*$|^(can|could|should|how|what|why|when|where|is|am|do|does|did|will)\b/i;
+// Lines that start like a question or a request go to Bud, never to quick add ("who won the cup in
+// 2022" is not a 2022 expense).
+const QUESTION = /\?\s*$|^(can|could|should|would|how|what|why|when|where|who|whose|which|is|are|am|was|were|do|does|did|will|tell|explain|write|give|list|help|please|ignore|translate)\b/i;
 
 export function readIntent(text: string): Intent {
   const line = text.trim();

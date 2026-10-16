@@ -11,7 +11,7 @@ const toCents = (s: string) => Math.round(Number(s.trim().replace(',', '.')) * 1
 
 export default function LimitSheet() {
   const db = useSQLiteContext();
-  const params = useLocalSearchParams<{ category?: Category }>();
+  const params = useLocalSearchParams<{ category?: Category; amount?: string }>();
   const [category, setCategory] = useState<Category>(params.category && CATEGORIES.includes(params.category) ? params.category : 'Food');
   const [amount, setAmount] = useState('');
   const [had, setHad] = useState(false);
@@ -20,9 +20,10 @@ export default function LimitSheet() {
   useEffect(() => {
     loadLimits(db).then((l) => {
       setHad(!!l[category]);
-      setAmount(l[category] ? String(l[category]! / 100) : '');
+      // Bud can open this prefilled with a suggested amount for the category it named.
+      setAmount(params.amount && category === params.category ? params.amount : l[category] ? String(l[category]! / 100) : '');
     });
-  }, [db, category]);
+  }, [db, category, params.amount, params.category]);
 
   async function save() {
     const cents = toCents(amount);

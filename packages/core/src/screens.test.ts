@@ -85,6 +85,10 @@ describe("readIntent", () => {
     expect(readIntent("kopi 4.50, grab 12").kind).toBe("add");
     expect(readIntent("how much did I spend on grab this month?")).toEqual({ kind: "ask" });
     expect(readIntent("hello")).toEqual({ kind: "ask" });
+    expect(readIntent("who won the world cup in 2022")).toEqual({ kind: "ask" });
+    expect(readIntent("write me an essay about 1984")).toEqual({ kind: "ask" });
+    expect(readIntent("which bills are due")).toEqual({ kind: "ask" });
+    expect(readIntent("whopper 15").kind).toBe("add");
   });
 });
 

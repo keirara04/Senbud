@@ -37,24 +37,11 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('waitlist', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
 
-        // Model calls cost money. Keyed by the app's anonymous device id when it sends one, else the
-        // IP; the daily cap per IP stops one device id being rotated to dodge it.
-        $who = function (Request $request) {
-            $device = $request->header('X-Device-Id');
-
-            return is_string($device) && preg_match('/^[0-9a-f-]{36}$/i', $device) ? 'd:'.$device : 'ip:'.$request->ip();
-        };
+        $who = self::who(...);
         // The web app has no Pro yet, so its browsers get a small free allowance a day. Browsers can't
         // forge Origin; other clients can, but then they only get the app's caps above, as today.
         $web = fn (Request $request) => $request->header('Origin') === config('app.app_origin');
-        // The owner's own devices (UNLIMITED_DEVICES, from Settings → Support ID) skip every AI limit.
-        // A device id is a random UUID only that phone or browser knows, so listing it is safe enough.
-        $unlimited = function (Request $request) {
-            $device = $request->header('X-Device-Id');
-            $list = array_filter(array_map('trim', explode(',', (string) config('app.unlimited_devices'))));
-
-            return is_string($device) && $device !== '' && in_array(strtolower($device), array_map('strtolower', $list), true);
-        };
+        $unlimited = self::unlimited(...);
         // The web caps go first: the first limit hit sets Retry-After, and the app reads a day-sized one
         // as "that's today's free allowance".
         RateLimiter::for('receipt', fn (Request $request) => $unlimited($request) ? Limit::none() : [
@@ -67,5 +54,24 @@ class AppServiceProvider extends ServiceProvider
             ...($web($request) ? [Limit::perDay(self::WEB_FREE_QUESTIONS)->by('web:'.$who($request)), Limit::perDay(60)->by('web-ip:'.$request->ip())] : []),
             Limit::perMinute(10)->by($who($request)), Limit::perDay(100)->by($who($request)), Limit::perDay(300)->by('ip:'.$request->ip()),
         ]);
+    }
+
+    // Model calls cost money. Keyed by the app's anonymous device id when it sends one, else the IP;
+    // the daily cap per IP stops one device id being rotated to dodge it.
+    public static function who(Request $request): string
+    {
+        $device = $request->header('X-Device-Id');
+
+        return is_string($device) && preg_match('/^[0-9a-f-]{36}$/i', $device) ? 'd:'.$device : 'ip:'.$request->ip();
+    }
+
+    // The owner's own devices (UNLIMITED_DEVICES, from Settings → Support ID) skip every AI limit.
+    // A device id is a random UUID only that phone or browser knows, so listing it is safe enough.
+    public static function unlimited(Request $request): bool
+    {
+        $device = $request->header('X-Device-Id');
+        $list = array_filter(array_map('trim', explode(',', (string) config('app.unlimited_devices'))));
+
+        return is_string($device) && $device !== '' && in_array(strtolower($device), array_map('strtolower', $list), true);
     }
 }

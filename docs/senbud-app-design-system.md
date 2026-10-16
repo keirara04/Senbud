@@ -467,7 +467,7 @@ Today's Setup asks five things on one page: period, budget, rent, due day and cu
   - Then `danger` "Erase all data" with "Privacy · Terms" under it.
 - **What gets sent** (pushed screen), three cards:
   1. "When you snap a receipt": the receipt consent text from `receipt.tsx`, word for word.
-  2. "When you ask a question": the question plus a short summary (this month's totals, budget and rent, the last 20 expenses), never the full history. This is spec 3's "AI sees" rule.
+  2. "When you ask a question": the question and the last few questions and answers in this chat (up to 4, never saved), plus a short summary (this month's totals, budget and rent, the last 20 expenses), never the full history. It names the model (currently Anthropic's Claude Haiku, run by Google, through OpenRouter). This is spec 3's "AI sees" rule.
   3. "Never leaves the phone": expenses, friends' names, treats and the jar.
   - Then the same `Switch` again.
 - **Erase:**
@@ -522,6 +522,10 @@ Today's Setup asks five things on one page: period, budget, rent, due day and cu
 - **AI off:** an "AI is off" slip with Bud's oops face: "AI is off, so I can't answer questions. Quick adds still work, like 'kopi 4.50'." with `secondary` "Turn on AI in Settings". The camera button is hidden, and the field's placeholder becomes "kopi 4.50, grab 12".
 - **Offline:** "Can't reach Senbud right now. Anything you add is still saved on your phone." with a "Try again" `TextButton`. Plain text, never red.
 - **Questions in your own words** (built): Senbud Pro only, like receipts; free users get a "Senbud Pro" slip with `secondary` "See plans". The first question prints a "Before your first question" consent slip (separate from the receipt consent, stored as `ask_consent_at`) with "Allow and ask". The app sends only the question, this period's totals, budget and rent, and the period's last 20 expenses; the API validates that shape and drops anything else.
+  - **Guardrail:** the model returns `{ on_topic, answer, actions }`. Off topic (anything that isn't the person's money or money-adjacent student life) prints a fixed line written by the API, never model text, with two suggestion chips. Obvious misuse (code fences, "ignore previous instructions", "write me an essay") is refused without a model call. Three off-topic questions in a day pause AI questions until tomorrow ("Let's stick to your money today"); rule-based answers keep working. Lines that start like a question ("who…", "which…", "tell me…") never go to quick add.
+  - **Actions:** up to 2 `secondary` buttons under an answer: "Set a {Category} limit of {amount}", "Add {name} as a bill", "Open the treat jar", "See Budgets". Each opens the existing sheet prefilled; nothing is saved until the person taps Save there.
+  - **Thinking:** while Bud works, the slip prints what it's doing a step at a time ("Going through your spending…", "Checking rent and bills…", "Counting what's left…", "Writing it down…") over the shimmer lines, stopping on the last step.
+  - **Speed and cost:** Claude Haiku 5.5 with thinking off (`OPENROUTER_ASK_MODEL`), numbers sent as compact text, answers under 45 words, OpenRouter routed by latency. About 1.5 to 3 s and about US$0.00015 per question (Gemini Flash was 2.5 to 10 s and up to US$0.001).
 
 ### 4.10 Proposed components
 
