@@ -14,6 +14,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" options={{ title: 'Senbud' }} />
           <Stack.Screen name="setup" options={{ title: 'Budget & rent' }} />
           <Stack.Screen name="activity" options={{ title: 'Activity' }} />
+          <Stack.Screen name="receipt" options={{ title: 'Receipt' }} />
         </Stack>
       </SQLiteProvider>
     </ThemeProvider>

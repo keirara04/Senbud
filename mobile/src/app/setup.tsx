@@ -4,8 +4,8 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 
-import { eraseAll, loadSetup, saveSetup } from '@/db';
-import { Button, Card, Field, Screen, Segmented, T } from '@/ui';
+import { eraseAll, loadApp, loadSetup, saveSetup, setPro } from '@/db';
+import { Button, Card, Field, Screen, Segmented, T, TextButton } from '@/ui';
 
 // "12.50" or "12,50" -> 1250 cents; anything else -> NaN.
 const toCents = (s: string) => Math.round(Number(s.trim().replace(',', '.')) * 100);
@@ -22,8 +22,10 @@ export default function SetupScreen() {
   const [dueDay, setDueDay] = useState('1');
   const [currency, setCurrency] = useState(device.currencyCode ?? 'USD');
   const [errors, setErrors] = useState<Errors>({});
+  const [pro, setProState] = useState(false);
 
   useEffect(() => {
+    loadApp(db).then((a) => setProState(a.pro));
     loadSetup(db).then((s) => {
       if (!s) return;
       setKind(s.budget.period.kind);
@@ -101,6 +103,17 @@ export default function SetupScreen() {
 
       <Button title="Save" onPress={save} />
       <Button title="Erase all data" variant="danger" onPress={erase} />
+      {/* ponytail: dev-only Pro switch until RevenueCat (Phase 2 C) owns this flag. */}
+      {__DEV__ && (
+        <TextButton
+          title={`Dev: Pro is ${pro ? 'on' : 'off'}`}
+          tone="textDim"
+          onPress={async () => {
+            await setPro(db, !pro);
+            setProState(!pro);
+          }}
+        />
+      )}
     </Screen>
   );
 }

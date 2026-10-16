@@ -36,7 +36,15 @@
         }
       ],
       "expo-sqlite",
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Senbud reads the receipt photos you pick to add your spending.",
+          "cameraPermission": "Senbud uses the camera to photograph receipts.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

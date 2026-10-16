@@ -2,6 +2,11 @@
 import type { Bill, BudgetPeriod, Category, IsoDate, Transaction } from '@senbud/core';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
+// A random v4 UUID from SQLite's own CSPRNG, so no native crypto module is needed.
+const NEW_APP_ROW = `INSERT INTO app (id, device_id) VALUES (1,
+  lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))), 2) || '-' ||
+  substr('89ab', 1 + abs(random()) % 4, 1) || substr(lower(hex(randomblob(2))), 2) || '-' || lower(hex(randomblob(6))));`;
+
 // Append only; never edit a shipped migration. PRAGMA user_version records how many have run.
 const MIGRATIONS = [
   `CREATE TABLE transactions (
@@ -16,6 +21,9 @@ const MIGRATIONS = [
    CREATE TABLE budget (id INTEGER PRIMARY KEY CHECK (id = 1), cents INTEGER NOT NULL, kind TEXT NOT NULL, start INTEGER NOT NULL);
    CREATE TABLE bills (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, cents INTEGER NOT NULL, due_day INTEGER NOT NULL);
    CREATE TABLE profile (id INTEGER PRIMARY KEY CHECK (id = 1), currency TEXT NOT NULL, locale TEXT NOT NULL);`,
+  // 2: app state that exists before setup: anonymous device id (the API's rate-limit key), AI consent, Pro.
+  `CREATE TABLE app (id INTEGER PRIMARY KEY CHECK (id = 1), device_id TEXT NOT NULL, ai_consent_at TEXT, pro INTEGER NOT NULL DEFAULT 0);
+   ${NEW_APP_ROW}`,
 ];
 
 export async function migrate(db: SQLiteDatabase) {
@@ -82,9 +90,20 @@ export async function listTransactions(db: SQLiteDatabase, since?: IsoDate): Pro
   return rows;
 }
 
-// "Erase all data": every row gone, schema kept.
+// "Erase all data": every row gone, schema kept. A fresh device id too, so nothing links the old data to the new.
 export const eraseAll = (db: SQLiteDatabase) =>
-  db.execAsync('DELETE FROM transactions; DELETE FROM budget; DELETE FROM bills; DELETE FROM profile;');
+  db.execAsync(`DELETE FROM transactions; DELETE FROM budget; DELETE FROM bills; DELETE FROM profile; DELETE FROM app; ${NEW_APP_ROW}`);
+
+export type AppState = { deviceId: string; aiConsentAt: string | null; pro: boolean };
+
+export async function loadApp(db: SQLiteDatabase): Promise<AppState> {
+  const r = await db.getFirstAsync<{ device_id: string; ai_consent_at: string | null; pro: number }>('SELECT * FROM app');
+  if (!r) throw new Error('app row missing; migrations did not run');
+  return { deviceId: r.device_id, aiConsentAt: r.ai_consent_at, pro: r.pro === 1 };
+}
+
+export const giveAiConsent = (db: SQLiteDatabase) => db.runAsync('UPDATE app SET ai_consent_at = ?', new Date().toISOString());
+export const setPro = (db: SQLiteDatabase, pro: boolean) => db.runAsync('UPDATE app SET pro = ?', pro ? 1 : 0);
 
 // Today on the device's own calendar. toISOString() would give yesterday every evening in UTC+8.
 export function today(): IsoDate {
