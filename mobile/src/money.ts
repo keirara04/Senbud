@@ -110,6 +110,8 @@ export function useWrapped(month: string) {
   const { setup, bills, day, fmt } = m;
   const w = wrapped({ txns: data.txns, bills, limit: setup.budget.cents, period: setup.budget.period, month: range, today: day });
   const date = (o: Intl.DateTimeFormatOptions) => new Date(`${range.start}T12:00:00Z`).toLocaleDateString(setup.profile.locale, { ...o, timeZone: 'UTC' });
-  const hours = data.rate && w.spent ? hoursOfWork(w.spent, data.rate) : null;
+  // "4,296 hrs", "2.5 hrs": half hours only while they matter.
+  const h = data.rate && w.spent ? hoursOfWork(w.spent, data.rate) : null;
+  const hours = h === null ? null : h.toLocaleString(setup.profile.locale, { maximumFractionDigits: h >= 10 ? 0 : 1 });
   return { w, name: date({ month: 'long', year: 'numeric' }), month: date({ month: 'long' }), fmt, pro, hours, running: day < range.nextStart };
 }

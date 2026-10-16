@@ -77,6 +77,6 @@ describe("wrapped", () => {
   it("counts a running month only up to today", () => {
     const oct = monthRange("2026-10");
     const w = wrapped({ ...base, txns: [], month: oct, today: "2026-10-05" });
-    expect(w).toMatchObject({ streak: 5, spent: 0, categories: [], topPlace: null, used: 0 });
+    expect(w).toMatchObject({ streak: 5, days: 5, spent: 0, categories: [], topPlace: null, used: 0 });
   });
 });

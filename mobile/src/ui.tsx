@@ -447,7 +447,7 @@ export function BarChart({ data, font }: { data: { category: Category; share: nu
     <View accessible accessibilityLabel={data.map((d) => `${d.category} ${pct(d.share)}`).join(', ')} style={{ gap: space.sm }}>
       {data.map((d) => (
         <View key={d.category} style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-          <T variant="caption" numberOfLines={1} style={{ width: 92, color: palette.ink, fontFamily: font }}>
+          <T variant="caption" numberOfLines={1} style={{ width: 108, color: palette.ink, fontFamily: font }}>
             {d.category}
           </T>
           <View style={{ flex: 1 }}>

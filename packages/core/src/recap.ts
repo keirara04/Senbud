@@ -69,7 +69,7 @@ export function wrapped(opts: { txns: Transaction[]; bills: Bill[]; limit: numbe
     topPlace: top && top.visits > 1 ? { label: top.label, visits: top.visits } : null,
     treats: txns.filter((t) => t.category === "Treat").length,
     streak,
-    days,
+    days: daysBetween(month.start, end), // so far, for a month still running
   };
 }
 

@@ -138,12 +138,15 @@ Dynamic Type and font scaling stay on (React Native's default). Layouts must sur
 | `Marker` | children | Highlighter stroke behind a phrase, as on the web's `.marker`. Use once per screen at most. |
 | `UndoBar` | `message`, `onUndo` | Ink bar with a highlighter "Undo" (cobalt in dark mode, where the bar is moon). Shows for `motion.undoMs` (5 s) after any reversible write. Announced politely to screen readers. |
 | `ListRow` / `ListGroup` | `label`, `value`, `onPress`, `first`, `right` / `title`, `footer` | Settings rows: min 52 pt, hairline between rows, chevron when it goes somewhere. A row with its own control (`right`) is a plain View. |
-| `AiSwitch` | `value`, `onChange` | The whole row is the control and the RN `Switch` only shows the state: on iOS 26 taps on RN's `Switch` never land (its frame and UIKit's drawing disagree). One VoiceOver element with `role="switch"`. |
+| `AiSwitch` | `value`, `onChange`, `label` (default the AI label; the share screen's "Show amounts" reuses it) | The whole row is the control and the RN `Switch` only shows the state: on iOS 26 taps on RN's `Switch` never land (its frame and UIKit's drawing disagree). One VoiceOver element with `role="switch"`. |
 | `CategoryPicker` | `value`, `onChange` | Chips for the six categories, radio semantics. |
 | `ProLock` | `onPress` | Grey "Pro" chip with a lock. Opens the paywall; never hides the option it marks. |
 | `Avatar` | `name`, `size` | Initial on a colour picked from the name. Friends are just names. |
 | `Icon` | `name` ({ios, android}), `size`, `color`, `label` | SF Symbols / Material Symbols via `expo-symbols`, never emoji. Decorative unless labelled. |
 | `BudTab` | `onPress` | See 4.10. Raised 12 pt, not 22: RN doesn't deliver touches outside a parent's bounds, so a higher circle had an untappable top. |
+| `StoryPager` | `title`, `pages: {label, body}[]`, `onClose`, `footer(index)` | Wrapped's cobalt pages with segment bars. Tap the right or left half; the last page's right half closes. Pages cut, never slide, so Reduce Motion needs nothing. Each page is one `adjustable` element read as its sentence (swipe up/down to move with VoiceOver). |
+| `BarChart` | `data: {category, share}[]`, `font` | Horizontal bars sorted by share, % as text on each, on a white `ReceiptCard` with category **ink** fills. Not drawn on a dark surface yet (that needs the tints). |
+| `Button variant="onPanel"` | – | Outline button on the cobalt panel (`onPanel` text, `onPanelDim` border). Wrapped's Share. |
 | `Bud`, `TreatJar`, `ReceiptCard` (`art.tsx`) | `face` / `share` / children | SVG art. `ReceiptCard` is the torn-edge white slip used by Budgets' StampLedger, Split and the assistant's slips. |
 | `applyTheme(theme)` | `'system' \| 'light' \| 'dark'` | `Appearance.setColorScheme`; System passes `'unspecified'`. Dark is the default (16 Oct 2026). |
 | `useNavigationTheme()` | – | React Navigation theme built from ours, passed to `ThemeProvider` in `_layout.tsx`. Headers, back buttons and screen backgrounds follow the system scheme live. |
@@ -165,8 +168,8 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 | **Budgets** | `panel` with what's left in highlighter and `Progress tone="panel"` | `StampLedger` by category; rent and bills list with due days; detected subscriptions | Built |
 | **Can I afford it?** | `panel`: verdict in words, key number in highlighter | Price `Field`, optional "What is it?", treat price picks, hours of work under a hairline | Built |
 | **Friends** | Net balance `hero` in highlighter, direction in words | Per-friend rows; friend sheet with "Send on WhatsApp", "Other apps", "Copy" and "Mark paid"; 3-step split flow with `PersonTabs` and `ClaimRow` | Built; WhatsApp path untested (not installed on simulators) |
-| **Treats** | `TreatJar` filling toward a goal, total in highlighter, `highlight` "Add to jar" inside the panel | Treat list with "every N days" and status, short history, month-end leftover sheet | Built, except the month-end leftover sheet (needs a period-end trigger) |
-| **Wrapped** | One stat per page, full-bleed `panel` | `StoryPager`, `BarChart` on a `ReceiptCard`, share image | Concept (later phase) |
+| **Treats** | `TreatJar` filling toward a goal, total in highlighter, `highlight` "Add to jar" inside the panel | Treat list with "every N days" and status, short history, month-end leftover sheet | Built. The leftover sheet (`leftover.tsx`) opens when the app comes to the front after a period ended under budget (see 4.6) |
+| **Wrapped** | One stat per page, full-bleed `panel` | `StoryPager`, `BarChart` on a `ReceiptCard`, share image | Built (`wrapped.tsx`, `share.tsx`), opened from Budgets → Wrapped. Free: total vs budget, top category, kept. Pro: top place, treats, hours of work, best streak. Captions are written from the numbers until the assistant has AI. No year-end edition yet. |
 | **Settings** | none | Grouped `ListRow`s: Money, AI, Look, Your data, Senbud Pro, then `danger` Erase | Built, plus "Restore from a backup" and a pushed "What gets sent" screen |
 | **Senbud Pro paywall** | selected plan as `panel`; the buy button is the one `highlight` | Title, three benefits, plan radio group, buy button, small print with Terms, Privacy, Restore (see 4.8b) | Built (`pro.tsx`) |
 | **Assistant** | – | `BudTab`, the middle of the tab bar, opens the assistant with chat | Built, local only: rules answer (afford, month, split, quick add); free-text questions say AI is coming. A `modal`, not a form sheet: RNScreens' formSheet mis-lays a ScrollView with a pinned input row. |
@@ -358,6 +361,9 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
   - A sheet on the 1st (or reached from the Home nudge): "September's done. You finished RM 38 under budget. Move it to the treat jar?"
   - `primary` "Move RM 38 to the jar" and `secondary` "Keep it in October's budget".
   - In dark mode `primary` and `highlight` look the same (section 7). On this screen that's acceptable, because the sheet covers the panel.
+  - **Built:** on launch and whenever the app comes back to the front, the tabs layout checks whether a budget period (week or month) ended since the last look (`app.period_handled`, migration 5; `closedPeriod` in core). Leftover = limit − spending − bills that fell due in that period (`periodLeftover`), so rent money is never offered as treat money. Only the latest period is offered after time away. A new install, an update, or a changed budget records the current period without asking.
+  - The secondary button is "Not now", not "Keep it in October's budget": carry-over is Pro (spec 8) and not built, so the money doesn't move anywhere. Closing the sheet counts as "Not now"; it never asks twice.
+  - The title is the month name only when the budget starts on the 1st ("September's done"); otherwise "Last month's done" or "Last week's done".
 - **Learned treat:** "You've had Tealive 4 times this month. Make it a treat?" with two `secondary` buttons. This asks before adding, as spec 4.8 says.
 - **Empty:** the jar hero at RM 0 with "Leftover budget lands here at the end of each month.", the learned-treat card, then "Or add one yourself, like 'bubble tea'. Senbud remembers what you paid."
 
@@ -383,6 +389,11 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
   - A "Show amounts" `Switch`, off by default.
   - `primary` "Share image" opens the native share sheet.
 - **Pro:** free users get the basic monthly cards; Pro adds the full set and the year-end edition.
+- **Built (16 Oct 2026):** free cards are total vs budget, top category and what you kept (or how far over). Pro adds top place, treats, hours of work (when an hourly rate is set) and best streak; free users get a last page "There's more" with `highlight` "See plans". The share image lists only the stats the person can see.
+  - Bills count as spent, since rent is part of the budget. A weekly budget is scaled to the month (× days ÷ 7).
+  - Best streak: the longest run of days that each stayed within the month's budget after bills ÷ days. Days with no spending count.
+  - "Top place" is the most repeated label (2+ times); Senbud has no shop names apart from what you type.
+  - The share image is a 9:16 receipt on cobalt, captured with `react-native-view-shot` and shared with `expo-sharing`.
 
 ### 4.8 Settings
 
@@ -533,5 +544,5 @@ The voice is a friendly older cousin who's good with money.
 - **Large text checked on iOS only.** At the largest accessibility size on the iPhone 17 simulator, Home and Activity wrap correctly. That's after three fixes: `Row` wraps, inputs drop their fixed line height, and the hero number is capped at 1.3× and shrinks to fit. Android at large font scale is not checked yet.
 - **`money` minor digits:** verified on iOS Hermes (KRW). Android is inferred, since it matched Node in every Phase 0 `Intl` probe.
 - **Android cold start shows one light frame** before Dark applies (likely Android recreating the activity on the night-mode change). iOS starts dark. Not fixed.
-- **Month-end leftover sheet and Wrapped** are not built.
+- **Wrapped captions** are templates from the numbers; spec 4.9 has the AI write them once the assistant is on OpenRouter. No Home nudge on the 1st yet; Wrapped opens from Budgets.
 - **Assistant keyboard layout** not checked with a full soft keyboard (the iOS simulator uses the hardware keyboard; the Android emulator's is in floating stylus mode).

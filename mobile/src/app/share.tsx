@@ -82,7 +82,7 @@ export default function Share() {
             {amounts && <Line label="Kept" value={fmt(w.saved)} />}
             {pro && w.topPlace && <Line label="Top place" value={`${w.topPlace.label} ×${w.topPlace.visits}`} />}
             {pro && <Line label="Treats" value={String(w.treats)} />}
-            {pro && hours !== null && <Line label="Hours of work" value={String(hours)} />}
+            {pro && hours !== null && <Line label="Hours of work" value={hours} />}
             {pro && <Line label="Best streak" value={`${w.streak} ${w.streak === 1 ? 'day' : 'days'}`} />}
             <Mono style={{ textAlign: 'center', color: palette.inkDim, marginTop: space.md }}>Made with Senbud</Mono>
           </View>
