@@ -1,35 +1,12 @@
-import {
-  aheadOfPace,
-  billCountdown,
-  budgetStatus,
-  money,
-  type Nudge,
-  parseSpending,
-  periodRange,
-  pickNudge,
-  safeToSpend,
-  type Transaction,
-} from '@senbud/core';
+import { aheadOfPace, billCountdown, type IsoDate, type Nudge, parseSpending, pickNudge, type Transaction } from '@senbud/core';
 import { motion, radius, space } from '@senbud/core/tokens';
-import { Redirect, router, Stack, useFocusEffect } from 'expo-router';
+import { Redirect, router, Stack } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 
-import {
-  addTransactions,
-  type BillRow,
-  deleteTransactions,
-  listBills,
-  listIous,
-  listSubscriptions,
-  listTransactions,
-  listTreats,
-  loadSetup,
-  type Setup,
-  today,
-  type Txn,
-} from '@/db';
+import { addTransactions, deleteTransactions, listIous, listTreats } from '@/db';
+import { useMoney } from '@/money';
 import { Button, Card, Icon, Progress, Row, T, TextButton, UndoBar, useTheme } from '@/ui';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -37,51 +14,34 @@ const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
 // Words that start a question rather than a list of spending ("can I afford…", "how's my month?").
 const QUESTION = /\?\s*$|^(can|could|should|how|what|why|when|is|am|do|does|will)\b/i;
 
-type Data = { setup: Setup; txns: Txn[]; bills: BillRow[]; nudge: Nudge | null };
+// "Not today" holds for the rest of the day (spec 5: one nudge a day at most); resets on relaunch.
+let nudgeDismissedOn: IsoDate | null = null;
 
 export default function Home() {
   const db = useSQLiteContext();
   const t = useTheme();
-  const [data, setData] = useState<Data | null | undefined>(undefined);
+  const { money: m, reload } = useMoney();
+  const [nudge, setNudge] = useState<Nudge | null>(null);
   const [text, setText] = useState('');
   const [hint, setHint] = useState('');
   const [undo, setUndo] = useState<{ ids: number[]; summary: string } | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const load = useCallback(async () => {
-    const setup = await loadSetup(db);
-    if (!setup) return setData(null);
-    const day = today();
-    const [txns, bills, subscriptions, ious, treats] = await Promise.all([
-      listTransactions(db, periodRange(setup.budget.period, day).start),
-      listBills(db),
-      listSubscriptions(db),
-      listIous(db),
-      listTreats(db),
-    ]);
-    const safe = safeToSpend({ limit: setup.budget.cents, period: setup.budget.period, transactions: txns, bills, subscriptions, today: day });
-    const onTrack = budgetStatus(safe.spent, setup.budget.cents) === 'ok' && !aheadOfPace(safe.spent, setup.budget.cents, safe, day);
-    setData({ setup, txns, bills, nudge: pickNudge({ today: day, subscriptions, ious, treats, safe, onTrack }) });
-  }, [db]);
-
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load]),
-  );
+  useEffect(() => {
+    if (!m || nudgeDismissedOn === m.day) return setNudge(null);
+    Promise.all([listIous(db), listTreats(db)]).then(([ious, treats]) =>
+      setNudge(pickNudge({ today: m.day, subscriptions: m.subscriptions, ious, treats, safe: m.safe, onTrack: m.onTrack })),
+    );
+  }, [db, m]);
   useEffect(() => () => clearTimeout(undoTimer.current), []);
 
-  if (data === undefined) return null;
-  if (data === null) return <Redirect href="/setup" />;
+  if (m === undefined) return null;
+  if (m === null) return <Redirect href="/setup" />;
 
-  const { setup, txns, bills, nudge } = data;
-  const { currency, locale } = setup.profile;
-  const fmt = (cents: number) => money(cents / 100, currency, locale);
-  const day = today();
+  const { setup, txns, safe, status, fmt, day } = m;
+  const { locale } = setup.profile;
   const limit = setup.budget.cents;
   const unit = setup.budget.period.kind;
-  const safe = safeToSpend({ limit, period: setup.budget.period, transactions: txns, bills, today: day });
-  const status = budgetStatus(safe.spent, limit);
   const rent = setup.rent && { ...setup.rent, ...billCountdown(setup.rent, day) };
   const now = new Date();
   const dateLabel = now.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'short' });
@@ -115,7 +75,7 @@ export default function Home() {
     const total = fmt(rows.reduce((s, r) => s + r.cents, 0));
     setUndo({ ids, summary: rows.length === 1 ? `Added ${rows[0].label}, ${total}` : `Added ${rows.length} items, ${total}` });
     undoTimer.current = setTimeout(() => setUndo(null), motion.undoMs);
-    load();
+    reload();
   }
 
   async function undoAdd() {
@@ -123,11 +83,11 @@ export default function Home() {
     clearTimeout(undoTimer.current);
     await deleteTransactions(db, undo.ids);
     setUndo(null);
-    load();
+    reload();
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: t.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: t.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen
         options={{
           headerTitle: '',
@@ -193,7 +153,16 @@ export default function Home() {
           </Row>
         </Card>
 
-        {nudge && <NudgeCard nudge={nudge} fmt={fmt} />}
+        {nudge && (
+          <NudgeCard
+            nudge={nudge}
+            fmt={fmt}
+            onDismiss={() => {
+              nudgeDismissedOn = day;
+              setNudge(null);
+            }}
+          />
+        )}
 
         {!txns.length && <T tone="textDim">Type what you spent below, like “nasi lemak 6.50”. Senbud does the rest.</T>}
         <TextButton title="Can I afford it?" onPress={() => router.push('/afford')} />
@@ -233,6 +202,7 @@ export default function Home() {
             placeholderTextColor={t.textDim}
             selectionColor={t.accent}
             accessibilityLabel="Type what you spent, or ask Bud"
+            autoFocus={!txns.length}
             style={{ flex: 1, minHeight: 48, fontSize: 17, color: t.text }}
           />
           <Pressable onPress={() => router.push('/add')} accessibilityRole="button" accessibilityLabel="Add by hand" style={{ padding: space.sm }} hitSlop={4}>
@@ -245,9 +215,7 @@ export default function Home() {
 }
 
 // Today's nudge, priorities 3–5 of spec 5. One sentence, at most two actions.
-function NudgeCard({ nudge, fmt }: { nudge: Nudge; fmt: (c: number) => string }) {
-  const [hidden, setHidden] = useState(false);
-  if (hidden) return null;
+function NudgeCard({ nudge, fmt, onDismiss }: { nudge: Nudge; fmt: (c: number) => string; onDismiss: () => void }) {
   const body =
     nudge.kind === 'renewal'
       ? `${nudge.subscription.merchant} renews tomorrow: ${fmt(nudge.subscription.cents)}.`
@@ -264,7 +232,7 @@ function NudgeCard({ nudge, fmt }: { nudge: Nudge; fmt: (c: number) => string })
       <T>{body}</T>
       <Row style={{ justifyContent: 'flex-start' }}>
         <TextButton title={action[0]} onPress={() => router.push(action[1] as '/friends')} />
-        <TextButton title="Not today" tone="textDim" onPress={() => setHidden(true)} />
+        <TextButton title="Not today" tone="textDim" onPress={onDismiss} />
       </Row>
     </Card>
   );

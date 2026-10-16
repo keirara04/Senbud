@@ -1,4 +1,6 @@
-// Placeholder for the tab bar's centre slot. BudTab opens /assistant instead, so this never shows.
+import { Redirect } from 'expo-router';
+
+// The tab bar's centre slot is BudTab, which opens /assistant. A deep link to /bud lands on Home.
 export default function BudSlot() {
-  return null;
+  return <Redirect href="/" />;
 }

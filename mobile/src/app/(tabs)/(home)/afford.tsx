@@ -1,40 +1,33 @@
 // "Can I afford it?" (spec 4.5, design system 4.4). The answer updates as you type; rent comes first.
-import { addDays, afford, billCountdown, daysBetween, hoursOfWork, money, periodRange, safeToSpend } from '@senbud/core';
+import { addDays, afford, billCountdown, daysBetween, hoursOfWork } from '@senbud/core';
 import { space, type } from '@senbud/core/tokens';
 import { router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
+
+import { useMoney } from '@/money';
 import { TextInput, View } from 'react-native';
 
-import { addTransactions, type AppState, listBills, listTransactions, loadApp, loadSetup, type Setup, today, type Txn, type BillRow } from '@/db';
+import { addTransactions, type AppState, loadApp } from '@/db';
 import { Button, Card, Field, Screen, T, TextButton, useTheme } from '@/ui';
-
-type Data = { setup: Setup; app: AppState; txns: Txn[]; bills: BillRow[] };
 
 export default function Afford() {
   const db = useSQLiteContext();
   const t = useTheme();
-  const [data, setData] = useState<Data | null>(null);
+  const { money: m } = useMoney();
+  const [app, setApp] = useState<AppState | null>(null);
   const [price, setPrice] = useState('');
   const [what, setWhat] = useState('');
 
   useFocusEffect(
     useCallback(() => {
-      (async () => {
-        const setup = await loadSetup(db);
-        if (!setup) return;
-        const [app, txns, bills] = await Promise.all([loadApp(db), listTransactions(db, periodRange(setup.budget.period, today()).start), listBills(db)]);
-        setData({ setup, app, txns, bills });
-      })();
+      loadApp(db).then(setApp);
     }, [db]),
   );
 
-  if (!data) return null;
-  const { setup, app, txns, bills } = data;
-  const { currency, locale } = setup.profile;
-  const fmt = (cents: number) => money(cents / 100, currency, locale);
-  const day = today();
-  const safe = safeToSpend({ limit: setup.budget.cents, period: setup.budget.period, transactions: txns, bills, today: day });
+  if (!m || !app) return null;
+  const { setup, safe, fmt, day } = m;
+  const { locale } = setup.profile;
   const unit = setup.budget.period.kind;
   const periodDays = daysBetween(safe.start, safe.nextStart);
   const cents = Math.round(Number(price.replace(',', '.')) * 100);

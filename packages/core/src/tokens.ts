@@ -37,6 +37,7 @@ export const palette = {
   moonDim: "#a8b0d8",
   onCobalt: "#f4f6ff",
   onCobaltDim: "#c9d2ff",
+  periwinklePressed: "#b3bff5", // pressed dark-mode primary
 } as const;
 
 // 2. Themes. Every pair used for text passes WCAG AA (4.5:1); see the doc's contrast table.
@@ -81,7 +82,7 @@ const dark: Theme = {
   // Its own fill, so the one `highlight` button stays the only yellow thing on a dark screen
   // (user decision, 16 Oct 2026). Ink on periwinkle 11.3:1.
   primary: palette.onCobaltDim,
-  primaryPressed: '#b3bff5',
+  primaryPressed: palette.periwinklePressed,
   onPrimary: palette.ink,
   panel: palette.cobalt,
   onPanel: palette.onCobalt,

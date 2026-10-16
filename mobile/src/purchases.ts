@@ -42,7 +42,8 @@ export function ProSync() {
   const db = useSQLiteContext();
   useEffect(() => {
     if (!purchasesReady()) return;
-    const sync = (info: CustomerInfo) => setPro(db, hasPro(info));
+    // The catch: after a dev reload the old database handle is closed; a late update must not throw.
+    const sync = (info: CustomerInfo) => setPro(db, hasPro(info)).catch(() => {});
     // Offline or a RevenueCat outage: keep the cached value rather than locking someone out.
     Purchases.getCustomerInfo().then(sync, () => {});
     Purchases.addCustomerInfoUpdateListener(sync);
