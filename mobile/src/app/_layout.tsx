@@ -3,6 +3,7 @@ import { SQLiteProvider } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 
 import { migrate } from '@/db';
+import { ProSync } from '@/purchases';
 import { useNavigationTheme } from '@/ui';
 
 export default function RootLayout() {
@@ -10,6 +11,7 @@ export default function RootLayout() {
     <ThemeProvider value={useNavigationTheme()}>
       <SQLiteProvider databaseName="senbud.db" onInit={migrate}>
         <StatusBar style="auto" />
+        <ProSync />
         <Stack screenOptions={{ headerShadowVisible: false }}>
           <Stack.Screen name="index" options={{ title: 'Senbud' }} />
           <Stack.Screen name="setup" options={{ title: 'Budget & rent' }} />
