@@ -18,6 +18,10 @@ npm run build    # static site in out/, serve with nginx
 | `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` | Turns on cookie-free Plausible analytics for this domain. Unset = no analytics. |
 | `NEXT_PUBLIC_PLAUSIBLE_SRC` | Optional script URL for a self-hosted Plausible (defaults to plausible.io's tagged-events script). |
 
+## Deploying (Dokploy)
+
+`web/Dockerfile` builds the static export and serves it with nginx (`web/nginx.conf`, which handles the clean URLs below). In Dokploy: Build Type Dockerfile, Dockerfile Path `web/Dockerfile`, Docker Context Path `.` (the repo root), container port 80, domain `senbud.com`. The `NEXT_PUBLIC_*` values are build arguments and default to production (`https://senbud.com`, `https://api.senbud.com`). `web/Dockerfile.dockerignore` replaces the root `.dockerignore` for this build.
+
 ## Serving with nginx
 
 Pages are exported as `name.html` (for example `alternatives/ynab-alternative.html`). Serve clean URLs with:

@@ -274,7 +274,7 @@ New stores on top of the existing transactions and category budgets:
 
 ### Deployment
 - Self-hosted with Docker: one container for `web` (nginx serving the static files) and one for `api` (Laravel + queue worker + scheduler).
-- Domains: `senbud.app` (web) and `api.senbud.app` (Laravel). CORS is restricted to the web domain.
+- Domains (bought 17 Oct 2026): `senbud.com` (landing, `web/Dockerfile`), `app.senbud.com` (web app, `mobile/Dockerfile`) and `api.senbud.com` (Laravel, `api/Dockerfile`), all on one DigitalOcean droplet through Dokploy. CORS is restricted to `senbud.com`.
 - Secrets live in the server's environment: the OpenRouter key, the Polar webhook secret, the keys for signing licences, and the Web Push keys.
 
 ### Rules

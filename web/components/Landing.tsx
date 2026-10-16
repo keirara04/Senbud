@@ -23,7 +23,7 @@ export function Hero() {
           </p>
           <WaitlistForm place="hero" />
           <p className="small-dim">Coming to the App Store and Google Play. One email when it’s out, nothing else.</p>
-          <a className="pill out plausible-event-name=Web+app plausible-event-place=hero" href="https://senbud-app.vercel.app">
+          <a className="pill out plausible-event-name=Web+app plausible-event-place=hero" href="https://app.senbud.com">
             Try it in your browser
           </a>
           <ul className="promises">

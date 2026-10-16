@@ -1,0 +1,13 @@
+# Used instead of the repo-root .dockerignore when building web/Dockerfile (BuildKit).
+**/node_modules
+**/.next
+**/.expo
+**/dist
+web/out
+.git
+.claude
+api
+art
+docs
+mobile
+!mobile/package.json
