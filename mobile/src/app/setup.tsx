@@ -2,9 +2,8 @@ import { getLocales } from 'expo-localization';
 import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
-import { Alert } from 'react-native';
 
-import { eraseAll, loadSetup, saveSetup } from '@/db';
+import { loadSetup, saveSetup } from '@/db';
 import { Button, Card, Field, Screen, Segmented, T } from '@/ui';
 
 // "12.50" or "12,50" -> 1250 cents; anything else -> NaN.
@@ -22,10 +21,12 @@ export default function SetupScreen() {
   const [dueDay, setDueDay] = useState('1');
   const [currency, setCurrency] = useState(device.currencyCode ?? 'USD');
   const [errors, setErrors] = useState<Errors>({});
+  const [firstRun, setFirstRun] = useState(true);
 
   useEffect(() => {
     loadSetup(db).then((s) => {
       if (!s) return;
+      setFirstRun(false);
       setKind(s.budget.period.kind);
       setLimit(fromCents(s.budget.cents));
       setCurrency(s.profile.currency);
@@ -53,24 +54,9 @@ export default function SetupScreen() {
       rent: rentCents > 0 ? { name: 'Rent', cents: rentCents, dueDay: day } : null,
       profile: { currency: currency.toUpperCase(), locale: device.languageTag },
     });
-    // Opened from Home: go back. Redirected here on first run: there's nothing behind us.
+    // Opened from Home or Settings: go back. First run (Welcome replaced itself with us): nothing behind.
     if (router.canGoBack()) router.back();
     else router.replace('/');
-  }
-
-  function erase() {
-    Alert.alert('Erase all data?', 'Every expense, budget and bill on this phone is deleted. This can’t be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Erase',
-        style: 'destructive',
-        onPress: async () => {
-          await eraseAll(db);
-          setLimit('');
-          setRent('');
-        },
-      },
-    ]);
   }
 
   return (
@@ -97,10 +83,14 @@ export default function SetupScreen() {
 
       <Card>
         <Field label="Currency" value={currency} onChangeText={setCurrency} autoCapitalize="characters" maxLength={3} error={errors.currency} />
+        {!firstRun && (
+          <T variant="caption" tone="textDim">
+            Changing it relabels what you’ve saved; amounts aren’t converted.
+          </T>
+        )}
       </Card>
 
       <Button title="Save" onPress={save} />
-      <Button title="Erase all data" variant="danger" onPress={erase} />
     </Screen>
   );
 }

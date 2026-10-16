@@ -31,5 +31,14 @@ class AppServiceProvider extends ServiceProvider
         }
 
         RateLimiter::for('waitlist', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
+
+        // Receipt reading costs money per call. Keyed by the app's anonymous device id when it sends
+        // one, else the IP; the daily cap per IP stops one device id being rotated to dodge it.
+        RateLimiter::for('receipt', function (Request $request) {
+            $device = $request->header('X-Device-Id');
+            $who = is_string($device) && preg_match('/^[0-9a-f-]{36}$/i', $device) ? 'd:'.$device : 'ip:'.$request->ip();
+
+            return [Limit::perMinute(6)->by($who), Limit::perDay(60)->by($who), Limit::perDay(200)->by('ip:'.$request->ip())];
+        });
     }
 }
