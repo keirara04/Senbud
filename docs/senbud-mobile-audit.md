@@ -26,7 +26,7 @@ The choice is sound. Expo SDK 58 is current and mature enough for this app, and 
 | Minimum OS | iOS 16.4+, Android 7+ | docs.expo.dev/versions/latest |
 | Node | 22.13+ (you have 24) | same |
 | Expo Router | Part of SDK 58. Typed routes are beta (`experiments.typedRoutes`). Since SDK 56, import navigation only from `expo-router`, not `@react-navigation/*` | docs.expo.dev/router |
-| Expo Go | Fine for early UI work. Purchases, widgets, remote push, SQLCipher and custom native code need a **development build** (`expo-dev-client`). Expo Go now requires logging in. | docs.expo.dev/develop/development-builds |
+| Expo Go | Fine for early UI work. Purchases, widgets, remote push, SQLCipher and custom native code need a **development build** (`expo-dev-client`). Expo Go now requires logging in (from the changelog headline only, **UNVERIFIED**). | docs.expo.dev/develop/development-builds |
 
 **Recommendation:** start on SDK 58. The project is new, so there's nothing to migrate. Run `npx expo install --check` after adding each library, since a library may not yet support RN 0.88. Plan to work in a development build from week one, because payments and widgets need one.
 
@@ -52,7 +52,7 @@ Senbud/
 - **npm is fine.** Expo's monorepo guide supports npm, Yarn, pnpm and Bun, and recommends none in particular. Keep npm.
 - **Metro configures itself for monorepos** since SDK 52. Don't add `watchFolders` or other resolver settings by hand.
 - **Avoid two copies of React.** `web/` and Expo both use React 19.3 today. Pin `react` and `react-dom` with a root `overrides` field, and check with `npm why react`. If web upgrades React before Expo does, this is the first thing to break.
-- **Using the core without a build step:** point `packages/core/package.json` `main` (and `exports`) at `src/index.ts`. Metro compiles TypeScript from workspace packages. Next.js needs `transpilePackages: ["@senbud/core"]`. The Expo guide doesn't cover TypeScript-source packages, so this is **UNVERIFIED** and is the first thing to prove in the spike.
+- **Using the core without a build step:** point `packages/core/package.json` `main` (and `exports`) at `src/index.ts`. Metro compiles TypeScript from workspace packages. On the web side, Next.js probably needs `transpilePackages: ["@senbud/core"]`. Neither half is documented for TypeScript-source packages, so both are **UNVERIFIED** and are the first thing to prove in the spike.
 - **Next.js and the root lockfile.** Moving to workspaces creates a root `package-lock.json`. Set `turbopack.root` in `web/next.config.ts` so Next picks the right root, and change the planned `web/` Docker build to copy `packages/core` too.
 
 ### What moves from `web/lib/demo.ts` into the core, and what has to change
@@ -73,7 +73,7 @@ Senbud/
 
 | Need | Choice | Status | Notes and risks |
 |---|---|---|---|
-| **Styling** | **Decide in the spike:** NativeWind v5 (Tailwind 4, release candidate) **or** shared design tokens plus `StyleSheet` / Unistyles 3 | NativeWind stable is 4.2.7 but **Tailwind 3 only**. v5 is `5.0.0-rc.0` and needs Tailwind 4.1, the New Architecture and Reanimated 4. Unistyles is 3.5.3 and New Architecture only. | Whichever wins, export colours and spacing from `@senbud/core/tokens` so the web CSS variables and the app share one palette. Don't bet launch on a release candidate without trying it on SDK 58 first. |
+| **Styling** | **Decide in the spike:** NativeWind v5 (Tailwind 4, release candidate) **or** shared design tokens plus `StyleSheet` / Unistyles 3 | NativeWind stable is 4.2.7 but **Tailwind 3 only**. v5 is `5.0.0-rc.0` and needs Tailwind 4.1, the New Architecture and Reanimated 4. Unistyles is 3.5.3 (New Architecture only is inferred, **UNVERIFIED**). | Whichever wins, export colours and spacing from `@senbud/core/tokens` so the web CSS variables and the app share one palette. Don't bet launch on a release candidate without trying it on SDK 58 first. |
 | **Animation** | **Reanimated 4.7** + `react-native-worklets` 0.13 | Current; 4.7 targets RN 0.86–0.88 | **Skip Moti.** Its last release was roughly 9 months ago and Reanimated 4 support is unclear. |
 | **Gestures** | **react-native-gesture-handler v3** | 3.3.0. v2 stops at RN 0.87, so **RN 0.88 needs v3** | Needed for swipe-to-undo and the bill-split taps |
 | **Local data** | **expo-sqlite** | Included in SDK 58 and works in Expo Go. Change listener available. | Optional encryption (SQLCipher) needs a development build |
@@ -103,7 +103,7 @@ Senbud/
 ### Recommended payment design
 1. **Inside the apps:** sell Pro through **RevenueCat** (`react-native-purchases`), which uses StoreKit and Play Billing. It's free up to $2,500 of monthly tracked revenue, then 1%. It needs a development build; Expo Go only gets a preview mode.
 2. **No accounts:** RevenueCat uses anonymous IDs, and "Restore purchases" works through the person's App Store or Play account.
-3. **Web (Polar):** keep web Pro for the **web app only** at launch. RevenueCat has **no Polar integration**. RevenueCat does integrate with Stripe (Redemption Links work without accounts), but Stripe's own merchant-of-record service doesn't accept Malaysian sellers. Sharing one Pro across web and app means either your own Laravel sync or a later move to RevenueCat Web Billing. **PRO:** check the cross-platform design with a lawyer.
+3. **Web (Polar):** keep web Pro for the **web app only** at launch. RevenueCat has **no Polar integration**. RevenueCat does integrate with Stripe (Redemption Links work without accounts). Stripe's own merchant-of-record service doesn't accept Malaysian sellers, but direct Stripe lists Malaysia (whether individuals qualify is **UNVERIFIED**), and then US sales tax would be your job. Sharing one Pro across web and app means either your own Laravel sync or a later move to RevenueCat Web Billing. **PRO:** check the cross-platform design with a lawyer.
 4. **Show subscription terms on the paywall** (price, renewal, links to terms and privacy). The exact wording is **UNVERIFIED**, so check Apple's 3.1.2 checklist.
 
 ### Accounts and launch timeline
@@ -130,6 +130,9 @@ Senbud/
 ---
 
 ## 5. Implementation plan
+
+### Before Phase 0
+- **Another chat is working in `web/`.** Moving `web/` into npm workspaces moves `node_modules` to the root, which breaks its running `next dev` server. Coordinate with it before the spike, and expect a fresh `npm install` for everyone.
 
 ### Phase 0: spike (2–3 days). Prove the risky parts before building screens.
 1. Root `package.json` with npm workspaces and `overrides` for React. Move `web/` onto it, and confirm `next build` and the tests still pass.
@@ -162,7 +165,12 @@ Senbud/
 
 ---
 
-## 6. Open decisions for you
+## 6. Gaps the audit found
+- **The spec contradicts itself.** `docs/senbud-spec.md` section 10 still plans the main app as Next.js `/app/*` with Dexie, Serwist PWA and Web Push. With Expo as the app, those rows are deferred. **Option, not decision:** SDK 58 bundles react-native-web 0.21, so the Expo app could also produce the web version, which would avoid building `/app` twice. The landing page stays in Next.js either way.
+- **Mobile analytics is unresolved.** Plausible has no React Native SDK, and `web/lib/track.ts` is web-only. Pick a privacy-respecting option for the app before launch (**UNVERIFIED** which).
+- **The AI proxy doesn't exist yet.** Phase 2 depends on Laravel's `/v1/agent` endpoint (OpenRouter proxy, no image retention, rate limits), which hasn't been built.
+
+## 7. Open decisions for you
 1. **Styling:** NativeWind v5 (release candidate, closest to your web Tailwind) or shared tokens plus StyleSheet/Unistyles (no release-candidate risk)? Decide after the spike.
 2. **Seller name:** publish as an individual, with your legal name shown on the App Store, or register a company first?
 3. **Web Pro:** keep it separate from app Pro at launch (simplest), or build a shared entitlement later?

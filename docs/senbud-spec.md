@@ -267,6 +267,8 @@ New stores on top of the existing transactions and category budgets:
 - Financial data never reaches the server. `/v1/agent` receives only what a single request needs, and the API doesn't log request contents.
 - The app works fully offline without the API. Only AI features, payments and push need it.
 
+> **Note (16 Oct 2026):** the `/app/*` web-app rows above (Dexie, Serwist PWA, Web Push) are **deferred**. The main app is now the Expo mobile app below. Whether the Expo app also produces the web version (react-native-web) is an open option; see `docs/senbud-mobile-audit.md` section 6.
+
 ### Mobile apps (decided)
 The App Store and Google Play apps use **Expo SDK 58 (React Native 0.88, React 19.3) plus a shared TypeScript core** (`packages/core`) in an npm-workspaces monorepo.
 - **Data and capture:** expo-sqlite, expo-image-picker, expo-notifications.
