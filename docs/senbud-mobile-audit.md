@@ -63,7 +63,7 @@ Senbud/
 | `afford`, `hoursOfWork` | Yes | None |
 | `splitBill` | No | People are hard-coded as types (`"You" \| "Jordan" \| "Sarah"`). Make people a generic list of IDs. |
 | `money` | No | Hard-codes USD and `en-US`. Take currency and locale as arguments. **Phase 0:** done. Hermes `Intl` matches Node for `en-US`, `en-MY` and `de-DE`, but `ms-MY` differs on iOS (`RM12` vs Node's `RM 12`). Don't snapshot formatted strings across platforms. |
-| Safe-to-spend, rent countdown, treat jar, subscription detection | Not written yet | Write them in the core, with tests, before any app screens. They're the product's brain. |
+| Safe-to-spend, rent countdown, treat jar, subscription detection | Written in Phase 1 | Done in the core with tests (plus category budgets and IOUs). See the notes under Phase 1 in section 5. |
 
 `web/lib/game/*` (Budget Dungeon) can stay in `web/` for now.
 
@@ -224,6 +224,31 @@ The NativeWind trial is kept on branch `claude/nativewind-v5-trial` (not for mer
 - **Storage:** expo-sqlite (with Drizzle, or plain SQL with numbered migrations).
 - **Local nudges:** expo-notifications, rescheduled on every app open because of the iOS 64-notification cap.
 - **Logic:** all money maths in `@senbud/core`, tested.
+
+**Core logic choices where the spec is ambiguous** (`packages/core/src/budget.ts`, `dates.ts`, `subscriptions.ts`, `iou.ts`):
+- **Units.** New functions take integer cents and `"YYYY-MM-DD"` date strings, done in UTC. The caller passes `today` as the device's local date. The older float helpers (`afford`, `hoursOfWork`, `money`) are unchanged because web uses them.
+- **Budget period.** The spec has a single `startDay` field. The core uses a separate shape for each kind instead:
+  - week: `startWeekday` (0 = Sunday)
+  - month: `startDay` (1–31, clamped in short months)
+  - until: `start` and `payday`
+- **Period boundaries.** A period runs from `start` up to, but not including, the next start (or payday). Days left counts today, so it is 1 on the last day. A period whose payday has passed also counts as 1 day left.
+- **Safe to spend.** It is rounded down to the cent and never below 0. `covered` means `limit − spent − upcoming bills ≥ 0`, and the rent card and treat nudge both use it.
+- **Bills that count as upcoming.**
+  - A bill due today counts. One due on the next period's first day doesn't.
+  - Confirmed subscriptions that renew in the period count too.
+  - To stop a paid bill being counted twice (once in spending, once as upcoming), a bill has an optional `paidThrough` date. The app sets it when rent is paid.
+- **Month-end due days.** A bill due on the 31st falls due on Feb 28/29, Apr 30, and so on. Due today means 0 days left.
+- **Category status.**
+  - "close" starts at 90% used, and exactly at the limit is still "close".
+  - "over" means more than the limit.
+  - With a limit of 0, any spending is "over".
+  - The pace warning is a separate check (`aheadOfPace`).
+- **Treat jar.** Only end-of-period underspend rolls in (`leftover`). The jar has no rounding up of purchases, because the spec doesn't mention it. Learning treats from repeat purchases isn't built yet.
+- **Subscription cadence windows (in days).** Weekly is 6–8, monthly 27–33 and yearly 358–372. "Similar amount" means within 10% of the latest charge.
+  - Every charge from that merchant must fit the pattern, so one odd purchase at the same place hides the subscription.
+  - Merchants match on lower-cased, trimmed labels.
+  - Two charges are enough, as the spec says.
+- **IOUs.** Only debts involving the user are stored, with direction `theyOweMe` or `iOweThem`. If a friend paid, the user owes that friend their own share, and what others owe that friend isn't tracked. "Settle up" marks every unpaid IOU with that friend as paid. Stale means unpaid for more than 7 days.
 
 ### Phase 2: AI and Pro
 - **Receipt snapping:** image-picker, then resize, then Laravel `/v1/agent`, then OpenRouter. Show the consent screen first, keep no image retention, and add rate limits.
