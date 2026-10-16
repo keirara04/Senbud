@@ -85,6 +85,11 @@ export async function saveSetup(db: SQLiteDatabase, { budget, rent, profile }: S
   });
 }
 
+// Currency on its own (Settings → Currency). The profile row can exist before Setup has run.
+export const loadProfile = (db: SQLiteDatabase) => db.getFirstAsync<Profile>('SELECT currency, locale FROM profile');
+export const setCurrency = (db: SQLiteDatabase, currency: string, locale: string) =>
+  db.runAsync('INSERT INTO profile (id, currency, locale) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET currency = excluded.currency', currency, locale);
+
 export async function addTransactions(db: SQLiteDatabase, txns: Transaction[]): Promise<number[]> {
   const ids: number[] = [];
   await db.withTransactionAsync(async () => {

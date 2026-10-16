@@ -92,7 +92,7 @@ export default function Afford() {
             {hours !== null && (
               <View style={{ borderTopWidth: 1, borderColor: t.onPanelDim, paddingTop: space.sm, marginTop: space.xs }}>
                 <T variant="caption" tone="onPanelDim">
-                  = {hours} hours of work at {fmt(app.hourlyRateCents!)}/hr
+                  That’s {hours} {hours === 1 ? 'hour' : 'hours'} of work at {fmt(app.hourlyRateCents!)} an hour.
                 </T>
               </View>
             )}
@@ -114,8 +114,8 @@ export default function Afford() {
 
       {typed && !app.hourlyRateCents && (
         <Card>
-          <T>Want prices in hours of work? Add what you earn an hour.</T>
-          <TextButton title="Add hourly rate" onPress={() => router.push('/rate')} />
+          <T>Have a part-time job? Add your pay per hour and Senbud shows how many hours of work this costs.</T>
+          <TextButton title="Add pay per hour" onPress={() => router.push('/rate')} />
         </Card>
       )}
       {result && result.verdict !== 'no' && <Button title="I bought it" variant="secondary" onPress={bought} />}

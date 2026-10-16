@@ -87,3 +87,21 @@ describe("readIntent", () => {
     expect(readIntent("hello")).toEqual({ kind: "ask" });
   });
 });
+
+describe("withCharges", () => {
+  it("adds the gap between the printed total and the items as one line", async () => {
+    const { withCharges } = await import("./index");
+    const items = [
+      { label: "2 x Nasi Kandar Ayam", amount: 27.8, category: "Food" as const },
+      { label: "1 x Roti Canai Telur", amount: 3.5, category: "Food" as const },
+      { label: "3 x Teh Tarik Ais", amount: 10.5, category: "Treat" as const },
+      { label: "1 x Maggi Goreng", amount: 8.9, category: "Food" as const },
+    ];
+    const out = withCharges(items, 59.1);
+    expect(out).toHaveLength(5);
+    expect(out[4]).toEqual({ label: "Service charge and tax", amount: 8.4, category: "Food" });
+    expect(withCharges(items, 50.7)).toBe(items); // already adds up
+    expect(withCharges(items, 45)).toBe(items); // discount: leave it
+    expect(withCharges(items, null)).toBe(items);
+  });
+});

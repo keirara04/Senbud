@@ -1,20 +1,16 @@
-// Budgets (design system 4.3): what's left on the cobalt hero, the StampLedger by category on a
-// receipt, rent and bills, and subscriptions Senbud has spotted (Pro).
-import { billCountdown, billsDue, type Category, detectSubscriptions, spentIn, stamps, type Subscription } from '@senbud/core';
-import { categoryColors, palette, space } from '@senbud/core/tokens';
+// Budgets (design system 4.3): what's left on the cobalt hero, spending by category with a bar
+// each, rent and bills, and subscriptions Senbud has spotted (Pro).
+import { billCountdown, billsDue, budgetStatus, type Category, detectSubscriptions, spentIn, type Subscription } from '@senbud/core';
+import { categoryColors, space } from '@senbud/core/tokens';
 import { router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
-import { ReceiptCard } from '@/art';
 import { deleteBill, listTransactions, loadLimits, saveSubscription, type Txn } from '@/db';
 import { useMoney } from '@/money';
 import { usePro } from '@/purchases';
 import { Button, CATEGORIES, Card, Icon, ListGroup, ListRow, MONO, ProLock, Progress, Row, Screen, T, TextButton, useTheme } from '@/ui';
-
-const RECEIPT_INK = palette.ink;
-const RECEIPT_DIM = palette.inkDim;
 
 export default function Budgets() {
   const db = useSQLiteContext();
@@ -76,15 +72,17 @@ export default function Budgets() {
       </Card>
 
       {rows.length ? (
-        <ReceiptCard>
-          <T variant="label" style={{ color: RECEIPT_DIM, fontFamily: MONO }}>
-            {periodName.split(' · ')[0].toUpperCase()} · BY CATEGORY
+        <View style={{ gap: space.sm }}>
+          <T variant="label" tone="textDim">
+            {periodName.split(' · ')[0]} · by category
           </T>
-          {rows.map((r) => (
-            <StampRow key={r.category} {...r} fmt={fmt} onPress={() => router.push({ pathname: '/limit', params: { category: r.category } })} />
-          ))}
-          {hasLimits && <TextButton title="Set a category limit" onPress={() => router.push('/limit')} color={palette.cobalt} />}
-        </ReceiptCard>
+          <Card style={{ gap: 0, paddingVertical: space.xs }}>
+            {rows.map((r, i) => (
+              <CategoryRow key={r.category} {...r} first={i === 0} fmt={fmt} onPress={() => router.push({ pathname: '/limit', params: { category: r.category } })} />
+            ))}
+            {hasLimits && <TextButton title="Set a category limit" onPress={() => router.push('/limit')} />}
+          </Card>
+        </View>
       ) : null}
       {!hasLimits && (
         <Card>
@@ -112,7 +110,7 @@ export default function Budgets() {
                   {fmt(b.cents)}
                 </T>
                 {b.name === 'Rent' ? (
-                  <TextButton title="Edit" onPress={() => router.push('/setup')} />
+                  <TextButton title="Edit" onPress={() => router.push('/edit-rent')} />
                 ) : (
                   <Pressable
                     onPress={async () => {
@@ -168,7 +166,7 @@ export default function Budgets() {
           Budget
         </T>
         <Card style={{ gap: 0, paddingVertical: space.xs }}>
-          <Pressable onPress={() => router.push('/setup')} accessibilityRole="button" style={{ minHeight: 52, justifyContent: 'center' }}>
+          <Pressable onPress={() => router.push('/edit-budget')} accessibilityRole="button" style={{ minHeight: 52, justifyContent: 'center' }}>
             <Row>
               <T>Period and amount</T>
               <T tone="textDim">
@@ -197,63 +195,34 @@ export default function Budgets() {
   );
 }
 
-// One StampLedger row: name, dotted leader, "248 / 400", then 10 stamps and what's left in words.
-function StampRow({ category, spent, limit, fmt, onPress }: { category: Category; spent: number; limit?: number; fmt: (c: number) => string; onPress: () => void }) {
-  const st = stamps(spent, limit);
-  const ink = categoryColors[category].fg;
-  const major = (c: number) => fmt(c).replace(/[^\d.,\s]/g, '').trim();
-  const words = !st
-    ? 'No limit'
-    : st.over
-      ? `${major(-st.left)} over`
-      : st.status === 'close'
-        ? `${major(st.left)} left, go easy`
-        : `${major(st.left)} left`;
-  const wordColor = !st ? RECEIPT_DIM : st.over ? palette.coralInk : st.status === 'close' ? palette.amberInk : RECEIPT_DIM;
+// One category: name and what's left (or over) on top, a status bar, then "spent of limit" in words.
+// Tapping it edits the limit. Colour is never the only signal: the words say left, close or over.
+function CategoryRow({ category, spent, limit, first, fmt, onPress }: { category: Category; spent: number; limit?: number; first: boolean; fmt: (c: number) => string; onPress: () => void }) {
+  const t = useTheme();
+  const status = limit ? budgetStatus(spent, limit) : null;
+  const left = limit ? limit - spent : 0;
+  const right = !limit ? fmt(spent) : left < 0 ? `${fmt(-left)} over` : `${fmt(left)} left`;
+  const sub = !limit ? 'No limit · tap to set one' : `${fmt(spent)} of ${fmt(limit)}${status === 'close' ? ' · go easy' : ''}`;
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={limit ? `${category}, ${fmt(spent)} of ${fmt(limit)}, ${words}` : `${category}, ${fmt(spent)}, no limit. Set one.`}
-      style={({ pressed }) => ({ minHeight: 48, gap: space.xs, paddingVertical: space.xs, opacity: pressed ? 0.6 : 1 })}
+      accessibilityLabel={`${category}, ${right}, ${sub}`}
+      style={({ pressed }) => ({ paddingVertical: space.sm, gap: space.xs, borderTopWidth: first ? 0 : 1, borderColor: t.line, opacity: pressed ? 0.6 : 1 })}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.xs }}>
-        <T variant="bodyStrong" style={{ color: RECEIPT_INK }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: categoryColors[category].bg }} />
+        <T variant="bodyStrong" style={{ flex: 1 }}>
           {category}
         </T>
-        <T numberOfLines={1} style={{ flex: 1, color: RECEIPT_DIM, opacity: 0.5, fontFamily: MONO }}>
-          {'. '.repeat(60)}
-        </T>
-        <T variant="caption" money style={{ color: RECEIPT_INK, fontFamily: MONO }}>
-          {limit ? `${major(spent)} / ${major(limit)}` : major(spent)}
+        <T variant="bodyStrong" money tone={status === 'over' ? 'bad' : status === 'close' ? 'warn' : limit ? 'text' : 'textDim'}>
+          {right}
         </T>
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' }}>
-        {st && (
-          <View style={{ flexDirection: 'row', gap: 3 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            {Array.from({ length: 10 }, (_, i) => (
-              <View
-                key={i}
-                style={{
-                  width: 14,
-                  height: 14,
-                  borderRadius: 4,
-                  borderWidth: 1.5,
-                  borderStyle: i < st.filled ? 'solid' : 'dotted',
-                  borderColor: i < st.filled ? ink : 'rgba(26, 28, 46, 0.35)',
-                  backgroundColor: i < st.filled ? ink : 'transparent',
-                }}
-              />
-            ))}
-            {st.over && (
-              <View style={{ width: 14, height: 14, borderRadius: 4, marginLeft: 5, borderWidth: 1.5, borderColor: palette.coralInk, backgroundColor: palette.coral }} />
-            )}
-          </View>
-        )}
-        <T variant="caption" style={{ color: wordColor }}>
-          {words}
-        </T>
-      </View>
+      {limit ? <Progress value={spent / limit} status={status!} /> : null}
+      <T variant="caption" tone="textDim">
+        {sub}
+      </T>
     </Pressable>
   );
 }
