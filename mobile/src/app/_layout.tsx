@@ -13,11 +13,15 @@ export default function RootLayout() {
         <StatusBar style="auto" />
         <ProSync />
         <Stack screenOptions={{ headerShadowVisible: false }}>
-          <Stack.Screen name="index" options={{ title: 'Senbud' }} />
-          <Stack.Screen name="setup" options={{ title: 'Budget & rent' }} />
-          <Stack.Screen name="activity" options={{ title: 'Activity' }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="setup" options={{ title: 'Budget and rent' }} />
           <Stack.Screen name="receipt" options={{ title: 'Receipt' }} />
+          <Stack.Screen name="add" options={{ title: 'Add by hand', presentation: 'formSheet', sheetAllowedDetents: [0.92], sheetGrabberVisible: true }} />
           <Stack.Screen name="pro" options={{ title: 'Senbud Pro', presentation: 'modal' }} />
+          <Stack.Screen
+            name="assistant"
+            options={{ title: 'Bud', presentation: 'formSheet', sheetAllowedDetents: [0.92], sheetGrabberVisible: true }}
+          />
         </Stack>
       </SQLiteProvider>
     </ThemeProvider>

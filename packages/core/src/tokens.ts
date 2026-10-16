@@ -47,9 +47,12 @@ const light = {
   text: palette.ink as string,
   textDim: palette.inkDim as string,
   line: "rgba(26, 28, 46, 0.12)",
-  accent: palette.cobalt as string, // links, selected states, primary buttons
+  accent: palette.cobalt as string, // links, selected states, tab tint
   accentPressed: palette.cobaltDeep as string,
   onAccent: palette.onCobalt as string,
+  primary: palette.cobalt as string, // primary button fill
+  primaryPressed: palette.cobaltDeep as string,
+  onPrimary: palette.onCobalt as string,
   panel: palette.cobalt as string, // the hero panel stays cobalt in both schemes
   onPanel: palette.onCobalt as string,
   onPanelDim: palette.onCobaltDim as string,
@@ -75,6 +78,11 @@ const dark: Theme = {
   accent: palette.highlighter, // cobalt on night is too dark to read; the web flips to highlighter too
   accentPressed: palette.highlighterPressed,
   onAccent: palette.ink,
+  // Its own fill, so the one `highlight` button stays the only yellow thing on a dark screen
+  // (user decision, 16 Oct 2026). Ink on periwinkle 11.3:1.
+  primary: palette.onCobaltDim,
+  primaryPressed: '#b3bff5',
+  onPrimary: palette.ink,
   panel: palette.cobalt,
   onPanel: palette.onCobalt,
   onPanelDim: palette.onCobaltDim,

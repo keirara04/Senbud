@@ -19,6 +19,8 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+
+import { Bud } from '@/art';
 import { DarkTheme, DefaultTheme } from 'expo-router';
 
 export const useTheme = (): Theme => themes[useColorScheme() === 'dark' ? 'dark' : 'light'];
@@ -97,7 +99,7 @@ export function Button({
 }) {
   const t = useTheme();
   const look: Record<ButtonVariant, { bg: string; pressed: string; fg: string; border?: string }> = {
-    primary: { bg: t.accent, pressed: t.accentPressed, fg: t.onAccent },
+    primary: { bg: t.primary, pressed: t.primaryPressed, fg: t.onPrimary },
     highlight: { bg: t.highlight, pressed: palette.highlighterPressed, fg: t.onHighlight },
     secondary: { bg: 'transparent', pressed: t.surfaceSunken, fg: t.accent, border: t.line },
     danger: { bg: 'transparent', pressed: t.surfaceSunken, fg: t.bad, border: t.line },
@@ -222,6 +224,46 @@ export function Icon({ name, size = 24, color, label }: { name: IconName; size?:
       accessibilityElementsHidden={!label}
       importantForAccessibility={label ? 'yes' : 'no-hide-descendants'}
     />
+  );
+}
+
+// Centre of the tab bar: Bud on a raised cobalt circle (56 pt). Opens the assistant; never switches tabs.
+// In dark mode a periwinkle ring keeps the circle visible (cobalt on night is 2.4:1).
+export function BudTab({ onPress }: { onPress: () => void }) {
+  const t = useTheme();
+  const dark = useColorScheme() === 'dark';
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="Ask Bud"
+      style={({ pressed }) => ({ flex: 1, alignItems: 'center', opacity: pressed ? 0.8 : 1 })}
+    >
+      <View
+        style={{
+          width: 56,
+          height: 56,
+          // Raised 12 pt, not the spec's 22: touches above the tab bar's own bounds never reach the button.
+          marginTop: -12,
+          borderRadius: 28,
+          backgroundColor: t.panel,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: dark ? 1.5 : 0,
+          borderColor: t.onPanelDim,
+          shadowColor: '#000',
+          shadowOpacity: 0.2,
+          shadowRadius: 6,
+          shadowOffset: { width: 0, height: 3 },
+          elevation: 4,
+        }}
+      >
+        <Bud size={38} />
+      </View>
+      <T variant="label" tone="textDim" style={{ fontSize: 11, textTransform: 'none', letterSpacing: 0, marginTop: 2 }}>
+        Bud
+      </T>
+    </Pressable>
   );
 }
 
