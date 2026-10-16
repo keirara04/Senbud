@@ -58,6 +58,7 @@ export function Footer() {
                   ["How it works", "/#how"],
                   ["Pricing", "/#pricing"],
                   ["FAQ", "/#faq"],
+                  ["Budget calculator", "/student-budget-calculator"],
                   ["Compare apps", "/alternatives"],
                   ["Get early access", "/#waitlist"],
                 ].map(([label, href], i) => (
