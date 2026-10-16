@@ -20,16 +20,17 @@ export default function Split() {
   const db = useSQLiteContext();
   const t = useTheme();
   const pro = usePro();
-  const params = useLocalSearchParams<{ items?: string; merchant?: string }>();
+  // From a receipt: items + merchant. From Bud: amount, merchant and people ("a,b").
+  const params = useLocalSearchParams<{ items?: string; merchant?: string; amount?: string; people?: string }>();
   const items: Item[] = useMemo(() => (params.items ? JSON.parse(params.items) : []), [params.items]);
   const hasItems = items.length > 0;
 
   const [profile, setProfile] = useState<Profile>({ currency: 'USD', locale: 'en-US' });
   const [known, setKnown] = useState<string[]>([]);
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState(params.amount ?? '');
   const [note, setNote] = useState(params.merchant ?? '');
-  const [people, setPeople] = useState<string[]>([ME]);
+  const [people, setPeople] = useState<string[]>(() => [ME, ...(params.people ? params.people.split(',').filter((p) => p && p !== ME) : [])]);
   const [newName, setNewName] = useState('');
   const [payer, setPayer] = useState(ME);
   const [mode, setMode] = useState<'even' | 'items'>('even');

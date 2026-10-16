@@ -73,3 +73,17 @@ describe("toCsv", () => {
     expect(csv.split("\n")).toEqual(["date,amount,currency,label,category,source", '2026-10-16,4.5,MYR,"Kopi, ""large""",Food,manual']);
   });
 });
+
+describe("readIntent", () => {
+  it("routes lines by rules", async () => {
+    const { readIntent } = await import("./index");
+    expect(readIntent("can I afford a RM 45 ticket on saturday?")).toEqual({ kind: "afford", amount: 45, label: "Ticket on saturday" });
+    expect(readIntent("can I afford it")).toEqual({ kind: "afford", label: "" });
+    expect(readIntent("badminton court 32 split with aiman and sarah")).toEqual({ kind: "split", amount: 32, label: "Badminton court", people: ["Aiman", "Sarah"] });
+    expect(readIntent("how's my month?")).toEqual({ kind: "month" });
+    expect(readIntent("How’s my month?")).toEqual({ kind: "month" });
+    expect(readIntent("kopi 4.50, grab 12").kind).toBe("add");
+    expect(readIntent("how much did I spend on grab this month?")).toEqual({ kind: "ask" });
+    expect(readIntent("hello")).toEqual({ kind: "ask" });
+  });
+});
