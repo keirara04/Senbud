@@ -2,21 +2,20 @@ import { daysBetween, money, type Transaction } from '@senbud/core';
 import { motion, space } from '@senbud/core/tokens';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 import Purchases from 'react-native-purchases';
-import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
 
 import { type Receipt, readReceipt } from '@/api';
 import { addTransactions, type AppState, deleteTransactions, giveAiConsent, loadApp, loadSetup, type Profile, setPro, today } from '@/db';
 import { hasPro, purchasesReady } from '@/purchases';
-import { Button, Card, CategoryChip, Row, Screen, T, TextButton, UndoBar, useTheme } from '@/ui';
+import { Button, Card, CategoryChip, Row, Screen, T, UndoBar, useTheme } from '@/ui';
 
 type Step =
   | { kind: 'loading' }
-  | { kind: 'pro'; note?: string }
+  | { kind: 'pro' }
   | { kind: 'consent' }
   | { kind: 'pick'; error?: string }
   | { kind: 'reading' }
@@ -38,8 +37,14 @@ export default function ReceiptScreen() {
   const [step, setStep] = useState<Step>({ kind: 'loading' });
   const undoTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  useEffect(() => {
-    (async () => {
+  useEffect(() => () => clearTimeout(undoTimer.current), []);
+
+  // On focus, so coming back from the paywall re-checks Pro. Only from the gate or first load:
+  // returning from the photo picker mustn't reset a flow in progress.
+  useFocusEffect(
+    useCallback(() => {
+      if (step.kind !== 'loading' && step.kind !== 'pro') return;
+      (async () => {
       const a = await loadApp(db);
       const s = await loadSetup(db);
       if (s) setProfile(s.profile);
@@ -53,38 +58,11 @@ export default function ReceiptScreen() {
       }
       setApp(a);
       setStep(!a.pro ? { kind: 'pro' } : a.aiConsentAt ? { kind: 'pick' } : { kind: 'consent' });
-    })();
-    return () => clearTimeout(undoTimer.current);
-  }, [db]);
+      })();
+    }, [db, step.kind]),
+  );
 
   const fmt = (n: number) => money(n, profile.currency, profile.locale);
-
-  // After a purchase or restore, write the entitlement to the local cache and carry on into the flow.
-  async function unlocked(isPro: boolean, none: string) {
-    await setPro(db, isPro);
-    if (!isPro) return setStep({ kind: 'pro', note: none });
-    const a = await loadApp(db);
-    setApp(a);
-    setStep(a.aiConsentAt ? { kind: 'pick' } : { kind: 'consent' });
-  }
-
-  async function upgrade() {
-    try {
-      const result = await RevenueCatUI.presentPaywall();
-      if (result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED)
-        await unlocked(hasPro(await Purchases.getCustomerInfo()), 'The purchase didn’t unlock Pro. Try Restore purchases.');
-    } catch {
-      setStep({ kind: 'pro', note: 'Couldn’t open the store. Check your connection and try again.' });
-    }
-  }
-
-  async function restore() {
-    try {
-      await unlocked(hasPro(await Purchases.restorePurchases()), 'No Senbud Pro purchase found on this Apple or Google account.');
-    } catch {
-      setStep({ kind: 'pro', note: 'Couldn’t reach the store to restore. Try again.' });
-    }
-  }
 
   async function consent() {
     await giveAiConsent(db);
@@ -141,8 +119,7 @@ export default function ReceiptScreen() {
         <T tone="textDim">Senbud reads the shop, items and prices from a photo, so you don’t type them. It’s part of Senbud Pro.</T>
         {purchasesReady() ? (
           <>
-            <Button title="See Senbud Pro" variant="highlight" onPress={upgrade} />
-            <TextButton title="Restore purchases" onPress={restore} />
+            <Button title="See Senbud Pro" variant="highlight" onPress={() => router.push('/pro')} />
           </>
         ) : (
           <Card>
@@ -152,11 +129,6 @@ export default function ReceiptScreen() {
             </T>
           </Card>
         )}
-        {step.note ? (
-          <T variant="caption" tone="bad">
-            {step.note}
-          </T>
-        ) : null}
         <T variant="caption" tone="textDim">
           Typing expenses, budgets and rent stay free.
         </T>
