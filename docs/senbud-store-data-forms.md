@@ -2,7 +2,7 @@
 
 These are draft answers for the **App Store privacy label** (App Store Connect → App Privacy) and the **Google Play Data safety** form (Play Console → App content).
 
-- They describe the app as of Phase 2: local-first storage, plus receipt reading through `POST /v1/agent/receipt`.
+- They describe the app with local-first storage, receipt reading through `POST /v1/agent/receipt`, and questions to Bud through `POST /v1/agent/ask`.
 - **Re-check them whenever a feature sends anything off the phone.**
 - They're drafts. The store definitions are summarised from Apple's and Google's help pages and should be checked at submission. **PRO:** have them reviewed before launch.
 
@@ -11,10 +11,11 @@ These are draft answers for the **App Store privacy label** (App Store Connect �
 | Data | When | Where it goes | Kept? |
 |---|---|---|---|
 | Expenses, budgets, bills, profile | Never | Stays in SQLite on the phone | Only on the phone. "Erase all data" deletes it. |
-| Receipt photo | Only when the person taps Snap a receipt, after the consent screen | Senbud API, then OpenRouter, then the model provider (currently Google Gemini) | **No.** It's held in memory for that one request only. Nothing is written to disk, queues or logs (`api/app/Http/Controllers/ReceiptController.php`). OpenRouter is asked for zero-data-retention endpoints only (`provider.zdr`, `data_collection: deny`), and OpenRouter itself stores no prompts unless the account opts in. |
-| Currency code (e.g. "MYR") | With each receipt | Same as the photo | No |
-| Anonymous device id (random UUID, not tied to the person or the hardware) | With each receipt | Senbud API only, in the `X-Device-Id` header | Yes: as a hashed rate-limit counter in the server cache, for up to 24 hours. A new one is made on "Erase all data". |
-| IP address | With each receipt (all HTTPS traffic) | Senbud API | Hashed per-IP rate-limit counter, up to 24 hours. Not logged with the request. |
+| Receipt photo | Only when the person taps Snap a receipt, after the "Bud uses AI" sheet | Senbud API, then OpenRouter, then the model provider (currently Google Gemini) | **No.** It's held in memory for that one request only. Nothing is written to disk, queues or logs (`api/app/Http/Controllers/ReceiptController.php`). OpenRouter is asked for zero-data-retention endpoints only (`provider.zdr`, `data_collection: deny`), and OpenRouter itself stores no prompts unless the account opts in. |
+| Question to Bud, plus a spending summary: the question, up to 4 earlier questions and answers in that chat, this period's totals by category, budget, rent and upcoming bills, and up to 20 of this period's expenses (date, label, amount, category) | Only when the person asks Bud something in their own words, after the "Bud uses AI" sheet. Quick adds and the built-in answers never leave the phone | Senbud API, then OpenRouter, then the model provider (currently Anthropic's Claude Haiku, run by Google) | **No.** Same as photos: held in memory for that one request, not written or logged (`api/app/Http/Controllers/AskController.php` validates the exact shape and drops anything else). Same zero-data-retention OpenRouter settings. Expense labels are free text the person typed, so they can hold anything. |
+| Currency code (e.g. "MYR") | With each receipt or question | Same as the photo | No |
+| Anonymous device id (random UUID, not tied to the person or the hardware) | With each receipt or question | Senbud API only, in the `X-Device-Id` header | Yes: as hashed rate-limit counters in the server cache, for up to 24 hours. That includes the off-topic counter that pauses questions for the day. A new id is made on "Erase all data". |
+| IP address | With each receipt or question (all HTTPS traffic) | Senbud API | Hashed per-IP rate-limit counter, up to 24 hours. Not logged with the request. |
 | Purchases (Phase 2 C, RevenueCat) | When buying or restoring Pro | Apple / Google, plus RevenueCat | Yes. **Not built yet;** update these answers when it is. |
 
 ## Apple: App Privacy label
@@ -22,6 +23,7 @@ These are draft answers for the **App Store privacy label** (App Store Connect �
 Apple counts data as **collected** only if it leaves the device and is kept longer than needed to answer the request in real time. On that test:
 
 - **Photos:** *not collected.* Processed in real time and discarded. **Keep it that way:** any server-side storage, logging or retry queue for images changes this answer.
+- **Questions and the spending summary** (Financial Info → Other Financial Info, User Content → Other User Content): *not collected*, on the same test. They are processed in real time for one answer and discarded. The same warning applies: storing chats, logging request bodies or keeping "conversation history" on the server changes this answer to collected, App Functionality, not linked, not tracking.
 - **Device ID:** declare it, to be safe. **Identifiers → Device ID**:
   - purpose: App Functionality (rate limiting and abuse prevention)
   - **not linked to the user's identity**
@@ -46,15 +48,18 @@ Google counts anything sent off the device, so the photo must be declared even t
 | Is all user data encrypted in transit? | **Yes.** HTTPS only; release builds must use an `https://` `EXPO_PUBLIC_API_URL`. |
 | Can users ask for their data to be deleted? | **Yes.** "Erase all data" in the app. Nothing is kept server-side apart from rate-limit counters that expire within 24 hours. |
 | **Photos and videos → Photos** | Collected: **yes.** Shared: **no** (OpenRouter and the model provider process it for Senbud as service providers, which Google doesn't count as sharing). **Processed ephemerally: yes.** Required or optional: **optional** (only if the person uses receipt reading). Purpose: **App functionality.** |
-| **Device or other IDs** | Collected: **yes.** Shared: **no.** Processed ephemerally: **no** (kept up to 24 hours). Required: **optional** (only sent with receipts). Purpose: **App functionality, Fraud prevention, security and compliance.** |
+| **Financial info → Other financial info** (the spending summary and expenses sent with a question) | Collected: **yes.** Shared: **no** (OpenRouter and the model provider are service providers). **Processed ephemerally: yes.** Required or optional: **optional** (only if the person asks Bud a question with AI on). Purpose: **App functionality.** |
+| **App activity → Other user-generated content** (the question and earlier turns in that chat) | Collected: **yes.** Shared: **no.** **Processed ephemerally: yes.** Required or optional: **optional.** Purpose: **App functionality.** |
+| **Device or other IDs** | Collected: **yes.** Shared: **no.** Processed ephemerally: **no** (kept up to 24 hours). Required: **optional** (only sent with receipts and questions). Purpose: **App functionality, Fraud prevention, security and compliance.** |
 | **Financial info → Purchase history** (once RevenueCat ships) | Collected: **yes**, via Play Billing and RevenueCat. Purpose: App functionality. Re-check against RevenueCat's Data safety guide. |
-| Financial info → anything else | **No.** Expenses never leave the phone. |
+| Financial info → anything else | **No.** Expenses leave the phone only inside a question's summary (above). |
 | Location, contacts, messages, app activity, web browsing, audio, health, calendar, files | **No** |
 
 ## Things that would change these answers
 
-- Logging request bodies, storing receipts for "history", or a retry queue that persists images.
+- Logging request bodies, storing receipts or chats for "history", or a retry queue that persists images or questions.
+- Sending more with a question (a longer expense list, other screens' data) than `AskController` validates today.
 - Analytics or crash reporting SDKs (none yet; see the audit's open gap on mobile analytics).
 - Cloud backup or sync.
 - RevenueCat, when Phase 2 C lands.
-- Switching models or providers. Update the consent screen's provider name in `mobile/src/app/receipt.tsx` and keep `provider.zdr`.
+- Switching models or providers. Update the provider names on the "Bud uses AI" sheet in `mobile/src/consent.tsx` (What gets sent shows the same cards) and keep `provider.zdr`.
