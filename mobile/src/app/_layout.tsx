@@ -100,6 +100,7 @@ export default function RootLayout() {
           <Stack.Screen name="pro" options={{ title: 'Senbud Pro', presentation: 'modal', headerShown: false }} />
           {/* A modal, not a formSheet: RNScreens' formSheet lays out a ScrollView with a pinned input row wrongly. */}
           <Stack.Screen name="assistant" options={{ title: 'Bud', presentation: 'modal' }} />
+          <Stack.Screen name="ai-consent" options={{ title: '', presentation: 'formSheet', sheetAllowedDetents: [0.92], sheetGrabberVisible: true }} />
         </Stack>
       </SQLiteProvider>
     </ThemeProvider>
