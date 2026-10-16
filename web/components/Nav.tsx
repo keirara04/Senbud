@@ -77,6 +77,14 @@ export function Nav() {
                 </Link>
               </li>
             ))}
+            <li>
+              <a
+                href="https://app.senbud.app"
+                className="plausible-event-name=Web+app plausible-event-place=nav inline-flex min-h-11 items-center px-3 text-sm text-on-panel-dim transition-colors hover:text-on-panel"
+              >
+                Try it in your browser
+              </a>
+            </li>
           </ul>
           <Link href="/#waitlist" className="plausible-event-name=CTA plausible-event-place=nav hl-sweep inline-flex min-h-11 items-center rounded-full bg-hl px-4 text-sm font-semibold text-panel">
             Join the waitlist
@@ -116,6 +124,14 @@ export function Nav() {
                   </Link>
                 </motion.li>
               ))}
+              <motion.li initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 + links.length * 0.05 }}>
+                <a
+                  href="https://app.senbud.app"
+                  className="plausible-event-name=Web+app plausible-event-place=nav flex min-h-12 items-center rounded-xl px-3 text-lg font-semibold hover:bg-white/10"
+                >
+                  Try it in your browser
+                </a>
+              </motion.li>
             </ul>
           </motion.div>
         )}

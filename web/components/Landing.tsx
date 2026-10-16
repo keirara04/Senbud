@@ -23,6 +23,9 @@ export function Hero() {
           </p>
           <WaitlistForm place="hero" />
           <p className="small-dim">Coming to the App Store and Google Play. One email when it’s out, nothing else.</p>
+          <a className="pill out plausible-event-name=Web+app plausible-event-place=hero" href="https://app.senbud.app">
+            Try it in your browser
+          </a>
           <ul className="promises">
             {["No bank login", "No account", "Stays on your phone", "Free plan forever"].map((t) => (
               <li key={t}>

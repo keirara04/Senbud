@@ -2,9 +2,10 @@
 // Spec: docs/senbud-app-design-system.md.
 import type { Category } from '@senbud/core';
 import { categoryColors, motion, palette, radius, space, type Theme, themes, touch, type } from '@senbud/core/tokens';
-import type { ReactNode } from 'react';
+import { type ReactNode, useState, useSyncExternalStore } from 'react';
 import {
   Appearance,
+  Platform,
   Pressable,
   ScrollView,
   type StyleProp,
@@ -25,7 +26,21 @@ import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Bud } from '@/art';
 import { DarkTheme, DefaultTheme } from 'expo-router';
 
-export const useTheme = (): Theme => themes[useColorScheme() === 'dark' ? 'dark' : 'light'];
+// Receipt type: the thermal-printer look on ReceiptCards.
+export const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
+
+// RN-web's Appearance follows the browser only (no setColorScheme), so on web the Settings choice is kept
+// here and wins over the browser unless it is System.
+let webTheme: 'system' | 'light' | 'dark' = 'dark';
+const webThemeListeners = new Set<() => void>();
+const subscribeWebTheme = (cb: () => void) => (webThemeListeners.add(cb), () => void webThemeListeners.delete(cb));
+const useScheme = () => {
+  const system = useColorScheme();
+  const chosen = useSyncExternalStore(subscribeWebTheme, () => webTheme, () => webTheme);
+  return Platform.OS === 'web' && chosen !== 'system' ? chosen : system;
+};
+
+export const useTheme = (): Theme => themes[useScheme() === 'dark' ? 'dark' : 'light'];
 
 type Tone = 'text' | 'textDim' | 'accent' | 'good' | 'warn' | 'bad' | 'onPanel' | 'onPanelDim' | 'highlight';
 
@@ -86,7 +101,8 @@ export function Row({ children, style }: { children: ReactNode; style?: StylePro
   return <View style={[s.row, style]}>{children}</View>;
 }
 
-type ButtonVariant = 'primary' | 'highlight' | 'secondary' | 'danger';
+// onPanel: an outline button on the cobalt panel (Wrapped's Share).
+type ButtonVariant = 'primary' | 'highlight' | 'secondary' | 'danger' | 'onPanel';
 
 export function Button({
   title,
@@ -105,6 +121,7 @@ export function Button({
     highlight: { bg: t.highlight, pressed: palette.highlighterPressed, fg: t.onHighlight },
     secondary: { bg: 'transparent', pressed: t.surfaceSunken, fg: t.accent, border: t.line },
     danger: { bg: 'transparent', pressed: t.surfaceSunken, fg: t.bad, border: t.line },
+    onPanel: { bg: 'transparent', pressed: 'rgba(255, 255, 255, 0.12)', fg: t.onPanel, border: t.onPanelDim },
   };
   const v = look[variant];
   return (
@@ -281,14 +298,14 @@ export function ProLock({ onPress }: { onPress: () => void }) {
   );
 }
 
-// System icons, never emoji: SF Symbols on iOS, Material Symbols on Android. Decorative unless given a label.
+// System icons, never emoji: SF Symbols on iOS, Material Symbols on Android and web. Decorative unless given a label.
 export type IconName = { ios: Extract<SymbolViewProps['name'], string>; android: Exclude<SymbolViewProps['name'], string>['android'] };
 
 export function Icon({ name, size = 24, color, label }: { name: IconName; size?: number; color?: string; label?: string }) {
   const t = useTheme();
   return (
     <SymbolView
-      name={name}
+      name={{ ...name, web: name.android }}
       size={size}
       tintColor={color ?? t.text}
       accessibilityLabel={label}
@@ -351,9 +368,18 @@ export function ListGroup({ title, children, footer }: { title: string; children
 // The one AI switch, in Settings and again under "What gets sent".
 // The whole row is the control and the Switch only shows the state: on iOS 26 RN's Switch frame and
 // UIKit's drawing disagree, so taps on the drawn switch never reached it. Also one VoiceOver element.
-export function AiSwitch({ value, onChange, first = true }: { value: boolean; onChange: (on: boolean) => void; first?: boolean }) {
+export function AiSwitch({
+  value,
+  onChange,
+  first = true,
+  label = 'Use AI for photos and questions',
+}: {
+  value: boolean;
+  onChange: (on: boolean) => void;
+  first?: boolean;
+  label?: string;
+}) {
   const t = useTheme();
-  const label = 'Use AI for photos and questions';
   return (
     <Pressable
       onPress={() => onChange(!value)}
@@ -370,14 +396,95 @@ export function AiSwitch({ value, onChange, first = true }: { value: boolean; on
   );
 }
 
+// Wrapped's story: full-bleed cobalt pages, one stat each, with segment bars, a label and Close.
+// Tap the right or left half to move. No autoplay, and pages cut rather than slide, so Reduce Motion
+// needs nothing extra. Each page is one accessibility element read as its sentence.
+export function StoryPager({
+  title,
+  pages,
+  onClose,
+  footer,
+}: {
+  title: string;
+  pages: { label: string; body: ReactNode }[];
+  onClose: () => void;
+  footer?: (index: number) => ReactNode;
+}) {
+  const t = useTheme();
+  const [i, setI] = useState(0);
+  const page = pages[Math.min(i, pages.length - 1)];
+  return (
+    <View style={{ flex: 1, gap: space.md }}>
+      <View style={{ flexDirection: 'row', gap: space.xs }}>
+        {pages.map((p, k) => (
+          <View key={k} style={{ flex: 1, height: 3, borderRadius: radius.pill, backgroundColor: k <= i ? t.onPanel : 'rgba(255, 255, 255, 0.3)' }} />
+        ))}
+      </View>
+      <Row style={{ flexWrap: 'nowrap' }}>
+        <T variant="label" tone="onPanelDim">
+          {title}
+        </T>
+        <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" hitSlop={12} style={{ padding: space.xs }}>
+          <Icon name={{ ios: 'xmark', android: 'close' }} color={t.onPanel} />
+        </Pressable>
+      </Row>
+      <View style={{ flex: 1 }}>
+        <View
+          accessible
+          accessibilityLabel={`${page.label} Card ${i + 1} of ${pages.length}.`}
+          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+          onAccessibilityAction={(e) => setI((k) => Math.max(0, Math.min(pages.length - 1, k + (e.nativeEvent.actionName === 'increment' ? 1 : -1))))}
+          accessibilityRole="adjustable"
+          style={{ flex: 1, justifyContent: 'center', gap: space.sm }}
+        >
+          {page.body}
+        </View>
+        <View style={[StyleSheet.absoluteFill, { flexDirection: 'row' }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Pressable style={{ flex: 1 }} onPress={() => setI((k) => Math.max(0, k - 1))} />
+          <Pressable style={{ flex: 1 }} onPress={() => (i < pages.length - 1 ? setI(i + 1) : onClose())} />
+        </View>
+      </View>
+      {footer?.(i)}
+    </View>
+  );
+}
+
+// Horizontal bars by category, sorted, the % written on every bar. Drawn on a white ReceiptCard, so
+// fills are the category inks (7.3–9.9:1 on white). On a dark surface it would need the tints instead.
+export function BarChart({ data, font }: { data: { category: Category; share: number }[]; font?: string }) {
+  const top = Math.max(...data.map((d) => d.share), 0.0001);
+  const pct = (n: number) => `${Math.round(n * 100)}%`;
+  return (
+    <View accessible accessibilityLabel={data.map((d) => `${d.category} ${pct(d.share)}`).join(', ')} style={{ gap: space.sm }}>
+      {data.map((d) => (
+        <View key={d.category} style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+          <T variant="caption" numberOfLines={1} style={{ width: 108, color: palette.ink, fontFamily: font }}>
+            {d.category}
+          </T>
+          <View style={{ flex: 1 }}>
+            <View style={{ width: `${(d.share / top) * 100}%`, minWidth: 4, height: 14, borderRadius: 3, backgroundColor: categoryColors[d.category].fg }} />
+          </View>
+          <T variant="caption" money style={{ width: 40, textAlign: 'right', color: palette.ink, fontFamily: font }}>
+            {pct(d.share)}
+          </T>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 // Light / Dark / System from Settings. 'unspecified' hands the choice back to the OS.
-export const applyTheme = (theme: 'system' | 'light' | 'dark') => Appearance.setColorScheme(theme === 'system' ? 'unspecified' : theme);
+export const applyTheme = (theme: 'system' | 'light' | 'dark') => {
+  if (Platform.OS !== 'web') return Appearance.setColorScheme(theme === 'system' ? 'unspecified' : theme);
+  webTheme = theme;
+  webThemeListeners.forEach((l) => l());
+};
 
 // Centre of the tab bar: Bud on a raised cobalt circle (56 pt). Opens the assistant; never switches tabs.
 // In dark mode a periwinkle ring keeps the circle visible (cobalt on night is 2.4:1).
 export function BudTab({ onPress }: { onPress: () => void }) {
   const t = useTheme();
-  const dark = useColorScheme() === 'dark';
+  const dark = useScheme() === 'dark';
   return (
     <Pressable
       onPress={onPress}
@@ -439,7 +546,7 @@ export function UndoBar({ message, onUndo }: { message: string; onUndo: () => vo
       </T>
       {/* The bar is ink in light mode and moon in dark: highlighter reads on ink (15:1) but not on
           moon (1.0:1), so dark mode uses cobalt (6.7:1). */}
-      <TextButton title="Undo" onPress={onUndo} color={useColorScheme() === 'dark' ? palette.cobalt : t.highlight} />
+      <TextButton title="Undo" onPress={onUndo} color={useScheme() === 'dark' ? palette.cobalt : t.highlight} />
     </Animated.View>
   );
 }
@@ -448,7 +555,7 @@ export function UndoBar({ message, onUndo }: { message: string; onUndo: () => vo
 // system scheme live (static headerStyle options don't update when the scheme flips).
 export function useNavigationTheme() {
   const t = useTheme();
-  const dark = useColorScheme() === 'dark';
+  const dark = useScheme() === 'dark';
   const base = dark ? DarkTheme : DefaultTheme;
   return {
     ...base,

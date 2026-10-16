@@ -1,5 +1,6 @@
 import { router, Tabs } from 'expo-router';
 
+import { useLeftoverCheck } from '@/money';
 import { BudTab, Icon, type IconName, useTheme } from '@/ui';
 
 const icon = (name: IconName) =>
@@ -11,6 +12,7 @@ const icon = (name: IconName) =>
 // sheet over the current screen and never switches tabs.
 export default function TabsLayout() {
   const t = useTheme();
+  useLeftoverCheck();
   return (
     <Tabs
       screenOptions={{

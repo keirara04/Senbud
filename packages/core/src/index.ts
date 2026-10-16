@@ -3,6 +3,7 @@ export * from "./budget";
 export * from "./dates";
 export * from "./iou";
 export * from "./nudge";
+export * from "./recap";
 export * from "./subscriptions";
 export type * from "./types";
 

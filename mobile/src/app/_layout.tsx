@@ -2,6 +2,7 @@ import { Stack, ThemeProvider } from 'expo-router';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { Alert, Platform } from 'react-native';
 
 import { loadApp, migrate } from '@/db';
 import { ProSync } from '@/purchases';
@@ -9,6 +10,21 @@ import { applyTheme, useNavigationTheme } from '@/ui';
 
 // Dark by default, from the first frame. ThemeSync then applies the Light / Dark / System choice from Settings.
 applyTheme('dark');
+
+// RN-web's Alert.alert does nothing, so on web use the browser's dialogs. Senbud's alerts have at most
+// Cancel plus one action.
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  Alert.alert = (title, message, buttons) => {
+    const text = [title, message].filter(Boolean).join('\n\n');
+    const action = buttons?.find((b) => b.style !== 'cancel');
+    const cancel = buttons?.find((b) => b.style === 'cancel');
+    if (!cancel) {
+      window.alert(text);
+      return void action?.onPress?.();
+    }
+    (window.confirm(text) ? action : cancel)?.onPress?.();
+  };
+}
 
 function ThemeSync() {
   const db = useSQLiteContext();
@@ -33,11 +49,14 @@ export default function RootLayout() {
           <Stack.Screen name="limit" options={{ title: 'Category limit', presentation: 'formSheet', sheetAllowedDetents: [0.92], sheetGrabberVisible: true }} />
           <Stack.Screen name="bill" options={{ title: 'Add a bill', presentation: 'formSheet', sheetAllowedDetents: [0.92], sheetGrabberVisible: true }} />
           <Stack.Screen name="jar" options={{ title: 'Treat jar', presentation: 'formSheet', sheetAllowedDetents: [0.92], sheetGrabberVisible: true }} />
+          <Stack.Screen name="leftover" options={{ title: '', presentation: 'formSheet', sheetAllowedDetents: [0.5], sheetGrabberVisible: true }} />
           <Stack.Screen name="treat" options={{ title: 'Add a treat', presentation: 'formSheet', sheetAllowedDetents: [0.92], sheetGrabberVisible: true }} />
           <Stack.Screen name="rate" options={{ title: 'Hourly rate', presentation: 'formSheet', sheetAllowedDetents: [0.6], sheetGrabberVisible: true }} />
           <Stack.Screen name="friend" options={{ title: '', presentation: 'formSheet', sheetAllowedDetents: [0.92], sheetGrabberVisible: true }} />
           <Stack.Screen name="split" options={{ title: 'Split a bill', presentation: 'modal' }} />
           <Stack.Screen name="add" options={{ title: 'Add by hand', presentation: 'formSheet', sheetAllowedDetents: [0.92], sheetGrabberVisible: true }} />
+          <Stack.Screen name="wrapped" options={{ headerShown: false, presentation: 'modal' }} />
+          <Stack.Screen name="share" options={{ title: 'Share', presentation: 'modal' }} />
           <Stack.Screen name="pro" options={{ title: 'Senbud Pro', presentation: 'modal' }} />
           {/* A modal, not a formSheet: RNScreens' formSheet lays out a ScrollView with a pinned input row wrongly. */}
           <Stack.Screen name="assistant" options={{ title: 'Bud', presentation: 'modal' }} />

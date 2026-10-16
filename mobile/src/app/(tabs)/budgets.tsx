@@ -5,15 +5,14 @@ import { categoryColors, palette, space } from '@senbud/core/tokens';
 import { router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { ReceiptCard } from '@/art';
 import { deleteBill, listTransactions, loadLimits, saveSubscription, type Txn } from '@/db';
 import { useMoney } from '@/money';
 import { usePro } from '@/purchases';
-import { Button, CATEGORIES, Card, Icon, ProLock, Progress, Row, Screen, T, TextButton, useTheme } from '@/ui';
+import { Button, CATEGORIES, Card, Icon, ListGroup, ListRow, MONO, ProLock, Progress, Row, Screen, T, TextButton, useTheme } from '@/ui';
 
-const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
 const RECEIPT_INK = palette.ink;
 const RECEIPT_DIM = palette.inkDim;
 
@@ -51,6 +50,10 @@ export default function Budgets() {
   const known = new Set(subscriptions.map((s) => s.merchant.toLowerCase()));
   const spotted = detectSubscriptions(history).filter((s) => !known.has(s.merchant.toLowerCase()));
   const setAside = billsDue(bills, day, safe.nextStart);
+  // Wrapped: this month so far, then up to five earlier months that have spending.
+  const thisMonth = day.slice(0, 7);
+  const months = [thisMonth, ...new Set(history.map((x) => x.date.slice(0, 7)).filter((mo) => mo < thisMonth))].slice(0, 6);
+  const monthName = (mo: string) => new Date(`${mo}-15T12:00:00Z`).toLocaleDateString(locale, { month: 'long', year: 'numeric', timeZone: 'UTC' });
 
   async function answer(s: Subscription, yes: boolean) {
     await saveSubscription(db, { ...s, confirmed: yes });
@@ -179,6 +182,17 @@ export default function Budgets() {
           </Row>
         </Card>
       </View>
+
+      <ListGroup title="Wrapped">
+        {months.map((mo, i) => (
+          <ListRow
+            key={mo}
+            first={i === 0}
+            label={mo === thisMonth ? `${monthName(mo)} so far` : monthName(mo)}
+            onPress={() => router.push({ pathname: '/wrapped', params: { month: mo } })}
+          />
+        ))}
+      </ListGroup>
     </Screen>
   );
 }
