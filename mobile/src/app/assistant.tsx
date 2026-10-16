@@ -1,7 +1,7 @@
 // Bud, the assistant (design system 4.9). Rules in core (readIntent) answer on the phone; only a question
 // in your own words goes to the API, with the summary "What gets sent" promises. Bud prints every answer
 // as a receipt slip.
-import { addDays, afford, daysBetween, hoursOfWork, readIntent, spentIn, type Transaction } from '@senbud/core';
+import { addDays, afford, billCountdown, compareToLast, daysBetween, hoursOfWork, nudgeKey, periodRange, readIntent, spentIn, type Transaction } from '@senbud/core';
 import { palette, radius, space, touch } from '@senbud/core/tokens';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -11,8 +11,9 @@ import Animated, { FadeIn, useAnimatedStyle, useReducedMotion, useSharedValue, w
 
 import { Bud, type BudFace, ReceiptCard } from '@/art';
 import { askBud, type AskSummary, type BudAction, COOLDOWN, type Turn, WEB } from '@/api';
-import { type AppState, addTransactions, deleteTransactions, giveAskConsent, loadApp } from '@/db';
+import { type AppState, addTransactions, deleteTransactions, giveAskConsent, listTransactions, loadApp } from '@/db';
 import { useMoney } from '@/money';
+import { NoteCard, useBudNotes } from '@/notes';
 import { Button, CATEGORIES, Icon, Marker, T, TextButton, useTheme } from '@/ui';
 
 const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
@@ -21,13 +22,9 @@ type Line = [label: string, value: string];
 type Slip = { face: BudFace; title: string; lines?: Line[]; total?: Line; note?: string; actions?: ReactNode; printing?: boolean };
 type Msg = { id: number; me: string } | { id: number; slip: Slip };
 
-// Title, hint, and what it puts in the box. "How's my month?" answers straight away.
-const STARTERS: [string, string, string][] = [
-  ['Can I afford…', 'Check a price before you pay', 'Can I afford '],
-  ['How’s my month?', 'Where it went, what’s left', 'How’s my month?'],
-  ['Split a bill', 'Who owes you what', 'Split '],
-  ['Add a few things', '“kopi 4.50, grab 12”', ''],
-];
+// A starter chip: title, hint, and either a question Bud answers straight away (send) or text it puts in
+// the box to finish.
+type Starter = { title: string; hint: string; text: string; send: boolean };
 
 export default function Assistant() {
   const db = useSQLiteContext();
@@ -44,6 +41,7 @@ export default function Assistant() {
   // Earlier questions and answers in this chat, sent along so follow-ups work. Never saved.
   const turns = useRef<Turn[]>([]);
   const viewH = useRef(0);
+  const { notes, dismiss } = useBudNotes(m);
 
   useEffect(() => {
     loadApp(db).then(setApp);
@@ -110,6 +108,77 @@ export default function Assistant() {
     };
   }
 
+  // Chips follow the state: a bill due soon, a low day, the top category, then the usual four.
+  function starters(): Starter[] {
+    const periodDays = daysBetween(safe.start, safe.nextStart);
+    const soon = m!.bills.map((b) => ({ b, ...billCountdown(b, day) })).find((x) => x.days <= 3);
+    const top = CATEGORIES.map((c) => [c, spentIn(txns.filter((x) => x.category === c), safe)] as const).sort((a, b) => b[1] - a[1])[0];
+    const chips: Starter[] = [];
+    if (soon) chips.push({ title: 'Next bill?', hint: `${soon.b.name} is due soon`, text: 'When’s the next bill?', send: true });
+    if (safe.perDay * periodDays < setup.budget.cents / 2) chips.push({ title: 'Can I afford 20?', hint: 'Today’s a tight one', text: 'Can I afford 20?', send: true });
+    if (top && top[1] > 0) chips.push({ title: `How much on ${top[0].toLowerCase()}?`, hint: `This ${unit} so far`, text: `How much on ${top[0].toLowerCase()}?`, send: true });
+    chips.push(
+      { title: 'Can I afford…', hint: 'Check a price before you pay', text: 'Can I afford ', send: false },
+      { title: `How’s my ${unit}?`, hint: 'Where it went, what’s left', text: `How’s my ${unit}?`, send: true },
+      { title: 'Split a bill', hint: 'Who owes you what', text: 'Split ', send: false },
+      { title: 'Add a few things', hint: '“kopi 4.50, grab 12”', text: '', send: false },
+    );
+    return chips.filter((c, i) => chips.findIndex((x) => x.title === c.title) === i).slice(0, 4);
+  }
+
+  const short = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString(setup.profile.locale, { day: 'numeric', month: 'short', timeZone: 'UTC' });
+
+  // "how much on food": a category by name, else anything whose label has the words in it.
+  function spentOnSlip(query: string): Slip {
+    const q = query.toLowerCase();
+    const category = CATEGORIES.find((c) => [c.toLowerCase(), `${c.toLowerCase()}s`].includes(q) || c.toLowerCase() === q.replace(/s$/, ''));
+    const found = txns.filter((x) => (category ? x.category === category : x.label.toLowerCase().includes(q)));
+    const total = found.reduce((sum, x) => sum + x.cents, 0);
+    const title = `Spent on ${category ?? query}`;
+    if (!found.length) return { face: 'happy', title, note: `Nothing on ${category?.toLowerCase() ?? query} this ${unit} yet.` };
+    return {
+      face: 'happy',
+      title,
+      lines: found.slice(0, 5).map((x): Line => [`${x.label} · ${short(x.date)}`, fmt(x.cents)]),
+      total: ['Total', fmt(total)],
+      note: `${found.length} ${found.length === 1 ? 'buy' : 'buys'} this ${unit}${found.length > 5 ? ', newest 5 shown' : ''}.`,
+    };
+  }
+
+  function biggestSlip(): Slip {
+    const top = [...txns].sort((a, b) => b.cents - a.cents).slice(0, 3);
+    if (!top.length) return { face: 'happy', title: 'Biggest spends', note: `Nothing spent this ${unit} yet.` };
+    return { face: 'thinking', title: 'Biggest spends', lines: top.map((x): Line => [`${x.label} · ${short(x.date)}`, fmt(x.cents)]), note: `${top[0].label} is the biggest this ${unit}.` };
+  }
+
+  function billsSlip(): Slip {
+    const due = m!.bills.map((b) => ({ b, ...billCountdown(b, day) })).sort((a, b) => a.days - b.days);
+    if (!due.length)
+      return { face: 'thinking', title: 'Coming up', note: 'No bills set yet. Add rent or a phone plan in Budgets.', actions: <TextButton title="See Budgets" onPress={() => router.navigate('/budgets')} /> };
+    return {
+      face: safe.covered ? 'happy' : 'oops',
+      title: 'Coming up',
+      lines: due.map(({ b, days }): Line => [`${b.name} · ${days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`}`, fmt(b.cents)]),
+      note: safe.covered ? 'All covered by what’s left.' : `Once these are paid you’re ${fmt(-safe.left)} short. Hold off on treats for now.`,
+    };
+  }
+
+  async function compareSlip(id: number) {
+    const last = periodRange(setup.budget.period, addDays(safe.start, -1));
+    const c = compareToLast(await listTransactions(db, last.start), setup.budget.period, day);
+    const diff = c.now - c.thenByNow;
+    replace(id, {
+      face: diff <= 0 ? 'happy' : 'thinking',
+      title: `This ${unit} vs last`,
+      lines: [
+        [`This ${unit}, day ${c.day}`, fmt(c.now)],
+        [`Last ${unit} by day ${c.day}`, fmt(c.thenByNow)],
+      ],
+      total: [`Last ${unit} in all`, fmt(c.thenTotal)],
+      note: !c.thenTotal ? `Nothing saved for last ${unit} to compare with.` : diff < 0 ? `${fmt(-diff)} less than this point last ${unit}.` : diff > 0 ? `${fmt(diff)} more than this point last ${unit}.` : `Same as this point last ${unit}.`,
+    });
+  }
+
   async function addSlip(id: number, rows: Transaction[]) {
     const ids = await addTransactions(db, rows);
     reload();
@@ -144,6 +213,12 @@ export default function Assistant() {
     if (intent.kind === 'afford')
       return replace(id, intent.amount ? affordSlip(Math.round(intent.amount * 100), intent.label) : { face: 'thinking', title: 'Can I afford it?', note: 'Tell me the price, like “can I afford 45”.' });
     if (intent.kind === 'month') return replace(id, monthSlip());
+    if (intent.kind === 'spentOn') return replace(id, spentOnSlip(intent.query));
+    if (intent.kind === 'biggest') return replace(id, biggestSlip());
+    if (intent.kind === 'bills') return replace(id, billsSlip());
+    if (intent.kind === 'daysLeft')
+      return replace(id, { face: 'happy', title: 'Days left', note: `${safe.daysLeft} ${safe.daysLeft === 1 ? 'day' : 'days'} left this ${unit}. Safe to spend: ${fmt(safe.perDay)} a day.` });
+    if (intent.kind === 'compare') return void compareSlip(id);
     if (intent.kind === 'add')
       return addSlip(id, intent.items.map((i) => ({ date: day, cents: Math.round(i.amount * 100), label: i.label, category: i.category, source: 'text' })));
     if (intent.kind === 'split') {
@@ -290,11 +365,18 @@ export default function Assistant() {
             <T tone="textDim" style={{ textAlign: 'center' }}>
               Ask me anything about your money, or tell me what you spent.
             </T>
+            {notes.length > 0 && (
+              <View style={{ alignSelf: 'stretch', gap: space.sm, marginTop: space.sm }}>
+                {notes.slice(0, 3).map((n) => (
+                  <NoteCard key={nudgeKey(n)} note={n} fmt={fmt} unit={unit} label="Bud noticed" onDismiss={() => dismiss([nudgeKey(n)])} />
+                ))}
+              </View>
+            )}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.sm }}>
-              {STARTERS.map((s) => s.map((x) => x.replace('month', unit)) as typeof s).map(([title, hint, fill]) => (
+              {starters().map(({ title, hint, text: fill, send: now }) => (
                 <Pressable
                   key={title}
-                  onPress={() => (fill.startsWith('How’s') ? send(fill) : (setText(fill), input.current?.focus()))}
+                  onPress={() => (now ? send(fill) : (setText(fill), input.current?.focus()))}
                   accessibilityRole="button"
                   accessibilityHint={hint}
                   style={({ pressed }) => ({ flexBasis: '47%', flexGrow: 1, minHeight: 72, padding: space.md, gap: space.xxs, borderRadius: radius.md, backgroundColor: pressed ? t.surfaceSunken : t.surface })}

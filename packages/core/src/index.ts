@@ -107,12 +107,19 @@ export type Intent =
   | { kind: "month" }
   | { kind: "split"; amount?: number; label: string; people: string[] }
   | { kind: "add"; items: Item[] }
+  | { kind: "spentOn"; query: string }
+  | { kind: "biggest" }
+  | { kind: "bills" }
+  | { kind: "daysLeft" }
+  | { kind: "compare" }
   | { kind: "ask" };
 
 const article = (s: string) => s.replace(/^(a|an|the|my)\s+/i, "").replace(/^\p{L}/u, (c) => c.toUpperCase());
 // Lines that start like a question or a request go to Bud, never to quick add ("who won the cup in
 // 2022" is not a 2022 expense).
 const QUESTION = /\?\s*$|^(can|could|should|would|how|what|why|when|where|who|whose|which|is|are|am|was|were|do|does|did|will|tell|explain|write|give|list|help|please|ignore|translate)\b/i;
+
+export const isQuestion = (line: string) => QUESTION.test(line.trim());
 
 export function readIntent(text: string): Intent {
   const line = text.trim();
@@ -126,8 +133,16 @@ export function readIntent(text: string): Intent {
     const [item] = parseSpending(before.replace(/\bsplit\b/gi, " "));
     return { kind: "split", amount: item?.amount, label: item ? article(item.label) : "", people: people.map(article) };
   }
+  // Questions Bud answers from the phone's own numbers. Before "month", so "how much on food" isn't a
+  // month summary; "how much is left" stays one.
+  const on = line.match(/\b(?:how much (?:(?:did|have) i (?:spend|spent|spending) |(?:have i |i )?(?:spent|spend) )?on|spent on|spending on)\s+(.+?)(?:\s+(?:this|so far|in total)\b.*)?\s*\??$/i);
+  if (on && !/\d/.test(on[1])) return { kind: "spentOn", query: on[1].replace(/^(my|the)\s+/i, "").trim() };
+  if (/\b(biggest|largest|most expensive)\b.*\b(spend|spends|expense|expenses|purchase|purchases|buy|buys)\b/i.test(line)) return { kind: "biggest" };
+  if (/\bwhen(['’]?s| is| are| do)\b.*\b(rent|bills?)\b|\bnext (bill|rent)\b|\b(rent|bills?) due\b|\bwhat bills\b/i.test(line)) return { kind: "bills" };
+  if (/\bhow many days\b|\bdays left\b/i.test(line)) return { kind: "daysLeft" };
+  if (/\b(last|previous) (week|month)\b|\bcompared?\b/i.test(line) && isQuestion(line)) return { kind: "compare" };
   if (/\bhow(['’]?s| is| am)\b.*\b(month|week|doing|budget)\b|\bwhere did\b.*\bgo\b|\bhow much (is )?left\b/i.test(line)) return { kind: "month" };
-  if (QUESTION.test(line)) return { kind: "ask" };
+  if (isQuestion(line)) return { kind: "ask" };
   const items = parseSpending(line);
   return items.length ? { kind: "add", items } : { kind: "ask" };
 }

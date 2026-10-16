@@ -526,6 +526,26 @@ Today's Setup asks five things on one page: period, budget, rent, due day and cu
   - **Actions:** up to 2 `secondary` buttons under an answer: "Set a {Category} limit of {amount}", "Add {name} as a bill", "Open the treat jar", "See Budgets". Each opens the existing sheet prefilled; nothing is saved until the person taps Save there.
   - **Thinking:** while Bud works, the slip prints what it's doing a step at a time ("Going through your spending…", "Checking rent and bills…", "Counting what's left…", "Writing it down…") over the shimmer lines, stopping on the last step.
   - **Speed and cost:** Claude Haiku 5.5 with thinking off (`OPENROUTER_ASK_MODEL`), numbers sent as compact text, answers under 45 words, OpenRouter routed by latency. About 1.5 to 3 s and about US$0.00015 per question (Gemini Flash was 2.5 to 10 s and up to US$0.001).
+- **Bud speaks first** (built, all on the phone, nothing sent):
+  - **Notes** (core `nudges`), most important first:
+    - a bill due within 3 days, covered or not;
+    - a category with a limit that's close, over, or ahead of pace;
+    - a renewal tomorrow;
+    - a newly spotted subscription;
+    - an IOU older than 7 days;
+    - 3 or more days in a row under the daily share, counted from the first thing logged this period;
+    - a treat, only when nothing else is said.
+  - **Where they show:** Home shows the first one that isn't rent (rent has its own card), as before: one a day at most, and its "Not today" hides Home's card until tomorrow. The Bud screen lists up to 3 under "What's up?" with the label "Bud noticed".
+  - **"Not today"** is stored per note in `nudge_dismissals` (cleared by Erase all data, not backed up), so it survives a relaunch.
+  - **Not notes:** month-end leftover has its own sheet, and overall pace has Home's progress card.
+  - **Answered without AI:**
+    - "how much on food" (a category name, else labels containing the words);
+    - "biggest spend";
+    - "when's rent / next bill";
+    - "how many days left";
+    - "compared to last month", which compares the same day of the last period.
+  - **Home's capture bar** uses the same rules (`readIntent`): only quick adds are saved there; anything else opens Bud.
+  - **Starter chips** follow the state: "Next bill?" when one is due within 3 days, "Can I afford 20?" on a tight day, "How much on {top category}?", then the usual four. Four at most.
 
 ### 4.10 Proposed components
 
