@@ -309,15 +309,21 @@ Branch `claude/senbud-phase2`.
 - No camera capture: the simulator has no camera. Only the picker path is checked.
 
 **Blocked on accounts**
-- **C. Paywall and restore (RevenueCat).**
-  - RevenueCat's **Test Store** needs no Apple or Google accounts, only a RevenueCat project.
-  - **Plan, once its Test Store key is in `mobile/.env.local` as `EXPO_PUBLIC_RC_TEST_KEY`:**
-    1. `npx expo install react-native-purchases react-native-purchases-ui`. Needs 9.5.4 or newer for the Test Store, plus a full native rebuild.
-    2. Call `Purchases.configure()` once in `_layout`, without an `appUserID`, only when a key exists. Use the **Test Store key only under `__DEV__`**: a release build with it crashes on purpose.
-    3. Add a customer-info listener: `entitlements.active.pro` → `setPro`.
-    4. The "Pro is coming soon" card becomes `RevenueCatUI.presentPaywall()` plus a Restore button.
-    5. Set price, renewal wording and the `/terms` and `/privacy` links in RevenueCat's paywall editor.
-    6. Remove the dev Pro switch.
+- **C. Paywall and restore (RevenueCat): built** on branch `claude/senbud-pro` and verified on the iOS simulator against the **Test Store**.
+  - **Setup:**
+    - `react-native-purchases` and `react-native-purchases-ui` 10.14.
+    - `Purchases.configure()` once, with no `appUserID`.
+    - The Test Store key is read from `EXPO_PUBLIC_REVENUECAT_TEST_KEY` in the gitignored `mobile/.env.local`, **only under `__DEV__`**. Release builds read `EXPO_PUBLIC_REVENUECAT_APPLE_KEY` and `EXPO_PUBLIC_REVENUECAT_GOOGLE_KEY` instead.
+  - **Entitlement cache:** `ProSync` (`mobile/src/purchases.ts`) writes the entitlement into the local `pro` flag on launch and on every customer-info update. If RevenueCat can't be reached, the cached value is kept.
+  - **Pro gate:** the receipt screen opens `RevenueCatUI.presentPaywall()` and offers Restore purchases. The dev Pro switch is gone.
+  - **Verified:**
+    1. A launch reset the cached Pro from 1 to 0.
+    2. A "Test valid purchase" succeeded.
+    3. Restore then unlocked Pro and continued into the receipt flow.
+  - **Dashboard findings, for you to fix:**
+    1. The entitlement identifier is **`senbud_pro`**, not `pro`. The code now matches the dashboard.
+    2. The `default` offering still uses RevenueCat's **default test products** (`monthly` $9.99, yearly $79.99), not `senbud_pro_monthly` at $4.99 and `senbud_pro_yearly` at $39.
+    3. The offering has **no paywall designed**, so the SDK shows its fallback layout. Design one in the paywall editor with price, renewal wording, and links to `/terms` and `/privacy`.
   - **Later, for the real stores:**
     - Apple: an In-App Purchase key (.p8 and Issuer ID) and the Paid Apps agreement.
     - Google: a service account with Play Console permissions (up to 36 hours to activate) and an uploaded signed build.
