@@ -267,6 +267,15 @@ New stores on top of the existing transactions and category budgets:
 - Financial data never reaches the server. `/v1/agent` receives only what a single request needs, and the API doesn't log request contents.
 - The app works fully offline without the API. Only AI features, payments and push need it.
 
+### Mobile apps (decided)
+The App Store and Google Play apps use **Expo SDK 58 (React Native 0.88, React 19.3) plus a shared TypeScript core** (`packages/core`) in an npm-workspaces monorepo.
+- **Data and capture:** expo-sqlite, expo-image-picker, expo-notifications.
+- **Interface:** Reanimated 4 and gesture-handler v3, with Expo Router for screens.
+- **Payments:** RevenueCat for in-app subscriptions.
+- **Builds and submission:** EAS.
+
+The full audit, with risks and the phased plan, is in `docs/senbud-mobile-audit.md`.
+
 ## 11. Still open
 - **Bank sync:** decide after launch.
 - **Name and branding:** check whether "Senbud" is free (domain, trademark).
