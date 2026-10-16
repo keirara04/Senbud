@@ -259,7 +259,7 @@
   .plist { list-style: none; padding: 0; margin: 4px 0 8px; display: grid; gap: 10px; font-size: 16px; line-height: 22px; }
   .plist li { padding-left: 26px; position: relative; }
   .plist li::before { content: ""; position: absolute; left: 2px; top: 5px; width: 12px; height: 7px; border-left: 2px solid var(--good); border-bottom: 2px solid var(--good); transform: rotate(-45deg); }
-  .pro-wrap { position: relative; border-radius: 28px; padding: 2px; background: conic-gradient(from var(--spin, 0deg), #eeff5a, #4fd1a5, #1f3fd8, #eeff5a); box-shadow: 0 30px 70px rgb(31 63 216 / 0.35); }
+  .pro-wrap { position: relative; border-radius: 28px; padding: 2px; background: conic-gradient(from var(--spin, 0deg), var(--hl), var(--mint), var(--panel), var(--hl)); box-shadow: 0 30px 70px rgb(31 63 216 / 0.35); }
   .price-card.pro { position: relative; border-radius: 26px; padding: 34px; background: linear-gradient(160deg, #2a4ae6 0%, var(--panel) 45%, var(--panel-2) 100%); color: var(--on-panel); border: 0; }
   .price-card.pro:hover { transform: none; box-shadow: none; }
   .pro .lab, .pro .cap { color: var(--on-panel-dim); }

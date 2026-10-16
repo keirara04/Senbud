@@ -34,9 +34,9 @@ export function MobileBar() {
           className="fixed inset-x-3 bottom-3 z-40 flex items-center justify-between gap-3 rounded-2xl bg-panel/95 p-2 pl-4 text-on-panel shadow-[0_18px_40px_-12px_rgb(0_0_0/0.55)] ring-1 ring-panel-line backdrop-blur-md md:hidden"
         >
           <span className="text-sm">
-            <span className="font-semibold">Senbud</span> <span className="text-on-panel-dim">· no bank login, no account</span>
+            <span className="font-semibold">Senbud</span> <span className="text-on-panel-dim">· free, no account</span>
           </span>
-          <a href="#waitlist" className="plausible-event-name=CTA plausible-event-place=mobile-bar hl-sweep inline-flex min-h-11 items-center rounded-xl bg-hl px-4 text-sm font-semibold text-panel">
+          <a href="#waitlist" className="plausible-event-name=CTA plausible-event-place=mobile-bar hl-sweep inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-xl bg-hl px-4 text-sm font-semibold text-panel">
             Join the waitlist
           </a>
         </motion.div>
