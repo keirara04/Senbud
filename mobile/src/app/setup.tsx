@@ -1,16 +1,16 @@
 import { getLocales } from 'expo-localization';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { loadSetup, saveSetup } from '@/db';
-import { Button, Card, Field, Screen, Segmented, T } from '@/ui';
+import { loadProfile, loadSetup, saveSetup } from '@/db';
+import { Button, Card, Field, ListRow, Screen, Segmented, T } from '@/ui';
 
 // "12.50" or "12,50" -> 1250 cents; anything else -> NaN.
 const toCents = (s: string) => Math.round(Number(s.trim().replace(',', '.')) * 100);
 const fromCents = (n: number) => String(n / 100);
 
-type Errors = Partial<Record<'limit' | 'rent' | 'dueDay' | 'currency', string>>;
+type Errors = Partial<Record<'limit' | 'rent' | 'dueDay', string>>;
 
 export default function SetupScreen() {
   const db = useSQLiteContext();
@@ -29,13 +29,18 @@ export default function SetupScreen() {
       setFirstRun(false);
       setKind(s.budget.period.kind);
       setLimit(fromCents(s.budget.cents));
-      setCurrency(s.profile.currency);
       if (s.rent) {
         setRent(fromCents(s.rent.cents));
         setDueDay(String(s.rent.dueDay));
       }
     });
   }, [db]);
+  // The currency comes from its own picker sheet; pick it up when we come back from it.
+  useFocusEffect(
+    useCallback(() => {
+      loadProfile(db).then((p) => p && setCurrency(p.currency));
+    }, [db]),
+  );
 
   async function save() {
     const cents = toCents(limit);
@@ -45,14 +50,13 @@ export default function SetupScreen() {
     if (!(cents > 0)) e.limit = `Enter how much you can spend per ${kind}.`;
     if (!(rentCents >= 0)) e.rent = 'Enter a number, or leave it empty.';
     if (rentCents > 0 && !(Number.isInteger(day) && day >= 1 && day <= 31)) e.dueDay = 'A day from 1 to 31.';
-    if (!/^[A-Za-z]{3}$/.test(currency)) e.currency = 'A 3-letter code, like USD or MYR.';
     setErrors(e);
     if (Object.keys(e).length) return;
     await saveSetup(db, {
       // Weeks start on Monday, months on the 1st, until settings need more.
       budget: { cents, period: kind === 'week' ? { kind, startWeekday: 1 } : { kind, startDay: 1 } },
       rent: rentCents > 0 ? { name: 'Rent', cents: rentCents, dueDay: day } : null,
-      profile: { currency: currency.toUpperCase(), locale: device.languageTag },
+      profile: { currency, locale: device.languageTag },
     });
     // Opened from Home or Settings: go back. First run (Welcome replaced itself with us): nothing behind.
     if (router.canGoBack()) router.back();
@@ -81,14 +85,12 @@ export default function SetupScreen() {
         <Field label="Rent due on day" value={dueDay} onChangeText={setDueDay} keyboardType="number-pad" placeholder="1" error={errors.dueDay} />
       </Card>
 
-      <Card>
-        <Field label="Currency" value={currency} onChangeText={setCurrency} autoCapitalize="characters" maxLength={3} error={errors.currency} />
-        {!firstRun && (
-          <T variant="caption" tone="textDim">
-            Changing it relabels what you’ve saved; amounts aren’t converted.
-          </T>
-        )}
-      </Card>
+      {/* Only on first run: afterwards currency is its own row in Settings. */}
+      {firstRun && (
+        <Card style={{ paddingVertical: 0 }}>
+          <ListRow first label="Currency" value={currency} onPress={() => router.push('/currency')} />
+        </Card>
+      )}
 
       <Button title="Save" onPress={save} />
     </Screen>

@@ -4,6 +4,7 @@ import { Redirect, router, Stack } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { addTransactions, deleteTransactions, listIous, listTreats } from '@/db';
 import { useMoney } from '@/money';
@@ -20,6 +21,7 @@ let nudgeDismissedOn: IsoDate | null = null;
 export default function Home() {
   const db = useSQLiteContext();
   const t = useTheme();
+  const insets = useSafeAreaInsets();
   const { money: m, reload } = useMoney();
   const [nudge, setNudge] = useState<Nudge | null>(null);
   const [text, setText] = useState('');
@@ -88,22 +90,24 @@ export default function Home() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: t.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Stack.Screen
-        options={{
-          headerTitle: '',
-          headerLeft: () => (
-            <T variant="bodyStrong" tone="textDim">
-              {dateLabel}
-            </T>
-          ),
-          headerRight: () => (
-            <Pressable onPress={() => router.push('/settings')} accessibilityRole="button" accessibilityLabel="Settings" hitSlop={12} style={{ padding: space.xs }}>
-              <Icon name={{ ios: 'gearshape', android: 'settings' }} color={t.accent} />
-            </Pressable>
-          ),
-        }}
-      />
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: space.md, gap: space.md }} keyboardShouldPersistTaps="handled">
+      {/* Our own top row, not the system header: iOS 26 wraps header items in glass pills, which made
+          the date look like a button. The date is plain text; Settings is the one button. */}
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={{ paddingTop: insets.top + space.xs, paddingHorizontal: space.md, paddingBottom: space.xs, flexDirection: 'row', alignItems: 'center' }}>
+        <T variant="bodyStrong" tone="textDim" style={{ flex: 1 }} accessibilityRole="header">
+          {dateLabel}
+        </T>
+        <Pressable
+          onPress={() => router.push('/settings')}
+          accessibilityRole="button"
+          accessibilityLabel="Settings"
+          hitSlop={8}
+          style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? t.surfaceSunken : t.surface })}
+        >
+          <Icon name={{ ios: 'gearshape', android: 'settings' }} size={22} color={t.text} />
+        </Pressable>
+      </View>
+      <ScrollView contentContainerStyle={{ padding: space.md, paddingTop: space.xs, gap: space.md }} keyboardShouldPersistTaps="handled">
         <Card tone="panel">
           <T variant="label" tone="onPanelDim">
             Safe to spend today

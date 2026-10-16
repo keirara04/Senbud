@@ -79,10 +79,10 @@ export default function Settings() {
 
   return (
     <Screen>
-      <ListGroup title="Money">
-        <ListRow first label="Currency" value={profile.currency} onPress={() => router.push('/setup')} />
-        <ListRow label="Hourly rate" value={app.hourlyRateCents ? `${fmt(app.hourlyRateCents)}/hr` : 'Not set'} onPress={() => router.push('/rate')} />
-        <ListRow label="Budget and rent" value={setup ? `${fmt(setup.budget.cents)} a ${setup.budget.period.kind}` : undefined} onPress={() => router.push('/setup')} />
+      <ListGroup title="Money" footer="Pay per hour is optional. With it, Can I afford it? shows a price as hours of work, like “4.5 hours”.">
+        <ListRow first label="Budget and rent" value={setup ? `${fmt(setup.budget.cents)} a ${setup.budget.period.kind}` : undefined} onPress={() => router.push('/setup')} />
+        <ListRow label="Currency" value={profile.currency} onPress={() => router.push('/currency')} />
+        <ListRow label="Pay per hour" value={app.hourlyRateCents ? `${fmt(app.hourlyRateCents)} an hour` : 'Add'} onPress={() => router.push('/rate')} />
       </ListGroup>
 
       <ListGroup title="AI" footer="Typing “kopi 4.50” always works, AI or not. Everything is stored on this phone.">
