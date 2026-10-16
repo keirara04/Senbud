@@ -1,4 +1,4 @@
-import { daysBetween, money, type Transaction } from '@senbud/core';
+import { daysBetween, money, type Transaction, withCharges } from '@senbud/core';
 import { motion, space } from '@senbud/core/tokens';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
@@ -85,7 +85,9 @@ export default function ReceiptScreen() {
       const ref = await ImageManipulator.manipulate(picked.assets[0].uri).resize({ width: 1280 }).renderAsync();
       const { base64 } = await ref.saveAsync({ format: SaveFormat.JPEG, compress: 0.7, base64: true });
       if (!base64) throw new Error('Couldn’t prepare that photo. Try another one.');
-      const receipt = await readReceipt(base64, profile.currency, app.deviceId);
+      const read = await readReceipt(base64, profile.currency, app.deviceId);
+      // Service charge and SST become their own line, so the saved amount matches the printed total.
+      const receipt = { ...read, items: withCharges(read.items, read.total) };
       if (!receipt.items.length) return setStep({ kind: 'pick', error: 'No items found. Try a sharper photo of the whole receipt.' });
       setStep({ kind: 'review', receipt, keep: receipt.items.map(() => true) });
     } catch (e) {
