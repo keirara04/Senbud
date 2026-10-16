@@ -9,6 +9,7 @@ import { Logo } from "./Logo";
 // Links point at "/#section" so they also work from the comparison pages.
 const links = [
   { id: "how", label: "How it works" },
+  { id: "meet-bud", label: "Bud" },
   { id: "pricing", label: "Pricing" },
   { id: "faq", label: "FAQ" },
 ];
@@ -78,7 +79,7 @@ export function Nav() {
             ))}
           </ul>
           <Link href="/#waitlist" className="plausible-event-name=CTA plausible-event-place=nav hl-sweep inline-flex min-h-11 items-center rounded-full bg-hl px-4 text-sm font-semibold text-panel">
-            Get early access
+            Join the waitlist
           </Link>
           <button
             type="button"

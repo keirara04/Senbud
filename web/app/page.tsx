@@ -1,24 +1,19 @@
-import { Brain } from "@/components/Brain";
-import { Faq, Pricing, Waitlist } from "@/components/Convert";
-import { Hero } from "@/components/Hero";
-import { HowItWorks } from "@/components/HowItWorks";
+import { Also, Faq, Friends, Hero, Join, MeetBud, Pricing, Privacy, Screens, Ways } from "@/components/Landing";
 import { MotionProvider } from "@/components/MotionProvider";
 import { Nav } from "@/components/Nav";
-import { PlayTeaser } from "@/components/PlayTeaser";
-import { Privacy } from "@/components/Privacy";
-import { Footer, Problem } from "@/components/Sections";
-import { Split, Wrapped } from "@/components/Social";
+import { Footer } from "@/components/Sections";
 
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   name: "Senbud",
   applicationCategory: "FinanceApplication",
-  operatingSystem: "Web",
-  description: "A budgeting app for students that logs spending from receipts or a quick line of text, without a bank login.",
+  operatingSystem: "iOS, Android",
+  description: "A budgeting app for students that tells you what's safe to spend today, from receipts or a quick line of text, without a bank login or an account.",
   offers: [
     { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
     { "@type": "Offer", name: "Pro yearly", price: "39", priceCurrency: "USD", availability: "https://schema.org/PreOrder" },
+    { "@type": "Offer", name: "Pro monthly", price: "4.99", priceCurrency: "USD", availability: "https://schema.org/PreOrder" },
   ],
 };
 
@@ -28,18 +23,17 @@ export default function Home() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Nav />
       <MotionProvider>
-        <main>
+        <main className="lp">
           <Hero />
-          <Problem />
-          <HowItWorks />
-          <Brain />
-          <Split />
-          <Wrapped />
-          <PlayTeaser />
+          <Ways />
+          <Screens />
+          <MeetBud />
+          <Friends />
           <Privacy />
+          <Also />
           <Pricing />
           <Faq />
-          <Waitlist />
+          <Join />
         </main>
       </MotionProvider>
       <Footer />

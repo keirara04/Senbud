@@ -3,9 +3,9 @@ import Script from "next/script";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import "./globals.css";
 
-const title = "Senbud — the money buddy that does the boring part";
+const title = "Senbud — know what’s safe to spend today";
 const description =
-  "Snap a receipt or type “lunch 12, grab 8”. Senbud logs it, counts down to rent, and tells you when you can afford a treat. No bank password needed.";
+  "A budgeting app for students. Snap a receipt or type “lunch 12, uber 8”, and Senbud sets rent aside and tells you what’s safe to spend today. No bank login, no account.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
