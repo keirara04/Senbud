@@ -207,7 +207,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 
 ### 4.3 Budgets
 
-- **Hero:** `panel` with the period label ("October · monthly"), what's left in highlighter, `Progress tone="panel"`, and "RM 498 of RM 1,400 spent. On track, 15 days to go."
+- **Hero:** `panel` with the period label ("October · monthly"), what's left in highlighter, `Progress tone="panel"`, and "RM 498 of RM 1,400 spent. On track, 16 days to go."
 - **By category:**
   - One `List` with a row per category: chip, "RM 248 of 400", and a bar.
   - A words line only when the category is close or over ("RM 24 left for 15 days." / "RM 12 over, no stress. Borrow from Treat?").
@@ -236,8 +236,8 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 
 | Verdict | Title | Highlighter | Caption | Action |
 |---|---|---|---|---|
-| Yes | "Yes! Go for it 🎉" | per day after (RM 18.05) | "a day till the 31st. Rent's still covered." | "I bought it" |
-| Tight | "Doable, but tight." | per day after (RM 6.80) | "a day, down from RM 25.50. Wait till payday on the 25th?" | "I bought it" |
+| Yes | "Yes! Go for it 🎉" | per day after (RM 18.06) | "a day till the 31st. Rent's still covered." | "I bought it" |
+| Tight | "Doable, but tight." | per day after (RM 6.81) | "a day, down from RM 25.56. Wait till payday on the 25th?" | "I bought it" |
 | No | "Not this month 😅" | the date it fits ("1 Nov") | "Rent's in 12 days, and this would eat into it." | "Remind me on 1 Nov" |
 
 - **"No" never turns the panel coral.** The highlighter shows when it fits instead of a shortfall.
@@ -367,7 +367,7 @@ These are additions to `ui.tsx` for the screens above. Each takes colours from `
 | `BarChart` | `data: {category, share}[]` (≤ 6) | Horizontal, sorted, with the % as text on every bar. Fill is the category **ink** on white or a receipt, and the category **tint** on a dark `surface`. |
 | `ReceiptCard` | `children` | White in both schemes with zig-zag torn edges (the web's `.receipt`), via `react-native-svg`. The share image is captured with `react-native-view-shot` and sent to the native share sheet. |
 | `ProLock` | `onPress` | Grey `Other`-style chip with a lock and "Pro" next to a locked option. Opens the paywall. It never hides the option. |
-| `ChatBubble` | `from: 'me' \| 'senbud'` | Yours: `accent` fill, `onAccent` text, right-aligned. Senbud's: `bg` fill, left-aligned. Inline actions are `TextButton`s; confirmations are a `Button` pair under the bubble. |
+| `ChatBubble` | `from: 'me' \| 'senbud'` | Yours: `panel` fill, `onPanel` text, right-aligned (cobalt in both schemes; `accent` would turn every bubble yellow in dark mode). Senbud's: `bg` fill, left-aligned. Inline actions are `TextButton`s; confirmations are a `Button` pair under the bubble. |
 
 **Contrast added by these components** (add to 2.2 when built):
 
@@ -387,7 +387,7 @@ These are additions to `ui.tsx` for the screens above. Each takes colours from `
 1. **Tab bar?** Is the 4-tab bar in 4.1 right, or should the app stay a single stack with links from Home?
 2. **Assistant button on Home?** Is it OK to have no assistant button on Home? The spec says every screen, and the capture bar does the job there.
 3. **Friends hero in highlighter both ways?** Should the Friends hero use highlighter in both directions (4.5), instead of good/bad colour?
-4. **Treats Marker and dark `primary`:** should the Treats Marker be dropped? And should dark `primary` get its own fill so it differs from `highlight`?
+4. **Treats Marker and dark `primary`:** should the Treats Marker be dropped? And should dark `primary` get its own fill? In dark mode `accent` is highlighter, so every `primary` button is yellow: Friends ("Split a bill", "Mark paid") and the assistant's "Yes, split it" show two yellow things on one screen.
 5. **Category limits free or Pro?** Spec 4.2 says they "exist already"; spec 8 makes "multiple budgets" Pro.
 6. **What does a chat question send?** Only the proposed summary, or more? This decides the privacy copy and the store data forms.
 7. **Nudges inside their cards?** Should rent and pace nudges live inside their own cards on Home (4.2)?

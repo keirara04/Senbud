@@ -139,9 +139,9 @@ body {
 .chip { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 2px 8px; font: 600 14px/19px var(--sans); white-space: nowrap; }
 .c-food { background: #ffd6cf; color: #9e2f22; } .c-transport { background: #e1e7fb; color: #1f3fd8; } .c-treat { background: #eeff5a; color: #4a5000; }
 .c-groceries { background: #c4efdd; color: #155a44; } .c-sub { background: #ece6ff; color: #5b3fb8; } .c-other { background: #e6e8f0; color: #3d4256; }
-.chip.big { min-height: 40px; padding: 0 14px; font-size: 15px; }
+.chip.big { min-height: 48px; padding: 0 14px; font-size: 15px; }
 .chip.sel { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
-.pick { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; min-width: 48px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); font: 600 15px/1 var(--sans); color: var(--dim); }
+.pick { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; min-width: 48px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); font: 600 15px/1 var(--sans); color: var(--dim); }
 .pick.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 
 .track { height: 10px; border-radius: 999px; background: var(--sunken); overflow: hidden; }
@@ -186,7 +186,7 @@ body {
 .alert .acts span + span { border-left: .5px solid var(--line); }
 
 .bubble { max-width: 82%; padding: 10px 14px; border-radius: 18px; font-size: 16px; line-height: 22px; }
-.bubble.me { align-self: flex-end; background: var(--accent); color: var(--on-accent); border-bottom-right-radius: 6px; }
+.bubble.me { align-self: flex-end; background: var(--panel); color: var(--on-panel); border-bottom-right-radius: 6px; }
 .bubble.bot { align-self: flex-start; background: var(--bg); border-bottom-left-radius: 6px; }
 
 .receipt { background: var(--receipt); color: var(--receipt-ink); --tooth: 10px;
@@ -319,7 +319,7 @@ body {
           <div class="scroll">
             <div class="card panel">
               <span class="lab">Safe to spend today</span>
-              <span class="hero">RM&nbsp;25.50</span>
+              <span class="hero">RM&nbsp;25.56</span>
               <span class="cap pdim money">RM 409 left for 16 days, after rent and bills</span>
             </div>
             <div class="card"><span>🏠 Rent <span class="money">RM&nbsp;450</span> in 12 days — you’re covered.</span></div>
@@ -385,8 +385,8 @@ body {
           <div class="scroll">
             <div class="card panel">
               <span class="lab">Safe to spend today</span>
-              <span class="hero">RM&nbsp;29.90</span>
-              <span class="cap pdim money">RM 927 left for 31 days, after rent and bills</span>
+              <span class="hero">RM&nbsp;29.26</span>
+              <span class="cap pdim money">RM 907 left for 31 days, after rent and bills</span>
             </div>
             <div class="card"><span>🏠 Rent <span class="money">RM&nbsp;450</span> in 27 days — you’re covered.</span></div>
             <div class="card">
@@ -411,7 +411,7 @@ body {
         <div class="phone">
           <div class="sb"><span>9:41</span><i></i></div>
           <div class="navbar"><span class="lab">Thursday 16 Oct</span></div>
-          <div class="scroll"><div class="card panel"><span class="lab">Safe to spend today</span><span class="hero">RM&nbsp;25.50</span></div></div>
+          <div class="scroll"><div class="card panel"><span class="lab">Safe to spend today</span><span class="hero">RM&nbsp;25.56</span></div></div>
           <div class="scrim"></div>
           <div class="sheet" style="top:96px">
             <div class="grab"></div>
@@ -459,7 +459,7 @@ body {
               <span class="lab">October · monthly</span>
               <span class="hero">RM&nbsp;902</span>
               <div class="track"><i style="width:36%"></i></div>
-              <span class="cap pdim money">RM 498 of RM 1,400 spent. On track, 15 days to go.</span>
+              <span class="cap pdim money">RM 498 of RM 1,400 spent. On track, 16 days to go.</span>
             </div>
             <span class="lab glab">By category</span>
             <div class="list">
@@ -591,7 +591,7 @@ body {
             <div class="card panel">
               <span class="title">Yes! Go for it 🎉</span>
               <span class="lab" style="margin-top:4px">After you buy it</span>
-              <span class="hero">RM&nbsp;18.05</span>
+              <span class="hero">RM&nbsp;18.06</span>
               <span class="cap pdim">a day till the 31st. Rent’s still covered.</span>
               <span style="border-top:1px solid rgba(255,255,255,.2);margin-top:4px;padding-top:10px" class="strong">= 12 hours of work <span class="pdim" style="font-weight:400">at RM 10/hr</span></span>
             </div>
@@ -612,8 +612,8 @@ body {
             <div class="card panel">
               <span class="title">Doable, but tight.</span>
               <span class="lab" style="margin-top:4px">After you buy it</span>
-              <span class="hero">RM&nbsp;6.80</span>
-              <span class="cap pdim">a day, down from RM 25.50. Wait till payday on the 25th?</span>
+              <span class="hero">RM&nbsp;6.81</span>
+              <span class="cap pdim">a day, down from RM 25.56. Wait till payday on the 25th?</span>
               <span style="border-top:1px solid rgba(255,255,255,.2);margin-top:4px;padding-top:10px" class="strong">= 30 hours of work <span class="pdim" style="font-weight:400">at RM 10/hr</span></span>
             </div>
             <div class="btn secondary">I bought it</div>
@@ -655,7 +655,7 @@ body {
             </div>
             <div class="card panel">
               <span class="lab">Safe to spend today</span>
-              <span class="hero">RM&nbsp;25.50</span>
+              <span class="hero">RM&nbsp;25.56</span>
               <span class="cap pdim">Type a price and Senbud checks it against this, rent first.</span>
             </div>
             <div class="card">
@@ -938,7 +938,7 @@ body {
             <span class="title" style="color:var(--on-panel);font-size:40px;line-height:46px">7-Eleven</span>
             <span class="hero" style="font-size:80px;line-height:84px;letter-spacing:-2.4px">31 visits</span>
             <span class="heading" style="color:var(--on-panel)">That’s nearly one a day 😂</span>
-            <span class="pdim">Next up: 62 hours of work, 6 treats and a 9-day streak.</span>
+            <span class="pdim">Next up: 123 hours of work, 6 treats and a 9-day streak.</span>
           </div>
           <div style="padding:0 24px 48px"><div class="btn onpanel"><svg class="ic"><use href="#i-share"/></svg>Share</div></div>
         </div>
@@ -960,7 +960,7 @@ body {
               <div class="rc-row"><span>Top category</span><span class="leader"></span><span>Food</span></div>
               <div class="rc-row"><span>Top place</span><span class="leader"></span><span>7-Eleven ×31</span></div>
               <div class="rc-row"><span>Treats</span><span class="leader"></span><span>6</span></div>
-              <div class="rc-row"><span>Hours of work</span><span class="leader"></span><span>62</span></div>
+              <div class="rc-row"><span>Hours of work</span><span class="leader"></span><span>123</span></div>
               <div class="rc-row"><span>Best streak</span><span class="leader"></span><span>9 days</span></div>
               <div style="flex:1"></div>
               <div style="text-align:center" class="rdim">No bank login. Just vibes.<br>Made with Senbud</div>
@@ -1278,7 +1278,7 @@ body {
       </div>
       <div class="spec">
         <h3><code>ChatBubble</code></h3>
-        <p>Yours: <code>accent</code> fill, <code>onAccent</code> text, right. Senbud’s: <code>bg</code> fill on the sheet, left. Inline actions (Undo, Try again) are <code>TextButton</code>s; confirmations are a pair of <code>Button</code>s under the bubble.</p>
+        <p>Yours: <code>panel</code> fill, <code>onPanel</code> text, right (cobalt in both schemes, so dark mode doesn’t fill the sheet with yellow). Senbud’s: <code>bg</code> fill on the sheet, left. Inline actions (Undo, Try again) are <code>TextButton</code>s; confirmations are a pair of <code>Button</code>s under the bubble.</p>
       </div>
     </div>
   </section>
@@ -1296,7 +1296,7 @@ body {
       <li><b>Tab bar?</b> Four tabs (Home, Budgets, Friends, Treats) with Activity, Can I afford it?, Wrapped and Settings pushed from them. Or keep today’s single stack with links from Home.</li>
       <li><b>No assistant button on Home?</b> The spec puts it on every screen. Here the capture bar does that job on Home, so there aren’t two “type to Senbud” boxes.</li>
       <li><b>Friends hero in highlighter both ways?</b> Section 4 said good/bad colour. Painting “you owe RM 8” coral reads as a telling-off.</li>
-      <li><b>Drop the Marker on Treats?</b> Highlighter number + Marker + Add-to-jar would be three yellow things. Also, Treats is the first screen with both a highlight and a primary button (the leftover sheet), and in dark mode those look identical. Give dark <code>primary</code> its own fill?</li>
+      <li><b>Drop the Marker on Treats?</b> Highlighter number + Marker + Add-to-jar would be three yellow things. Bigger version of the same problem: in dark mode <code>accent</code> is highlighter, so every <code>primary</code> button is yellow. Friends (“Split a bill”, “Mark paid”) and the assistant’s “Yes, split it” end up with two yellow things. Give dark <code>primary</code> its own fill?</li>
       <li><b>Are category limits free or Pro?</b> The spec says they “exist already” but makes “multiple budgets” Pro.</li>
       <li><b>What does a chat question send?</b> The Settings frame proposes “question + short summary, never the full list”. That needs a decision before the privacy copy and store forms are final.</li>
       <li><b>Rent and pace nudges inside their own cards?</b> Then the Home nudge card only carries renewals, old IOUs and treats.</li>
