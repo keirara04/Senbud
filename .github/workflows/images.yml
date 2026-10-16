@@ -9,11 +9,15 @@
 # Repo secrets, one Dokploy deploy webhook per app (app -> Deployments -> Webhook URL):
 #   DOKPLOY_WEBHOOK_API, DOKPLOY_WEBHOOK_WEB, DOKPLOY_WEBHOOK_APP
 # A missing secret skips that deploy; the image is still pushed.
+#
+# Nothing builds or deploys unless the tests pass: API (phpunit), core and web (vitest), and the
+# mobile and web type checks. Pull requests run the tests only.
 name: Build and deploy images
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
     inputs:
       all:
@@ -21,8 +25,9 @@ on:
         type: boolean
         default: true
 
+# One run per branch at a time; deploys from main never overlap.
 concurrency:
-  group: images
+  group: images-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -30,7 +35,41 @@ permissions:
   packages: write
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          coverage: none
+      - name: API tests
+        working-directory: api
+        run: |
+          composer install --no-interaction --no-progress --prefer-dist
+          cp .env.example .env
+          php artisan key:generate
+          php artisan test
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Core and web tests
+        run: |
+          npm test -w packages/core
+          npm test -w web
+      - name: Type checks
+        run: |
+          npx tsc -p mobile --noEmit
+          npx tsc -p web --noEmit
+
   changes:
+    needs: test
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     outputs:
       images: ${{ steps.pick.outputs.images }}
