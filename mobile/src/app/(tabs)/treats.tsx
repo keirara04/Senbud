@@ -8,7 +8,7 @@ import { useCallback, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { TreatJar } from '@/art';
-import { addToJar, addTransactions, addTreat, deleteTreat, type Jar, jarHistory, listTransactions, listTreats, loadJar, setJarGoal, today, type TreatRow } from '@/db';
+import { addToJar, addTreat, deleteTreat, type Jar, jarHistory, listTransactions, listTreats, loadJar, setJarGoal, today, type TreatRow } from '@/db';
 import { useMoney } from '@/money';
 import { Button, Card, Icon, Row, Screen, T, TextButton, useTheme } from '@/ui';
 
@@ -17,7 +17,7 @@ type History = Awaited<ReturnType<typeof jarHistory>>;
 export default function Treats() {
   const db = useSQLiteContext();
   const t = useTheme();
-  const { money: m, reload: reloadMoney } = useMoney();
+  const { money: m } = useMoney();
   const [jar, setJar] = useState<Jar | null>(null);
   const [treats, setTreats] = useState<TreatRow[]>([]);
   const [history, setHistory] = useState<History>([]);
@@ -63,11 +63,11 @@ export default function Treats() {
 
   async function spendGoal() {
     if (!jar?.goalCents || !jar.goalName) return;
+    // Only the jar is debited: its money was set aside in earlier periods, so logging an expense
+    // here would count it against this period's budget a second time.
     await addToJar(db, -jar.goalCents, jar.goalName, day);
-    await addTransactions(db, [{ date: day, cents: jar.goalCents, label: jar.goalName, category: 'Treat', source: 'manual' }]);
     await setJarGoal(db, null, null);
     load();
-    reloadMoney();
   }
 
   async function makeTreat() {
@@ -125,7 +125,7 @@ export default function Treats() {
       {learned && !skipLearned && (
         <Card>
           <T>
-            You’ve had {learned.name} {learned.times} times this month. Make it a treat?
+            You’ve had {learned.name} {learned.times} times in the last 30 days. Make it a treat?
           </T>
           <Row style={{ justifyContent: 'flex-start' }}>
             <Button title="Not now" variant="secondary" onPress={() => setSkipLearned(true)} />

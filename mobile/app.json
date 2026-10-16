@@ -84,7 +84,8 @@
           "microphonePermission": false
         }
       ],
-      "./plugins/with-whatsapp-query"
+      "./plugins/with-whatsapp-query",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,
