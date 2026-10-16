@@ -21,6 +21,17 @@
   --ink-dim: #565b75;
   --line: rgb(26 28 46 / 0.12);
   --dot: rgb(31 63 216 / 0.13);
+
+  /* App tokens for the phone screens drawn on the landing page (packages/core/src/tokens.ts). */
+  --sunken: #e6e8f0;
+  --on-accent: #f4f6ff;
+  --good: #155a44;
+  --good-fill: #4fd1a5;
+  --receipt-dim: #565b75;
+  --bezel: #1a1c2e;
+  --scrim: rgb(11 16 51 / 0.45);
+  --float: 0 8px 24px rgb(11 16 51 / 0.22);
+  --fab-ring: transparent;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -32,6 +43,12 @@
     --line: rgb(255 255 255 / 0.1);
     --dot: rgb(255 255 255 / 0.07);
     --accent-ink: #eeff5a;
+    --sunken: #1c2560;
+    --on-accent: #1a1c2e;
+    --good: #4fd1a5;
+    --bezel: #2a3170;
+    --float: 0 8px 24px rgb(0 0 0 / 0.5);
+    --fab-ring: #c9d2ff;
   }
 }
 
@@ -179,15 +196,13 @@ body {
   box-decoration-break: clone;
   padding-inline: 0.04em;
 }
-.marker-soft { --mk: rgb(255 255 255 / 0.22); }
 @keyframes marker-swipe {
   from { background-size: 0% 100%; }
   to { background-size: 100% 100%; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .marker-load { animation: marker-swipe 0.8s 0.5s cubic-bezier(0.22, 0.68, 0.14, 1) both; }
   @supports (animation-timeline: view()) {
-    .marker:not(.marker-load) {
+    .marker {
       animation: marker-swipe linear both;
       animation-timeline: view();
       animation-range: entry 60% cover 40%;
@@ -209,37 +224,19 @@ body {
 }
 .barcode:hover::after { transform: translateX(1250%); }
 
-/* Waitlist button while sending: a receipt strip prints across the button. */
-@keyframes print-strip {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-}
-.printing-strip {
-  transform-origin: left;
-  animation: print-strip 1.2s steps(12, end) infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .logo-line { animation: none; stroke-dashoffset: 0; }
   .hl-sweep::after, .barcode::after { display: none; }
-  .printing-strip { animation: none; transform: scaleX(1); }
 }
 
-/* Pro pricing card: a highlighter glow travels slowly around the border. */
+/* Pro pricing card (landing.css .pro-wrap): a glow travels slowly around the border. */
 @property --spin {
   syntax: "<angle>";
   initial-value: 0deg;
   inherits: false;
 }
-.glow-border {
-  background: conic-gradient(from var(--spin), var(--hl), transparent 25%, transparent 60%, var(--hl));
-  animation: spin-border 6s linear infinite;
-}
 @keyframes spin-border {
   to { --spin: 360deg; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .glow-border { animation: none; }
 }
 
 /* Backdrops for the cobalt sections: exercise-book grid fading out from one corner. */
@@ -252,33 +249,3 @@ body {
   mask-image: radial-gradient(ellipse 80% 70% at 30% 20%, #000 20%, transparent 75%);
 }
 
-/* Slow drifting glows and floating price tags. The float uses `translate`, so it stacks with the
-   mouse-parallax transform motion sets on the same element. */
-@keyframes drift {
-  50% { translate: 60px 40px; }
-}
-@keyframes float {
-  50% { translate: 0 -12px; }
-}
-.glow-drift { animation: drift 18s ease-in-out infinite; }
-.glow-drift-rev { animation: drift 22s ease-in-out infinite reverse; }
-.float-tag { animation: float 7s ease-in-out infinite; }
-
-@media (prefers-reduced-motion: reduce) {
-  .glow-drift, .glow-drift-rev, .float-tag { animation: none; }
-}
-
-/* Soft colour glows that sit behind key cards on the paper sections. Place inside a relative parent. */
-.paper-glow {
-  position: absolute;
-  z-index: -1;
-  pointer-events: none;
-  border-radius: 9999px;
-  filter: blur(80px);
-  opacity: 0.9;
-}
-.paper-glow.cobalt { background: rgb(31 63 216 / 0.28); }
-.paper-glow.hl { background: rgb(238 255 90 / 0.75); }
-@media (prefers-color-scheme: dark) {
-  .paper-glow { opacity: 0.45; }
-}

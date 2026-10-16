@@ -53,7 +53,7 @@ export default async function AlternativePage({ params }: PageProps<"/alternativ
               href="/#waitlist"
               className="hl-sweep mt-8 inline-flex min-h-11 items-center rounded-full bg-hl px-6 font-semibold text-panel"
             >
-              Get early access to Senbud
+              Join the Senbud waitlist
             </Link>
           </div>
         </section>
