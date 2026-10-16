@@ -142,7 +142,7 @@ export default function Home() {
           error={hint}
         />
         {undo && <UndoBar message={undo.summary} onUndo={undoAdd} />}
-        <TextButton title="📸 Snap a receipt instead" onPress={() => router.push('/receipt')} />
+        <TextButton title="Snap a receipt instead" onPress={() => router.push('/receipt')} />
       </Card>
 
       <Row style={{ justifyContent: 'space-around' }}>

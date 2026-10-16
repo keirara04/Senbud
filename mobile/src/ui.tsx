@@ -122,10 +122,10 @@ export function Button({
 }
 
 // Text link: same tap area as a button, no box.
-export function TextButton({ title, onPress, tone = 'accent' }: { title: string; onPress: () => void; tone?: Tone }) {
+export function TextButton({ title, onPress, tone = 'accent', color }: { title: string; onPress: () => void; tone?: Tone; color?: string }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" hitSlop={12} style={({ pressed }) => [s.textButton, pressed && { opacity: 0.6 }]}>
-      <T variant="bodyStrong" tone={tone}>
+      <T variant="bodyStrong" tone={tone} style={color ? { color } : undefined}>
         {title}
       </T>
     </Pressable>
@@ -231,7 +231,9 @@ export function UndoBar({ message, onUndo }: { message: string; onUndo: () => vo
       <T variant="body" style={{ color: t.bg, flex: 1 }}>
         {message}
       </T>
-      <TextButton title="Undo" onPress={onUndo} tone="highlight" />
+      {/* The bar is ink in light mode and moon in dark: highlighter reads on ink (15:1) but not on
+          moon (1.0:1), so dark mode uses cobalt (6.7:1). */}
+      <TextButton title="Undo" onPress={onUndo} color={useColorScheme() === 'dark' ? palette.cobalt : t.highlight} />
     </Animated.View>
   );
 }
