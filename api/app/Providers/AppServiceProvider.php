@@ -32,13 +32,20 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('waitlist', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
 
-        // Receipt reading costs money per call. Keyed by the app's anonymous device id when it sends
-        // one, else the IP; the daily cap per IP stops one device id being rotated to dodge it.
-        RateLimiter::for('receipt', function (Request $request) {
+        // Model calls cost money. Keyed by the app's anonymous device id when it sends one, else the
+        // IP; the daily cap per IP stops one device id being rotated to dodge it.
+        $who = function (Request $request) {
             $device = $request->header('X-Device-Id');
-            $who = is_string($device) && preg_match('/^[0-9a-f-]{36}$/i', $device) ? 'd:'.$device : 'ip:'.$request->ip();
 
-            return [Limit::perMinute(6)->by($who), Limit::perDay(60)->by($who), Limit::perDay(200)->by('ip:'.$request->ip())];
-        });
+            return is_string($device) && preg_match('/^[0-9a-f-]{36}$/i', $device) ? 'd:'.$device : 'ip:'.$request->ip();
+        };
+        RateLimiter::for('receipt', fn (Request $request) => [
+            Limit::perMinute(6)->by($who($request)), Limit::perDay(60)->by($who($request)), Limit::perDay(200)->by('ip:'.$request->ip()),
+        ]);
+        // Separate keys from receipts (Laravel prefixes them with the limiter name), so asking never
+        // uses up receipt reads.
+        RateLimiter::for('ask', fn (Request $request) => [
+            Limit::perMinute(10)->by($who($request)), Limit::perDay(100)->by($who($request)), Limit::perDay(300)->by('ip:'.$request->ip()),
+        ]);
     }
 }

@@ -178,7 +178,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 | **Wrapped** | One stat per page, full-bleed `panel` | `StoryPager`, `BarChart` on a `ReceiptCard`, share image | Built (`wrapped.tsx`, `share.tsx`), opened from Budgets → Wrapped. Free: total vs budget, top category, kept. Pro: top place, treats, hours of work, best streak. Captions are written from the numbers until the assistant has AI. No year-end edition yet. |
 | **Settings** | none | Grouped `ListRow`s: Money, AI, Look, Your data, Senbud Pro, then `danger` Erase | Built, plus "Restore from a backup" and a pushed "What gets sent" screen |
 | **Senbud Pro paywall** | selected plan as `panel`; the buy button is the one `highlight` | Title, three benefits, plan radio group, buy button, small print with Terms, Privacy, Restore (see 4.8b) | Built (`pro.tsx`) |
-| **Assistant** | – | `BudTab`, the middle of the tab bar, opens the assistant with chat | Built, local only: rules answer (afford, month, split, quick add); free-text questions say AI is coming. A `modal`, not a form sheet: RNScreens' formSheet mis-lays a ScrollView with a pinned input row. |
+| **Assistant** | – | `BudTab`, the middle of the tab bar, opens the assistant with chat | Built: rules answer on the phone (afford, month, split, quick add); free-text questions go to `POST /v1/agent/ask` (Pro, AI on, their own consent slip on first use) with only the "What gets sent" summary. A `modal`, not a form sheet: RNScreens' formSheet mis-lays a ScrollView with a pinned input row. |
 
 **Empty states:**
 - One sentence with a concrete example of what to do: "Type 'lunch 12' on Home to add your first expense."
@@ -521,6 +521,7 @@ Today's Setup asks five things on one page: period, budget, rent, due day and cu
 - **Asks first when unsure:** a "Split this?" slip showing exactly what would be saved ("Badminton court RM 32.00", "You RM 16.00", "Aiman owes you RM 16.00"), then `secondary` "Just mine" / `primary` "Yes, split it".
 - **AI off:** an "AI is off" slip with Bud's oops face: "AI is off, so I can't answer questions. Quick adds still work, like 'kopi 4.50'." with `secondary` "Turn on AI in Settings". The camera button is hidden, and the field's placeholder becomes "kopi 4.50, grab 12".
 - **Offline:** "Can't reach Senbud right now. Anything you add is still saved on your phone." with a "Try again" `TextButton`. Plain text, never red.
+- **Questions in your own words** (built): Senbud Pro only, like receipts; free users get a "Senbud Pro" slip with `secondary` "See plans". The first question prints a "Before your first question" consent slip (separate from the receipt consent, stored as `ask_consent_at`) with "Allow and ask". The app sends only the question, this period's totals, budget and rent, and the period's last 20 expenses; the API validates that shape and drops anything else.
 
 ### 4.10 Proposed components
 

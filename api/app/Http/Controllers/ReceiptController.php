@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Client\ConnectionException;
+use App\Support\OpenRouter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 // Reads a receipt photo with a vision model through OpenRouter and returns the line items.
@@ -32,33 +31,24 @@ class ReceiptController extends Controller
             return response()->json(['message' => 'The image must be a JPEG, PNG or WebP.', 'errors' => ['image' => ['invalid']]], 422);
         }
 
-        $key = config('services.openrouter.key');
-        if (! $key) {
+        if (! OpenRouter::ready()) {
             return response()->json(['error' => 'receipt_reading_unavailable'], 503);
         }
 
         $image = 'data:'.$mime.';base64,'.$data['image'];
         unset($bytes);
 
-        try {
-            $response = Http::withToken($key)
-                ->timeout(45)
-                ->acceptJson()
-                ->post(config('services.openrouter.url'), [
-                    'model' => config('services.openrouter.model'),
-                    'messages' => [[
-                        'role' => 'user',
-                        'content' => [
-                            ['type' => 'text', 'text' => $this->prompt($data['currency'] ?? null)],
-                            ['type' => 'image_url', 'image_url' => ['url' => $image]],
-                        ],
-                    ]],
-                    'response_format' => ['type' => 'json_schema', 'json_schema' => self::schema()],
-                    // No temperature: require_parameters drops any endpoint that doesn't support every
-                    // parameter sent, and the ZDR Gemini Flash endpoints don't list temperature.
-                    'provider' => ['zdr' => true, 'data_collection' => 'deny', 'require_parameters' => true],
-                ]);
-        } catch (ConnectionException) {
+        $response = OpenRouter::chat([
+            'messages' => [[
+                'role' => 'user',
+                'content' => [
+                    ['type' => 'text', 'text' => $this->prompt($data['currency'] ?? null)],
+                    ['type' => 'image_url', 'image_url' => ['url' => $image]],
+                ],
+            ]],
+            'response_format' => ['type' => 'json_schema', 'json_schema' => self::schema()],
+        ], 45);
+        if (! $response) {
             return response()->json(['error' => 'receipt_reading_failed'], 502);
         }
 
