@@ -117,7 +117,7 @@ Dynamic Type and font scaling stay on (React Native's default). Layouts must sur
   - Ease: `cubic-bezier(0.22, 0.68, 0.14, 1)`, the web's highlighter curve.
   - Motion explains a change: Undo sliding in, a number updating. It is never decoration.
   - Reanimated layout animations follow the OS **Reduce Motion** setting, so they just appear.
-- **Elevation:** none. Cards are flat colour on paper, like the web. Use shadows only for things that float over content, such as the assistant button and bottom sheets.
+- **Elevation:** none. Cards are flat colour on paper, like the web. Use shadows only for things that float over content, such as Bud in the tab bar and bottom sheets.
 
 ## 3. Components (`mobile/src/ui.tsx`)
 
@@ -157,7 +157,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 | **Wrapped** | One stat per page, full-bleed `panel` | `StoryPager`, `BarChart` on a `ReceiptCard`, share image | Concept (later phase) |
 | **Settings** | none | Grouped `ListRow`s: Money, AI, Look, Your data, Senbud Pro, then `danger` Erase | Concept |
 | **Senbud Pro paywall** | selected plan as `panel`; the buy button is the one `highlight` | Title, three benefits, plan radio group, buy button, small print with Terms, Privacy, Restore (see 4.8b) | Concept; code in `pro.tsx` on `claude/senbud-pro` |
-| **Assistant** | – | `AssistantFab` (Bud) opens a native form sheet with chat | Concept (Phase 2) |
+| **Assistant** | – | `BudTab`, the middle of the tab bar, opens a native form sheet with chat | Concept (Phase 2) |
 
 **Empty states:**
 - One sentence with a concrete example of what to do: "Type 'lunch 12' on Home to add your first expense."
@@ -176,10 +176,10 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
   - thinking (an answer is loading)
   - oops (offline or AI off)
   - yay (Pro unlocked, a jar goal reached)
-- **Where it shows:** inside `AssistantFab` (38 pt), the assistant sheet header (32 pt), Welcome (about 170 pt) and empty states. It's never in copy, and it never replaces words. Smallest size is 24 pt.
+- **Where it shows:** inside `BudTab` in the middle of the tab bar (38 pt), the assistant sheet header (32 pt), Welcome (about 170 pt) and empty states. It's never in copy, and it never replaces words. Smallest size is 24 pt.
 - **Accessibility:** decorative (`accessibilityElementsHidden` / `importantForAccessibility="no"`). The button keeps its label "Ask Senbud". An idle wobble on the button is off under Reduce Motion.
 - **Same drawing in both themes:** the white body reads on paper, night and cobalt. It's drawn with `react-native-svg`.
-- **Name:** "Bud" is a working name (see 4.11).
+- **Name:** Bud (decided 16 Oct 2026).
 
 ### 4.1b Welcome (first launch)
 
@@ -200,14 +200,17 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 
 ### 4.1 Navigation (all screens)
 
-- **Native tab bar with 4 tabs:** Home, Budgets, Friends, Treats. Expo Router tabs with SF Symbols (`house`, `chart.bar`, `person.2`, `gift`) and Material icons on Android. Tint is `accent`. The OS sets sizes, labels and Dynamic Type.
+- **Tab bar with five slots:** Home, Budgets, **Bud**, Friends, Treats (decided 16 Oct 2026).
+  - The four sides use SF Symbols (`house`, `chart.bar`, `person.2`, `gift`) and Material icons on Android. Tint is `accent`.
+  - Bud (`BudTab`) is raised in the middle and opens the assistant sheet over the current screen; it doesn't switch tabs.
+  - It's built with Expo Router's JS `Tabs` and a custom `tabBarButton` for the centre, because native tabs can't raise a button. That means we own Dynamic Type and safe-area handling for the bar.
 - **Pushed, not tabs:**
   - Activity, from the pace card's "See activity".
   - Can I afford it?, from Home.
   - Wrapped, from the Home nudge on the 1st and from Budgets → Past recaps.
   - Settings, from the button at the top right of Home.
 - **Titles:** tab roots other than Home use large titles. Home has no title; the date label sits in the nav bar and the panel is the first thing you see.
-- **Assistant button:** on every screen except Home (where `CaptureBar` does the job), Can I afford it?, Wrapped, and while a sheet or the keyboard is up. Lists get a 72 pt bottom inset so their last row clears it.
+- **No floating button.** Bud in the tab bar is the assistant on every tab, Home included. Pushed screens keep the tab bar; full-screen modals (Wrapped, paywall, sheets) hide it.
 
 ### 4.2 Home v2
 
@@ -329,7 +332,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
   - Beside the jar: the goal ("Movie night for two, RM 60"), "78% full", and "Change goal".
   - Under it: the total `hero`, a caption in treats ("= 4 Tealives or 2 movies at GSC. RM 13.50 to your goal."), then `highlight` "Add to jar". The screen has one yellow zone.
 - **The jar needs a size, so it gets a goal.**
-  - Fill = jar ÷ goal. This needs a new field, `treatJar.goalCents` (spec 7).
+  - Fill = jar ÷ goal. This needs a new field, `treatJar.goalCents` (spec 7). Approved 16 Oct 2026.
   - **No goal:** an empty jar with "Pick something to fill it for, like a concert." and "Set a goal".
   - **Goal reached:** the jar overflows a little, the side says "Full", the caption says "Goal reached. Movie night for two is covered, with RM 1.90 spare.", and the button becomes "Spend RM 60 on movie night".
   - Adding money animates the fill rising (`motion.slow`). It just updates under Reduce Motion.
@@ -394,7 +397,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 
 ### 4.8b Senbud Pro paywall
 
-- **Opened from:** Settings → "See plans", any `ProLock`, and the camera for free users. A full-screen modal with Close (48 pt) at the top right. There's no tab bar and no assistant button.
+- **Opened from:** Settings → "See plans", any `ProLock`, and the camera for free users. A full-screen modal with Close (48 pt) at the top right. There's no tab bar.
 - **Copy (chosen by the user):**
   - Title (`title`): "Senbud Pro does the typing for you".
   - Three benefit rows, each with a system icon on a `surface` circle, a `bodyStrong` name and a `caption` line:
@@ -420,7 +423,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 
 ### 4.9 Assistant
 
-- **`AssistantFab`:** Bud (4.0) on the cobalt circle, bottom right, 16 pt above the tab bar.
+- **`BudTab`:** Bud (4.0) on a raised cobalt circle in the middle of the tab bar. On Home the capture bar's text field also opens the sheet when you type a question.
 - **Sheet:**
   - Native form sheet at the medium detent; drag up for full height.
   - Bud (32 pt, its face matches the state: thinking while loading, oops when offline or AI is off), title "Ask Senbud", and Close.
@@ -438,7 +441,7 @@ These are additions to `ui.tsx` for the screens above. Each takes colours from `
 
 | Component | Props and variants | States and rules |
 |---|---|---|
-| `Tabs` (native) | Expo Router tabs | SF Symbols / Material icons, `accent` tint, OS sizing. 4 tabs (4.1). |
+| `Tabs` | Expo Router JS tabs | Five slots (4.1): four tabs with SF Symbols / Material icons and `accent` tint, plus `BudTab` in the middle. Labels scale with Dynamic Type. |
 | `NudgeCard` | `message`, `actions` (≤ 2), `onDismiss` | Surface card, "Today" `label`, one sentence, `TextButton`s. One a day at most; core picks it. Not a live region. |
 | `CaptureBar` | `onSnap`, `onSubmit(text)`, `onManual` | Pinned above the tab bar; rises with the keyboard. 48 pt icon buttons labelled "Snap a receipt" and "Add by hand". Amounts → `parseSpending` + `UndoBar`; questions → assistant sheet; camera without Pro → Pro screen. |
 | `Sheet` | Expo Router `presentation: 'formSheet'`, detents medium/large | `surface`, `radius.lg`, grabber, shadow (it floats). No JS sheet library. |
@@ -451,7 +454,7 @@ These are additions to `ui.tsx` for the screens above. Each takes colours from `
 | `TreatJar` | `cents`, `goalCents?` | `react-native-svg` jar on `panel`: `onPanel` outline, highlighter fill with coin outlines and a wavy top, quarter ticks, dashed goal line. It overflows a little past 100%. Decorative; the numbers next to it carry the meaning. |
 | `Bud` | `face: 'happy' \| 'thinking' \| 'oops' \| 'yay'`, `size` | The assistant mascot (4.0). `react-native-svg`, the same drawing in both themes, decorative. |
 | `Avatar` | `name` | 40 pt initials circle on `surfaceSunken`. Never a photo; no contacts access. |
-| `AssistantFab` | `onPress` | 56 pt `panel` circle with `Bud` (38 pt) inside, shadow. Dark mode adds a 1.5 pt `onPanelDim` ring. Label "Ask Senbud". Idle wobble off under Reduce Motion. Hidden where 4.1 says. |
+| `BudTab` | `onPress` | Centre slot of the tab bar: 56 pt `panel` circle raised 22 pt above the bar, `Bud` (38 pt) inside, label "Bud" under it, shadow, 1.5 pt `onPanelDim` ring in dark mode. Opens the assistant sheet (`tabPress` → `preventDefault`), never navigates. Role button, label "Ask Bud". Idle wobble off under Reduce Motion. |
 | `StoryPager` | `pages`, `onClose` | Full-bleed `panel` pages with segment bars. Tap the halves to move, swipe down to close, no autoplay, cuts under Reduce Motion. Each page is one accessibility element read as a sentence. |
 | `StampLedger` | `rows: {category, spentCents, limitCents?}[]` | Budgets by category (4.3). `ReceiptCard`, dotted leaders, 10 stamps per limit in category ink, words for left/close/over, a coral stamp outside the ten when over. Each row is one 48 pt button labelled "Food, RM 248 of 400, RM 152 left". |
 | `BarChart` | `data: {category, share}[]` (≤ 6) | Horizontal, sorted, with the % as text on every bar. Fill is the category **ink** on white or a receipt, and the category **tint** on a dark `surface`. |
@@ -466,7 +469,7 @@ These are additions to `ui.tsx` for the screens above. Each takes colours from `
 | mint on cobalt | 4.0 | `Progress tone="panel"` fill (non-text, needs 3:1) |
 | amber on cobalt | 4.7 | same |
 | coralLight on cobalt | 3.3 | same; plain coral is 2.7 and fails |
-| cobalt FAB on night | 2.4 | fails 3:1, hence the `onPanelDim` ring (12.5:1 on night) |
+| cobalt `BudTab` on night | 2.4 | fails 3:1, hence the `onPanelDim` ring (12.5:1 on night) |
 | category inks on white | 7.3–9.9 | `BarChart` in light mode and on receipts |
 | category inks on night2 | 1.7–2.3 | fail, hence tints in dark mode |
 | category tints on night2 | 12.4–15.0 | `BarChart` fills in dark mode |
@@ -475,17 +478,13 @@ These are additions to `ui.tsx` for the screens above. Each takes colours from `
 ### 4.11 Open questions (need the user's call before building)
 
 1. **Does Senbud get accounts at all?** Today there's no login on purpose (no bank login, no accounts, anonymous Pro). The concepts draw a welcome screen, plus an optional sign-in only for future sync. A real login screen would change the privacy promise and the store data forms.
-2. **Mascot name:** keep "Bud", or something else?
-3. **Jar goal:** OK to add a goal to the treat jar (`goalCents`), so the jar has a size to fill?
-4. **Tab bar?** Is the 4-tab bar in 4.1 right, or should the app stay a single stack with links from Home?
-5. **Assistant button on Home?** Is it OK to have no assistant button on Home? The spec says every screen, and the capture bar does the job there.
-6. **Friends hero in highlighter both ways?** Should the Friends hero use highlighter in both directions (4.5), instead of good/bad colour?
-7. **Treats Marker and dark `primary`:** should the Treats Marker be dropped? And should dark `primary` get its own fill? In dark mode `accent` is highlighter, so every `primary` button is yellow: Friends ("Split a bill", "Mark paid") and the assistant's "Yes, split it" show two yellow things on one screen.
-8. **Category limits free or Pro?** Spec 4.2 says they "exist already"; spec 8 makes "multiple budgets" Pro.
-9. **What does a chat question send?** Only the proposed summary, or more? This decides the privacy copy and the store data forms.
-10. **Nudges inside their cards?** Should rent and pace nudges live inside their own cards on Home (4.2)?
-11. **Share image link:** does the share image get a URL or handle? The domain isn't settled (spec 11).
-12. **Are by-item splits and full Wrapped still Pro?** Spec 8 says yes, and the concepts lock them. The paywall the user chose lists only receipts, the unlimited assistant and subscription reminders.
+2. **Friends hero in highlighter both ways?** Should the Friends hero use highlighter in both directions (4.5), instead of good/bad colour?
+3. **Treats Marker and dark `primary`:** should the Treats Marker be dropped? And should dark `primary` get its own fill? In dark mode `accent` is highlighter, so every `primary` button is yellow: Friends ("Split a bill", "Mark paid") and the assistant's "Yes, split it" show two yellow things on one screen.
+4. **Category limits free or Pro?** Spec 4.2 says they "exist already"; spec 8 makes "multiple budgets" Pro.
+5. **What does a chat question send?** Only the proposed summary, or more? This decides the privacy copy and the store data forms.
+6. **Nudges inside their cards?** Should rent and pace nudges live inside their own cards on Home (4.2)?
+7. **Share image link:** does the share image get a URL or handle? The domain isn't settled (spec 11).
+8. **Are by-item splits and full Wrapped still Pro?** Spec 8 says yes, and the concepts lock them. The paywall the user chose lists only receipts, the unlimited assistant and subscription reminders.
 
 ## 5. Voice
 

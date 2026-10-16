@@ -89,10 +89,13 @@ body {
 .lt { font: 700 34px/41px var(--display); letter-spacing: .3px; margin: 0; padding: 0 16px 8px; flex: none; }
 .scroll { flex: 1; overflow: hidden; padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 16px; position: relative; }
 .scroll.tight { gap: 8px; }
-.tabs { flex: none; height: 83px; display: grid; grid-template-columns: repeat(4, 1fr); padding: 6px 8px 0; border-top: .5px solid var(--line); background: var(--surface); }
+.tabs { flex: none; height: 83px; display: grid; grid-template-columns: repeat(5, 1fr); position: relative; padding: 6px 8px 0; border-top: .5px solid var(--line); background: var(--surface); }
 .tabs a { display: grid; justify-items: center; align-content: start; gap: 2px; font: 500 10px/12px var(--sans); color: var(--dim); text-decoration: none; min-height: 48px; }
 .tabs a.on { color: var(--accent); }
 .tabs .ic { width: 26px; height: 26px; }
+.tabs .budtab { position: relative; color: var(--text); font-weight: 600; }
+.tabs .budtab .fab { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); right: auto; bottom: auto; }
+.tabs .budtab .bl { margin-top: 34px; }
 .home-ind { position: absolute; bottom: 8px; left: 50%; width: 134px; height: 5px; border-radius: 3px; background: var(--text); transform: translateX(-50%); opacity: .9; z-index: 9; }
 
 .ic { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
@@ -321,9 +324,9 @@ body {
         <p class="job">Today the app is a stack with text links. Eight screens need a home base.</p>
       </div>
       <ul class="decide">
-        <li><b>Native tab bar with 4 tabs:</b> Home, Budgets, Friends, Treats. These are the places you return to. Built with Expo Router tabs and SF Symbols, so it's the OS's own bar with its own sizes and Dynamic Type.</li>
+        <li><b>Five-slot tab bar:</b> Home, Budgets, <b>Bud</b>, Friends, Treats. The four sides are places you return to. Bud sits raised in the middle on a 56 pt cobalt circle; tapping it opens the assistant sheet over whatever screen you’re on, it doesn’t switch tabs. Built with Expo Router’s JS tabs and a custom centre button (native tabs can’t raise one), SF Symbols for the other four.</li>
         <li><b>Pushed from a tab, not tabs themselves:</b> Activity (from the pace card), Can I afford it? (from Home), Wrapped (from the Home nudge on the 1st and from Budgets → Past recaps), Settings (button at the top right of Home).</li>
-        <li><b>Assistant:</b> a floating button on every tab except Home. On Home, the quick-capture bar is the way in (see Home).</li>
+        <li><b>No floating button anywhere.</b> Bud in the tab bar is the assistant on every tab, Home included, so nothing covers the last row of a list. Pushed screens keep the tab bar; full-screen modals (Wrapped, paywall, sheets) hide it.</li>
         <li><b>Large titles</b> on tab roots (Budgets, Friends, Treats). Home has no title; the date sits where it would be, and the safe-to-spend panel is the first thing you see.</li>
       </ul>
     </div>
@@ -339,8 +342,8 @@ body {
       </div>
       <ul class="decide">
         <li><b>Made from the brand’s own parts:</b> receipt-white body with torn edges, ink outline, two printed lines for a fringe, coral blush. No highlighter on Bud, so it never competes with a screen’s key number.</li>
-        <li><b>Four faces, each with a job:</b> happy (default, the assistant button), thinking (an answer is loading), oops (offline or AI off) and yay (Pro unlocked, a jar goal reached).</li>
-        <li><b>Where it shows:</b> the assistant button (38 pt inside the 56 pt cobalt circle), the assistant sheet header, the welcome screen, and empty states. Never inside copy, and it doesn’t replace words.</li>
+        <li><b>Four faces, each with a job:</b> happy (default, the tab bar), thinking (an answer is loading), oops (offline or AI off) and yay (Pro unlocked, a jar goal reached).</li>
+        <li><b>Where it shows:</b> the middle of the tab bar (38 pt inside a raised 56 pt cobalt circle), the assistant sheet header, the welcome screen, and empty states. Never inside copy, and it doesn’t replace words.</li>
         <li><b>Decorative for screen readers.</b> The button keeps its label “Ask Senbud”. A small idle wobble on the button turns off with Reduce Motion.</li>
         <li>Same drawing in light and dark: the white body reads on paper, night and cobalt.</li>
       </ul>
@@ -355,7 +358,7 @@ body {
         <span class="stack" style="align-items:center"><svg class="bud" width="72" height="72" aria-hidden="true"><use href="#bud-yay"/></svg><span class="cap dim">Yay</span></span>
       </div></div>
       <div class="bud-tile"><div class="row start" style="gap:24px;justify-content:center;align-items:flex-end">
-        <span class="stack" style="align-items:center"><span class="fab" style="position:static"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span><span class="cap dim">Button, 56 pt</span></span>
+        <span class="stack" style="align-items:center"><span class="fab" style="position:static"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span><span class="cap dim">Tab bar centre, 56 pt</span></span>
         <span class="stack" style="align-items:center"><svg class="bud" width="32" height="32" aria-hidden="true"><use href="#bud"/></svg><span class="cap dim">Sheet, 32 pt</span></span>
         <span class="stack" style="align-items:center"><svg class="bud" width="24" height="24" aria-hidden="true"><use href="#bud"/></svg><span class="cap dim">Smallest, 24 pt</span></span>
       </div></div>
@@ -460,7 +463,7 @@ body {
         <li><b>Hero stays put:</b> the cobalt panel with safe-to-spend in highlighter. Nothing else on Home is yellow.</li>
         <li><b>Today’s nudge</b> (spec 5) is one card under the rent and pace cards. <b>Rent and pace nudges merge into their own card</b> instead of repeating it in a second card, so the separate nudge card only carries priorities 3–5: renewals, old IOUs, treats.</li>
         <li><b>Quick-capture bar is pinned</b> above the tab bar: a camera button, the text field and a pen button for adding by hand. Real build uses SF Symbols (<code>camera</code>, <code>square.and.pencil</code>), with labels for VoiceOver.</li>
-        <li><b>The text field is also the assistant’s door on Home.</b> “kopi 4.50 grab 12” saves straight away with Undo (local parsing, works with AI off). A question (“can I afford…”) opens the assistant sheet with the answer. So Home has no floating button.</li>
+        <li><b>The text field is also the assistant’s door on Home.</b> “kopi 4.50 grab 12” saves straight away with Undo (local parsing, works with AI off). A question (“can I afford…”) opens the assistant sheet with the answer. Bud in the tab bar opens the same sheet empty.</li>
         <li><b>The pen button opens a sheet</b>: amount keypad first, then category chips, with favourites and “repeat last”, as spec 4.1 says.</li>
       </ul>
     </div>
@@ -625,7 +628,6 @@ body {
             </div>
           </div>
           <nav class="tabs" data-on="budgets"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
         </div>
       </figure>
 
@@ -656,7 +658,6 @@ body {
             </div>
           </div>
           <nav class="tabs" data-on="budgets"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
         </div>
       </figure>
 
@@ -682,7 +683,6 @@ body {
             </div>
           </div>
           <nav class="tabs" data-on="budgets"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
         </div>
       </figure>
 
@@ -711,7 +711,6 @@ body {
             </div>
           </div>
           <nav class="tabs" data-on="budgets"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
         </div>
       </figure>
     </div>
@@ -861,7 +860,6 @@ body {
             <span class="tbtn" style="align-self:center;color:var(--dim)">2 settled this month</span>
           </div>
           <nav class="tabs" data-on="friends"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
         </div>
       </figure>
 
@@ -964,7 +962,6 @@ body {
             <span class="cap dim" style="padding:0 16px;text-align:center">Friends are just names. Senbud doesn’t read your contacts.</span>
           </div>
           <nav class="tabs" data-on="friends"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
         </div>
       </figure>
     </div>
@@ -1017,7 +1014,6 @@ body {
             </div>
           </div>
           <nav class="tabs" data-on="treats"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
         </div>
       </figure>
 
@@ -1050,7 +1046,6 @@ body {
             </div>
           </div>
           <nav class="tabs" data-on="treats"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
         </div>
       </figure>
 
@@ -1106,7 +1101,6 @@ body {
             <span class="tbtn" style="align-self:center"><svg class="ic"><use href="#i-plus"/></svg>&nbsp;Add a treat</span>
           </div>
           <nav class="tabs" data-on="treats"></nav>
-          <span class="fab" aria-label="Ask Senbud"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span>
         </div>
       </figure>
     </div>
@@ -1335,7 +1329,7 @@ body {
         <p class="job">Show what Pro does, pick a plan, pay. Nothing pushy.</p>
       </div>
       <ul class="decide">
-        <li><b>Opened from</b> Settings → “See plans”, any <code>ProLock</code> chip, and the camera button for free users. A modal with Close at the top right, no tab bar, no assistant button.</li>
+        <li><b>Opened from</b> Settings → “See plans”, any <code>ProLock</code> chip, and the camera button for free users. A modal with Close at the top right and no tab bar.</li>
         <li><b>Copy is the one you chose:</b> “Senbud Pro does the typing for you”, three benefits (snap receipts, unlimited assistant, subscription reminders), yearly preselected with its monthly price, and small print with Terms, Privacy and Restore. No trial wording, no ratings, no countdowns.</li>
         <li><b>The selected plan is the cobalt panel.</b> Plans are a radio group; tapping the other one moves the panel there. The price on the panel is white, not highlighter, because the <b>one yellow thing is the buy button</b> (<code>highlight</code>), and that stays true in dark mode.</li>
         <li><b>The button says what you pay:</b> “Subscribe for $39 a year”. While the store sheet is up it shows a spinner and “Waiting for the App Store”.</li>
@@ -1440,7 +1434,7 @@ body {
         <p class="job">Ask or add in plain words, from anywhere.</p>
       </div>
       <ul class="decide">
-        <li><b>Floating button:</b> Bud on a 56 pt cobalt circle, bottom right, 16 pt above the tab bar, with a shadow. In dark mode cobalt on night is only 2.4:1, so it gets a 1.5 pt <code>onPanelDim</code> ring (12:1). Hidden on Home (the capture bar does this job), Can I afford it?, Wrapped, and whenever a sheet or keyboard is up.</li>
+        <li><b>Bud in the middle of the tab bar:</b> raised 56 pt cobalt circle with Bud inside, a shadow because it rises above the bar, and a 1.5 pt <code>onPanelDim</code> ring in dark mode (cobalt on night is only 2.4:1). Tap opens the sheet; the label under it is “Bud”, VoiceOver reads “Ask Bud”.</li>
         <li><b>Bottom sheet</b> (<code>radius.lg</code>) at the medium detent, drag up for full height. Native form sheet, so VoiceOver focus and swipe-to-close come for free.</li>
         <li><b>Answers reuse the app’s rules:</b> “can I afford” runs the same verdict as screen 3; quick text saves with Undo inline. Rules decide; the AI only writes the sentence.</li>
         <li><b>Asks first when unsure</b> (splits, odd amounts), as the spec says, with two buttons instead of guessing.</li>
@@ -1608,12 +1602,12 @@ body {
       </div>
       <div class="spec">
         <h3><code>Bud</code></h3>
-        <p>The assistant mascot in four faces (happy, thinking, oops, yay). Decorative, same in both themes, never in copy. Lives in the assistant button, the sheet header, Welcome and empty states.</p>
+        <p>The assistant mascot in four faces (happy, thinking, oops, yay). Decorative, same in both themes, never in copy. Lives in the middle of the tab bar, the sheet header, Welcome and empty states.</p>
         <div class="demo"><div class="row start" style="gap:12px"><svg class="bud" width="40" height="40" aria-hidden="true"><use href="#bud"/></svg><svg class="bud" width="40" height="40" aria-hidden="true"><use href="#bud-think"/></svg><svg class="bud" width="40" height="40" aria-hidden="true"><use href="#bud-oops"/></svg><svg class="bud" width="40" height="40" aria-hidden="true"><use href="#bud-yay"/></svg></div></div>
       </div>
       <div class="spec">
-        <h3><code>AssistantFab</code></h3>
-        <p>56 pt <code>panel</code> circle with Bud inside, <code>float</code> shadow. Dark mode adds a 1.5 pt <code>onPanelDim</code> ring (cobalt on night is 2.4:1, below 3:1). Label “Ask Senbud”. Hidden on Home, Can I afford it?, Wrapped, and with a sheet or keyboard up. Lists get a 72 pt bottom inset so the last row clears it.</p>
+        <h3><code>BudTab</code></h3>
+        <p>The centre slot of the tab bar: a 56 pt <code>panel</code> circle raised 22 pt above the bar with Bud inside, label “Bud” under it, <code>float</code> shadow, dark-mode <code>onPanelDim</code> ring. It opens the assistant sheet instead of switching tabs (<code>tabPress</code> → <code>preventDefault</code>). Role button, label “Ask Bud”. Idle wobble off under Reduce Motion.</p>
       </div>
       <div class="spec">
         <h3><code>StoryPager</code></h3>
@@ -1656,10 +1650,6 @@ body {
     </div>
     <ol class="qs">
       <li><b>Does Senbud get accounts at all?</b> There’s no login today on purpose (no bank login, no accounts, anonymous Pro). These frames draw a welcome screen and an optional sign-in only for future sync. A real login would change the privacy promise.</li>
-      <li><b>Mascot name.</b> Keep “Bud”, or something else?</li>
-      <li><b>Jar goal.</b> OK to give the treat jar a goal, so it has a size to fill?</li>
-      <li><b>Tab bar?</b> Four tabs (Home, Budgets, Friends, Treats) with Activity, Can I afford it?, Wrapped and Settings pushed from them. Or keep today’s single stack with links from Home.</li>
-      <li><b>No assistant button on Home?</b> The spec puts it on every screen. Here the capture bar does that job on Home, so there aren’t two “type to Senbud” boxes.</li>
       <li><b>Friends hero in highlighter both ways?</b> Section 4 said good/bad colour. Painting “you owe RM 8” coral reads as a telling-off.</li>
       <li><b>Drop the Marker on Treats?</b> Highlighter number + Marker + Add-to-jar would be three yellow things. Bigger version of the same problem: in dark mode <code>accent</code> is highlighter, so every <code>primary</code> button is yellow. Friends (“Split a bill”, “Mark paid”) and the assistant’s “Yes, split it” end up with two yellow things. Give dark <code>primary</code> its own fill?</li>
       <li><b>Are category limits free or Pro?</b> The spec says they “exist already” but makes “multiple budgets” Pro.</li>
@@ -1674,9 +1664,11 @@ body {
 
 <script>
 // Tab bars are identical in every frame, so they're filled in here.
-const TABS = [['home', 'Home', 'i-home'], ['budgets', 'Budgets', 'i-budgets'], ['friends', 'Friends', 'i-friends'], ['treats', 'Treats', 'i-jar']];
+const TABS = [['home', 'Home', 'i-home'], ['budgets', 'Budgets', 'i-budgets'], ['bud', 'Bud', ''], ['friends', 'Friends', 'i-friends'], ['treats', 'Treats', 'i-jar']];
 document.querySelectorAll('.tabs[data-on]').forEach((n) => {
-  n.innerHTML = TABS.map(([k, label, ic]) => `<a class="${k === n.dataset.on ? 'on' : ''}"><svg class="ic"><use href="#${ic}"/></svg>${label}</a>`).join('');
+  n.innerHTML = TABS.map(([k, label, ic]) => k === 'bud'
+    ? `<a class="budtab" aria-label="Ask Bud"><span class="fab"><svg class="bud" width="38" height="38" aria-hidden="true"><use href="#bud"/></svg></span><span class="bl">${label}</span></a>`
+    : `<a class="${k === n.dataset.on ? 'on' : ''}"><svg class="ic"><use href="#${ic}"/></svg>${label}</a>`).join('');
   n.insertAdjacentHTML('afterend', '<span class="home-ind"></span>');
 });
 document.querySelectorAll('.phone').forEach((p) => { if (!p.querySelector('.home-ind')) p.insertAdjacentHTML('beforeend', '<span class="home-ind"></span>'); });
