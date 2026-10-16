@@ -206,9 +206,9 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
   6. `TextButton` "I've used Senbud before".
 - **"I've used Senbud before"** opens a native form sheet. In the build today it expands a card below the fold, so the tap looks like it does nothing. The sheet says "There's no account to log in to. Bring your things back here:", then lists "Restore from a backup" (Files or Google Drive) and "Restore Senbud Pro" (Apple or Google account), a note about Settings → Back up everything, and "Not now".
 - **Motion** (once, and off under Reduce Motion):
-  - Bud pops in (450 ms).
-  - The receipt prints downward in 8 steps (900 ms).
-  - The sample number counts up (800 ms).
+  - Bud pops in (450 ms), then buzzes lightly while the receipt feeds out from under it like a thermal printer.
+  - The feed is three pushes with short pauses (1.3 s); then the paper swings and settles at a slight tilt.
+  - The sample number counts up once the paper stops (from 1.6 s, 800 ms).
   - The text rises in reading order, 100 ms apart.
   - Nothing loops. Bud doesn't bob or blink during onboarding, so 2.5 holds.
 - **Sign in (later, Pro, for encrypted sync only):**
@@ -238,8 +238,7 @@ Today's Setup asks five things on one page: period, budget, rent, due day and cu
     - A `DayStrip` of 48 pt day circles, centred near the likely day.
     - A note: "Bills like your phone plan can go in later, in Budgets."
 - **"You're set":**
-  - Bud's yay face hops once.
-  - A receipt prints line by line: budget this month, rent on the 28th (−RM 450), days left (16).
+  - Bud (yay face) prints a receipt out of its bottom edge, like a thermal printer: budget this month, rent on the 28th (−RM 450), days left (16).
   - Then "Safe to spend today" counts up to the number in highlighter: RM 59.37, or RM 87.50 with no rent.
   - The number uses the same floor-to-the-sen maths as `safeToSpend`. Rent that falls due after this period shows "next month" and isn't subtracted.
   - "Go to Home". Hourly rate and bills wait for Settings or Home cards.
@@ -254,7 +253,7 @@ Today's Setup asks five things on one page: period, budget, rent, due day and cu
   - Steps slide 24 pt with a fade (250 ms) and the progress segment fills.
   - Chip and key taps tick the amount 4 pt (150 ms), with a light haptic.
   - The rent fields expand with a layout spring.
-  - Receipt lines print 120 ms apart and the total counts up in 800 ms.
+  - On "You're set", Bud feeds your receipt out the same way as on Welcome; the total counts up once the paper stops, then Bud hops once.
   - Reduce Motion turns all of these into cuts and final values.
 - **Open questions:**
   - Should there be zero onboarding questions (ask on Home instead)? This concept keeps two, because Home without a number misses the point.

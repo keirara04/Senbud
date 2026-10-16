@@ -301,7 +301,8 @@ button { font: inherit; color: inherit; }
 .w-mk { background: var(--hl); color: #1a1c2e; border-radius: 6px; padding: 0 5px; margin-left: 1px; }
 .w-hero { display: grid; justify-items: center; margin-top: 18px; }
 .w-bud { position: relative; z-index: 2; filter: drop-shadow(0 10px 18px rgba(11,16,51,.25)); }
-.w-slip { --tooth: 8px; width: 250px; margin-top: -14px; padding: 18px 16px 18px; display: grid; gap: 4px; font-size: 13px; transform: rotate(-2deg); box-shadow: 0 18px 40px rgba(11,16,51,.18); }
+.feed { position: relative; z-index: 1; margin-top: -6px; clip-path: inset(0 -60px -80px -60px); }
+.w-slip { transform-origin: 50% 0;  --tooth: 8px; width: 250px; margin-top: 0; padding: 18px 16px 18px; display: grid; gap: 4px; font-size: 13px; transform: rotate(-1.5deg); box-shadow: 0 18px 40px rgba(11,16,51,.18); }
 .w-num { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 2px; }
 .w-num span { color: #565b75; font-size: 12px; }
 .w-num b { font: 800 22px/1 var(--display); letter-spacing: -.4px; }
@@ -348,7 +349,10 @@ button { font: inherit; color: inherit; }
 
 /* ready */
 .ready { gap: 12px; }
-.r-top { display: grid; justify-items: center; gap: 4px; margin-top: 12px; }
+.r-title { text-align: center; margin-top: 18px; }
+.r-top { display: grid; justify-items: center; position: relative; z-index: 2; }
+.ready .feed { margin-top: -10px; }
+.r-slip { transform-origin: 50% 0; transform: rotate(1deg); box-shadow: 0 18px 40px rgba(11,16,51,.18); }
 .r-slip { --tooth: 9px; padding: 20px 18px 22px; display: grid; gap: 6px; font-size: 14px; }
 .r-big { display: grid; justify-items: center; gap: 4px; margin-top: 4px; }
 .r-big span { font-size: 12px; color: #565b75; text-transform: uppercase; letter-spacing: 1px; }
@@ -377,7 +381,9 @@ button { font: inherit; color: inherit; }
 
 /* motion: every animation below is off under Reduce Motion */
 @keyframes pop { 0% { transform: scale(.7); opacity: 0; } 60% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); } }
-@keyframes printdown { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 -20px 0); } }
+/* Thermal printer feed: the paper advances in three pushes with short pauses, then swings and settles. */
+@keyframes feed { 0% { transform: translateY(-100%) rotate(0); } 28% { transform: translateY(-62%) rotate(0); } 36% { transform: translateY(-62%) rotate(0); } 62% { transform: translateY(-26%) rotate(0); } 70% { transform: translateY(-26%) rotate(0); } 88% { transform: translateY(0) rotate(0); } 94% { transform: translateY(0) rotate(var(--tilt, -1.5deg)) scale(1.01); } 100% { transform: translateY(0) rotate(var(--tilt, -1.5deg)); } }
+@keyframes buzz { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-1.5px); } 75% { transform: translateX(1.5px); } }
 @keyframes riseup { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes slideR { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes slideL { from { transform: translateX(-24px); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -385,18 +391,14 @@ button { font: inherit; color: inherit; }
 @keyframes hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-14px) rotate(-4deg); } 70% { transform: translateY(0) rotate(2deg); } }
 @keyframes linein { from { clip-path: inset(0 0 100% 0); opacity: .2; } to { clip-path: inset(0 0 -10px 0); opacity: 1; } }
 @media (prefers-reduced-motion: no-preference) {
-  .welcome .w-bud { animation: pop .45s var(--ease) both; }
-  .welcome .w-slip { animation: printdown .9s steps(8, end) .35s both; }
+  .welcome .w-slip { --tilt: -1.5deg; animation: feed 1.3s var(--ease) .45s both; }
+  .welcome .printer { animation: pop .45s var(--ease) both, buzz .09s linear .45s 9; }
   .welcome .anim-rise { animation: riseup .35s var(--ease) var(--d, 0s) both; }
   .proto .ob.enter-r { animation: slideR .25s var(--ease) both; }
   .proto .ob.enter-l { animation: slideL .25s var(--ease) both; }
   .amt-n.tick, [data-rent-out].tick { display: inline-block; animation: tick .15s var(--ease); }
-  .ready .r-bud { animation: hop .4s var(--ease) .2s both; }
-  .ready .r1 { animation: linein .2s steps(3, end) .35s both; }
-  .ready .r2 { animation: linein .2s steps(3, end) .47s both; }
-  .ready .r3 { animation: linein .2s steps(3, end) .59s both; }
-  .ready .r4 { animation: linein .2s steps(3, end) .71s both; }
-  .ready .r5 { animation: linein .3s steps(4, end) .83s both; }
+  .ready .r-slip { --tilt: 1deg; animation: feed 1.3s var(--ease) .3s both; }
+  .ready .printer { animation: buzz .09s linear .3s 9, hop .4s var(--ease) 1.7s both; }
 }
 
 </style>
@@ -444,7 +446,7 @@ button { font: inherit; color: inherit; }
     <ul class="rules">
       <li><b>One question per screen</b>Budget, then rent. Nothing else is asked before Home.</li>
       <li><b>Defaults over fields</b>Currency from the phone, month as the period, common amounts as one-tap chips.</li>
-      <li><b>Show the payoff</b>Welcome shows a sample of the number; the last screen prints yours.</li>
+      <li><b>Show the payoff</b>Bud prints a sample of the number on Welcome and prints yours at the end, like a receipt printer.</li>
       <li><b>Motion explains</b>Printing means Bud is working things out; sliding means you moved on. Nothing loops.</li>
     </ul>
   </section>
@@ -480,11 +482,11 @@ button { font: inherit; color: inherit; }
         <li>The keypad is the app’s own, so the system keyboard never covers Next.</li>
       </ul>
     </div>
-    <div class="shots"><figure class="shot"><figcaption><b>Welcome.</b> Bud prints a sample of the one number you’ll get. Three promises, one button.</figcaption><div class="phone ob-phone"><div class="sb"><span>9:41</span><i></i></div><section class="ob welcome" data-s="welcome">
+    <div class="shots"><figure class="shot"><figcaption><b>Welcome.</b> Bud feeds out a sample receipt with the one number you’ll get. Three promises, one button.</figcaption><div class="phone ob-phone"><div class="sb"><span>9:41</span><i></i></div><section class="ob welcome" data-s="welcome">
   <div class="w-brand"><span class="w-word">Sen<span class="w-mk">bud</span></span></div>
   <div class="w-hero">
-    <svg class="bud w-bud" width="128" height="128" aria-hidden="true"><use href="#bud"/></svg>
-    <div class="receipt w-slip mono"><div class="slip-h">For example · today</div><div class="rc-row "><span>Rent on the 28th</span><span class="leader"></span><span>covered</span></div><div class="slip-rule"></div><div class="w-num"><span>Safe to spend</span><b class="mk" data-count="59.37">RM 59.37</b></div></div>
+    <svg class="bud w-bud printer" width="128" height="128" aria-hidden="true"><use href="#bud"/></svg>
+    <div class="feed"><div class="receipt w-slip mono"><div class="slip-h">For example · today</div><div class="rc-row "><span>Rent on the 28th</span><span class="leader"></span><span>covered</span></div><div class="slip-rule"></div><div class="w-num"><span>Safe to spend</span><b class="mk" data-count="59.37">RM 59.37</b></div></div></div>
   </div>
   <h2 class="w-title anim-rise" style="--d:.55s">Your money buddy.</h2>
   <p class="w-sub anim-rise" style="--d:.65s">Know what’s safe to spend today. No bank login, ever.</p>
@@ -493,8 +495,8 @@ button { font: inherit; color: inherit; }
 </section></div></figure><figure class="shot"><figcaption><b>Welcome back.</b> A real sheet that slides up over Welcome, so nothing opens off-screen.</figcaption><div class="phone ob-phone"><div class="sb"><span>9:41</span><i></i></div><section class="ob welcome" data-s="welcome">
   <div class="w-brand"><span class="w-word">Sen<span class="w-mk">bud</span></span></div>
   <div class="w-hero">
-    <svg class="bud w-bud" width="128" height="128" aria-hidden="true"><use href="#bud"/></svg>
-    <div class="receipt w-slip mono"><div class="slip-h">For example · today</div><div class="rc-row "><span>Rent on the 28th</span><span class="leader"></span><span>covered</span></div><div class="slip-rule"></div><div class="w-num"><span>Safe to spend</span><b class="mk" data-count="59.37">RM 59.37</b></div></div>
+    <svg class="bud w-bud printer" width="128" height="128" aria-hidden="true"><use href="#bud"/></svg>
+    <div class="feed"><div class="receipt w-slip mono"><div class="slip-h">For example · today</div><div class="rc-row "><span>Rent on the 28th</span><span class="leader"></span><span>covered</span></div><div class="slip-rule"></div><div class="w-num"><span>Safe to spend</span><b class="mk" data-count="59.37">RM 59.37</b></div></div></div>
   </div>
   <h2 class="w-title anim-rise" style="--d:.55s">Your money buddy.</h2>
   <p class="w-sub anim-rise" style="--d:.65s">Know what’s safe to spend today. No bank login, ever.</p>
@@ -535,9 +537,10 @@ button { font: inherit; color: inherit; }
     <div style="flex:1"></div>
     <button type="button" class="btn primary" data-go="ready">Next</button>
   </div>
-</section></div></figure><figure class="shot"><figcaption><b>You’re set.</b> The receipt prints the sum line by line and lands on today’s number.</figcaption><div class="phone ob-phone"><div class="sb"><span>9:41</span><i></i></div><section class="ob ready" data-s="ready">
-  <div class="r-top"><svg class="bud r-bud" width="96" height="96" aria-hidden="true"><use href="#bud-yay"/></svg><h2 class="ob-title" style="text-align:center">You’re set.</h2></div>
-  <div class="receipt r-slip mono">
+</section></div></figure><figure class="shot"><figcaption><b>You’re set.</b> Bud feeds your receipt out like a thermal printer, then the total counts up to today’s number.</figcaption><div class="phone ob-phone"><div class="sb"><span>9:41</span><i></i></div><section class="ob ready" data-s="ready">
+  <h2 class="ob-title r-title">You’re set.</h2>
+  <div class="r-top"><svg class="bud r-bud printer" width="92" height="92" aria-hidden="true"><use href="#bud-yay"/></svg></div>
+  <div class="feed"><div class="receipt r-slip mono">
     <div class="slip-h" style="text-align:center">Senbud · Thursday 16 Oct</div>
     <div class="slip-rule"></div>
     <div class="rc-row r1"><span>Budget this month</span><span class="leader"></span><span><span data-r-budget>RM 1,400.00</span></span></div>
@@ -545,7 +548,7 @@ button { font: inherit; color: inherit; }
     <div class="rc-row r3"><span>Days left</span><span class="leader"></span><span>16</span></div>
     <div class="slip-rule r4"></div>
     <div class="r-big r5"><span>Safe to spend today</span><b class="mk money" data-r-safe>RM 59.37</b></div>
-  </div>
+  </div></div>
   <p class="cap dim r-cap" style="text-align:center">That’s your number. It updates every time you add something.</p>
   <div style="flex:1"></div>
   <button type="button" class="btn primary" data-go="home">Go to Home</button>
@@ -571,8 +574,8 @@ button { font: inherit; color: inherit; }
   <section class="ob welcome" data-s="welcome">
   <div class="w-brand"><span class="w-word">Sen<span class="w-mk">bud</span></span></div>
   <div class="w-hero">
-    <svg class="bud w-bud" width="128" height="128" aria-hidden="true"><use href="#bud"/></svg>
-    <div class="receipt w-slip mono"><div class="slip-h">For example · today</div><div class="rc-row "><span>Rent on the 28th</span><span class="leader"></span><span>covered</span></div><div class="slip-rule"></div><div class="w-num"><span>Safe to spend</span><b class="mk" data-count="59.37">RM 59.37</b></div></div>
+    <svg class="bud w-bud printer" width="128" height="128" aria-hidden="true"><use href="#bud"/></svg>
+    <div class="feed"><div class="receipt w-slip mono"><div class="slip-h">For example · today</div><div class="rc-row "><span>Rent on the 28th</span><span class="leader"></span><span>covered</span></div><div class="slip-rule"></div><div class="w-num"><span>Safe to spend</span><b class="mk" data-count="59.37">RM 59.37</b></div></div></div>
   </div>
   <h2 class="w-title anim-rise" style="--d:.55s">Your money buddy.</h2>
   <p class="w-sub anim-rise" style="--d:.65s">Know what’s safe to spend today. No bank login, ever.</p>
@@ -603,8 +606,9 @@ button { font: inherit; color: inherit; }
     <button type="button" class="btn primary" data-go="ready">Next</button>
   </div>
 </section><section class="ob ready" data-s="ready">
-  <div class="r-top"><svg class="bud r-bud" width="96" height="96" aria-hidden="true"><use href="#bud-yay"/></svg><h2 class="ob-title" style="text-align:center">You’re set.</h2></div>
-  <div class="receipt r-slip mono">
+  <h2 class="ob-title r-title">You’re set.</h2>
+  <div class="r-top"><svg class="bud r-bud printer" width="92" height="92" aria-hidden="true"><use href="#bud-yay"/></svg></div>
+  <div class="feed"><div class="receipt r-slip mono">
     <div class="slip-h" style="text-align:center">Senbud · Thursday 16 Oct</div>
     <div class="slip-rule"></div>
     <div class="rc-row r1"><span>Budget this month</span><span class="leader"></span><span><span data-r-budget>RM 1,400.00</span></span></div>
@@ -612,7 +616,7 @@ button { font: inherit; color: inherit; }
     <div class="rc-row r3"><span>Days left</span><span class="leader"></span><span>16</span></div>
     <div class="slip-rule r4"></div>
     <div class="r-big r5"><span>Safe to spend today</span><b class="mk money" data-r-safe>RM 59.37</b></div>
-  </div>
+  </div></div>
   <p class="cap dim r-cap" style="text-align:center">That’s your number. It updates every time you add something.</p>
   <div style="flex:1"></div>
   <button type="button" class="btn primary" data-go="home">Go to Home</button>
@@ -645,14 +649,14 @@ button { font: inherit; color: inherit; }
     <div class="tbl-wrap"><table class="mtable">
       <thead><tr><th>Moment</th><th>What moves</th><th>Timing</th><th>Why</th><th>Reanimated</th><th>Reduce Motion</th></tr></thead>
       <tbody>
-        <tr><td>Welcome opens</td><td>Bud pops in (scale 0.7 → 1), then the sample receipt prints downward</td><td>450 ms, then 900 ms in 8 steps</td><td>Bud produces the number; the receipt is the product</td><td><code>ZoomIn.springify()</code>, clip height with <code>withTiming</code></td><td>Both just appear</td></tr>
+        <tr><td>Welcome opens</td><td>Bud pops in, then buzzes lightly while the receipt feeds out from under it like a thermal printer: three pushes with short pauses, then the paper swings and settles at a slight tilt</td><td>Pop 450 ms; feed 1.3 s (pushes at 0–28%, 36–62%, 70–88%), settle 12%</td><td>Bud is the printer and the receipt is its answer, so the paper comes out of Bud instead of appearing in place</td><td><code>ZoomIn.springify()</code>; the receipt in a top-clipped view, <code>translateY</code> with <code>withSequence</code> of three <code>withTiming</code> pushes and <code>withDelay</code> pauses, then <code>withSpring</code> on rotation</td><td>Bud and the receipt just appear, already tilted</td></tr>
         <tr><td>Welcome text</td><td>Headline, line, pills and buttons rise 12 pt and fade in, 100 ms apart</td><td>350 ms each</td><td>Reading order matches what appears</td><td><code>FadeInDown.delay(n)</code></td><td>All visible at once</td></tr>
-        <tr><td>Sample number</td><td>Counts up from RM 0 to RM 59.37</td><td>800 ms, ease-out</td><td>Shows it’s a live number, not a label</td><td><code>useDerivedValue</code> + <code>withTiming</code></td><td>Final value only</td></tr>
+        <tr><td>Sample number</td><td>Counts up from RM 0 to RM 59.37 once the paper has stopped</td><td>Starts at 1.6 s, 800 ms, ease-out</td><td>Shows it’s a live number, not a label</td><td><code>useDerivedValue</code> + <code>withTiming</code></td><td>Final value only</td></tr>
         <tr><td>Welcome back</td><td>Sheet slides up, scrim fades</td><td>Native sheet</td><td>Standard sheet; nothing custom</td><td>Expo Router <code>formSheet</code></td><td>OS handles it</td></tr>
         <tr><td>Next / Back</td><td>Screens slide 24 pt and fade; the progress segment fills</td><td>250 ms</td><td>You moved forward or back</td><td><code>SlideInRight</code> / <code>SlideInLeft</code>, width <code>withTiming</code></td><td>Cut; segment fills instantly</td></tr>
         <tr><td>Chip or key tap</td><td>Amount ticks up 4 pt and settles</td><td>150 ms</td><td>Confirms the number changed</td><td><code>withSequence</code> on <code>translateY</code></td><td>No movement</td></tr>
         <tr><td>Rent Yes / No</td><td>The amount and date fields expand or collapse</td><td>250 ms</td><td>Fields appear because you said yes</td><td><code>Layout.springify()</code> on the group</td><td>Instant</td></tr>
-        <tr><td>You’re set</td><td>Bud hops once; receipt lines print one by one; the total counts up</td><td>Hop 400 ms; lines 120 ms apart; count 800 ms</td><td>Bud does the maths in front of you</td><td><code>FadeIn.delay</code> per line, <code>withTiming</code> count</td><td>Full receipt, final number</td></tr>
+        <tr><td>You’re set</td><td>Bud buzzes and feeds your receipt out the same way, the total counts up, then Bud hops once</td><td>Feed 1.3 s; count from 1.5 s, 800 ms; hop at 1.7 s, 400 ms</td><td>Same printer gesture, now with your own numbers</td><td>Same feed sequence as Welcome, <code>withTiming</code> count</td><td>Full receipt, final number</td></tr>
         <tr><td>Haptics</td><td>Light tick on chips and keys; success tap on You’re set</td><td>On press</td><td>Physical confirmation</td><td><code>expo-haptics</code></td><td>Kept (not motion)</td></tr>
       </tbody>
     </table></div>
@@ -730,7 +734,7 @@ try { const saved = localStorage.getItem('senbud-concepts-theme'); if (saved) se
   const tick = (el) => { el.classList.remove('tick'); void el.offsetWidth; el.classList.add('tick'); };
   function count(el, end, ms = 800) {
     if (reduce) { el.textContent = fmt(end, 2); return; }
-    const t0 = performance.now() + 250;
+    const t0 = performance.now() + (el.dataset.delay ? +el.dataset.delay : 250);
     const f = (t) => { const k = Math.min(1, Math.max(0, (t - t0) / ms)); el.textContent = fmt(end * (1 - Math.pow(1 - k, 3)), 2); if (k < 1) requestAnimationFrame(f); };
     requestAnimationFrame(f);
   }
@@ -760,14 +764,14 @@ try { const saved = localStorage.getItem('senbud-concepts-theme'); if (saved) se
     $('.r1 span:first-child').textContent = 'Budget this ' + s.per;
     $('.r3 span:last-child').textContent = days;
     const safe = Math.max(0, Math.floor(((budget() - (inPeriod ? s.rent : 0)) * 100) / days) / 100);
-    count($('[data-r-safe]'), safe);
+    const n = $('[data-r-safe]'); n.dataset.delay = 1500; count(n, safe);
   }
   function show(step) {
     const dir = ORDER.indexOf(step) >= ORDER.indexOf(s.step) ? 'enter-r' : 'enter-l';
     s.step = step; P.dataset.step = step;
     $$('.ob').forEach((el) => { el.classList.remove('active', 'enter-r', 'enter-l'); });
     const el = $(`.ob[data-s="${step}"]`); void el.offsetWidth; el.classList.add('active', dir);
-    if (step === 'welcome') count($('[data-count]'), 59.37);
+    if (step === 'welcome') { const n = $('[data-count]'); n.dataset.delay = 1600; count(n, 59.37); }
     if (step === 'budget') renderBudget();
     if (step === 'rent') renderRent();
     if (step === 'ready') renderReady();
