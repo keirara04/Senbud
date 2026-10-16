@@ -1,21 +1,24 @@
-// Bud, the assistant (design system 4.9). Local for now: rules in core (readIntent) decide every answer
-// and Bud prints it as a receipt slip. Questions in your own words wait for the AI step.
+// Bud, the assistant (design system 4.9). Rules in core (readIntent) answer on the phone; only a question
+// in your own words goes to the API, with the summary "What gets sent" promises. Bud prints every answer
+// as a receipt slip.
 import { addDays, afford, daysBetween, hoursOfWork, readIntent, spentIn, type Transaction } from '@senbud/core';
 import { palette, radius, space, touch } from '@senbud/core/tokens';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { type ComponentRef, type ReactNode, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { Bud, type BudFace, ReceiptCard } from '@/art';
-import { type AppState, addTransactions, deleteTransactions, loadApp } from '@/db';
+import { askBud, type AskSummary } from '@/api';
+import { type AppState, addTransactions, deleteTransactions, giveAskConsent, loadApp } from '@/db';
 import { useMoney } from '@/money';
 import { Button, CATEGORIES, Icon, Marker, T, TextButton, useTheme } from '@/ui';
 
 const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
 
 type Line = [label: string, value: string];
-type Slip = { face: BudFace; title: string; lines?: Line[]; total?: Line; note?: string; actions?: ReactNode };
+type Slip = { face: BudFace; title: string; lines?: Line[]; total?: Line; note?: string; actions?: ReactNode; printing?: boolean };
 type Msg = { id: number; me: string } | { id: number; slip: Slip };
 
 // Title, hint, and what it puts in the box. "How's my month?" answers straight away.
@@ -134,7 +137,7 @@ export default function Assistant() {
     setText('');
     const intent = readIntent(line);
     const id = newId();
-    add({ id: newId(), me: line }, { id, slip: { face: 'thinking', title: '…' } });
+    add({ id: newId(), me: line }, { id, slip: { face: 'thinking', title: 'Bud', printing: true } });
 
     if (intent.kind === 'afford')
       return replace(id, intent.amount ? affordSlip(Math.round(intent.amount * 100), intent.label) : { face: 'thinking', title: 'Can I afford it?', note: 'Tell me the price, like “can I afford 45”.' });
@@ -167,18 +170,70 @@ export default function Assistant() {
         ),
       });
     }
-    // A question in your own words: that's the AI step, not built yet.
-    replace(
-      id,
-      app!.aiEnabled
-        ? { face: 'thinking', title: 'Not yet', note: 'Questions in your own words are coming soon. For now try “how’s my month?”, “can I afford 45” or “kopi 4.50, grab 12”.' }
-        : {
-            face: 'oops',
-            title: 'AI is off',
-            note: 'AI is off, so I can’t answer questions. Quick adds still work, like “kopi 4.50”.',
-            actions: <Button title="Turn on AI in Settings" variant="secondary" onPress={() => router.navigate('/settings')} />,
-          },
-    );
+    return ask(line, id);
+  }
+
+  // Only this period's numbers and its last 20 expenses (txns is this period, newest first).
+  function summary(): AskSummary {
+    const major = (cents: number) => cents / 100;
+    const byCategory = Object.fromEntries(CATEGORIES.map((c) => [c, major(spentIn(txns.filter((x) => x.category === c), safe))]).filter(([, v]) => v));
+    return {
+      currency: setup.profile.currency,
+      summary: {
+        period: unit,
+        days_left: safe.daysLeft,
+        budget: major(setup.budget.cents),
+        spent: major(safe.spent),
+        left: major(safe.left),
+        safe_today: major(safe.perDay),
+        upcoming_bills: major(safe.upcoming),
+        by_category: byCategory,
+        rent: setup.rent && { amount: major(setup.rent.cents), due_day: setup.rent.dueDay },
+      },
+      expenses: txns.slice(0, 20).map((x) => ({ date: x.date, label: x.label.slice(0, 60), amount: major(x.cents), category: x.category })),
+    };
+  }
+
+  // A question in your own words. Same gates as receipts, read fresh so a purchase or a Settings change
+  // made since the sheet opened counts.
+  async function ask(line: string, id: number) {
+    const a = await loadApp(db);
+    setApp(a);
+    if (!a.aiEnabled)
+      return replace(id, {
+        face: 'oops',
+        title: 'AI is off',
+        note: 'AI is off, so I can’t answer questions. Quick adds still work, like “kopi 4.50”.',
+        actions: <Button title="Turn on AI in Settings" variant="secondary" onPress={() => router.navigate('/settings')} />,
+      });
+    if (!a.pro)
+      return replace(id, {
+        face: 'happy',
+        title: 'Senbud Pro',
+        note: `Questions in your own words come with Senbud Pro. “How’s my ${unit}?”, “can I afford 45” and quick adds stay free.`,
+        actions: <Button title="See plans" variant="secondary" onPress={() => router.push('/pro')} />,
+      });
+    if (!a.askConsentAt)
+      return replace(id, {
+        face: 'thinking',
+        title: 'Before your first question',
+        note: 'To answer, Senbud sends your question and a short summary (this month’s totals, your budget and rent, and your last 20 expenses) to its server and on to an AI model (currently Google Gemini) through OpenRouter. It isn’t stored or logged, and only providers that keep no data are used.'.replace('month', unit),
+        actions: (
+          <Button
+            title="Allow and ask"
+            onPress={async () => {
+              await giveAskConsent(db);
+              ask(line, id);
+            }}
+          />
+        ),
+      });
+    replace(id, { face: 'thinking', title: 'Bud', printing: true });
+    try {
+      replace(id, { face: 'happy', title: 'Bud', note: await askBud(line, summary(), a.deviceId) });
+    } catch (e) {
+      replace(id, { face: 'oops', title: 'Bud', note: e instanceof Error ? e.message : String(e), actions: <TextButton title="Try again" onPress={() => ask(line, id)} /> });
+    }
   }
 
   return (
@@ -273,6 +328,7 @@ function SlipView({ slip }: { slip: Slip }) {
           <T variant="label" style={dim}>
             {slip.title.toUpperCase()}
           </T>
+          {slip.printing && <PrintingLines />}
           {slip.lines?.map(([label, value], i) => (
             <View key={i} style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.xs }}>
               <T style={[ink, { flexShrink: 1 }]}>{label}</T>
@@ -301,5 +357,22 @@ function SlipView({ slip }: { slip: Slip }) {
         {slip.actions}
       </View>
     </View>
+  );
+}
+
+// The slip "printing" while an answer loads: placeholder lines that shimmer, still under Reduce Motion.
+function PrintingLines() {
+  const reduce = useReducedMotion();
+  const opacity = useSharedValue(0.5);
+  useEffect(() => {
+    if (!reduce) opacity.value = withRepeat(withTiming(0.15, { duration: 700 }), -1, true);
+  }, [reduce, opacity]);
+  const style = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  return (
+    <Animated.View style={[{ gap: space.xs, paddingVertical: space.xxs }, style]} accessible accessibilityLabel="Bud is thinking">
+      {['90%', '70%', '45%'].map((w) => (
+        <View key={w} style={{ width: w as `${number}%`, height: 12, borderRadius: 3, backgroundColor: palette.inkDim }} />
+      ))}
+    </Animated.View>
   );
 }

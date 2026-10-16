@@ -39,6 +39,8 @@ const MIGRATIONS = [
    ALTER TABLE app ADD COLUMN theme TEXT NOT NULL DEFAULT 'system';`,
   // 4: Dark is the default look; Light and System stay in Settings.
   `UPDATE app SET theme = 'dark' WHERE theme = 'system';`,
+  // 5: consent to send questions to Bud's AI, apart from the receipt-photo consent.
+  `ALTER TABLE app ADD COLUMN ask_consent_at TEXT;`,
 ];
 
 export async function migrate(db: SQLiteDatabase) {
@@ -114,7 +116,7 @@ export const eraseAll = (db: SQLiteDatabase) =>
 // "Back up everything": every user table as rows, plus the app settings. Not device_id (a new phone
 // gets its own) and not pro (the store owns that; Restore purchases brings it back).
 const BACKUP_TABLES = ['transactions', 'budget', 'bills', 'profile', 'category_limits', 'treats', 'treat_jar', 'treat_jar_history', 'ious', 'subscriptions', 'rules'];
-const BACKUP_SETTINGS = ['hourly_rate_cents', 'ai_enabled', 'theme', 'ai_consent_at'];
+const BACKUP_SETTINGS = ['hourly_rate_cents', 'ai_enabled', 'theme', 'ai_consent_at', 'ask_consent_at'];
 type Row = Record<string, string | number | null>;
 export type Backup = { app: 'senbud'; schema: number; tables: Record<string, Row[]>; settings: Row };
 
@@ -152,15 +154,16 @@ export async function importAll(db: SQLiteDatabase, data: unknown) {
 }
 
 export type Theme = 'system' | 'light' | 'dark';
-export type AppState = { deviceId: string; aiConsentAt: string | null; pro: boolean; hourlyRateCents: number | null; aiEnabled: boolean; theme: Theme };
+export type AppState = { deviceId: string; aiConsentAt: string | null; askConsentAt: string | null; pro: boolean; hourlyRateCents: number | null; aiEnabled: boolean; theme: Theme };
 
 export async function loadApp(db: SQLiteDatabase): Promise<AppState> {
-  const r = await db.getFirstAsync<{ device_id: string; ai_consent_at: string | null; pro: number; hourly_rate_cents: number | null; ai_enabled: number; theme: Theme }>('SELECT * FROM app');
+  const r = await db.getFirstAsync<{ device_id: string; ai_consent_at: string | null; ask_consent_at: string | null; pro: number; hourly_rate_cents: number | null; ai_enabled: number; theme: Theme }>('SELECT * FROM app');
   if (!r) throw new Error('app row missing; migrations did not run');
-  return { deviceId: r.device_id, aiConsentAt: r.ai_consent_at, pro: r.pro === 1, hourlyRateCents: r.hourly_rate_cents, aiEnabled: r.ai_enabled === 1, theme: r.theme };
+  return { deviceId: r.device_id, aiConsentAt: r.ai_consent_at, askConsentAt: r.ask_consent_at, pro: r.pro === 1, hourlyRateCents: r.hourly_rate_cents, aiEnabled: r.ai_enabled === 1, theme: r.theme };
 }
 
 export const giveAiConsent = (db: SQLiteDatabase) => db.runAsync('UPDATE app SET ai_consent_at = ?', new Date().toISOString());
+export const giveAskConsent = (db: SQLiteDatabase) => db.runAsync('UPDATE app SET ask_consent_at = ?', new Date().toISOString());
 export const setPro = (db: SQLiteDatabase, pro: boolean) => db.runAsync('UPDATE app SET pro = ?', pro ? 1 : 0);
 export const setHourlyRate = (db: SQLiteDatabase, cents: number | null) => db.runAsync('UPDATE app SET hourly_rate_cents = ?', cents);
 export const setAiEnabled = (db: SQLiteDatabase, on: boolean) => db.runAsync('UPDATE app SET ai_enabled = ?', on ? 1 : 0);
