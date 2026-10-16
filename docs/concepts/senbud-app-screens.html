@@ -305,9 +305,9 @@ body {
       <ul class="decide">
         <li><b>Hero stays put:</b> the cobalt panel with safe-to-spend in highlighter. Nothing else on Home is yellow.</li>
         <li><b>Today’s nudge</b> (spec 5) is one card under the rent and pace cards. <b>Rent and pace nudges merge into their own card</b> instead of repeating it in a second card, so the separate nudge card only carries priorities 3–5: renewals, old IOUs, treats.</li>
-        <li><b>Quick-capture bar is pinned</b> above the tab bar: 📸 camera, 💬 the text field, ✍️ by hand. Real build uses SF Symbols (<code>camera</code>, <code>square.and.pencil</code>), with labels for VoiceOver.</li>
-        <li><b>The 💬 field is also the assistant’s door on Home.</b> “kopi 4.50 grab 12” saves straight away with Undo (local parsing, works with AI off). A question (“can I afford…”) opens the assistant sheet with the answer. So Home has no floating button.</li>
-        <li><b>✍️ opens a sheet</b>: amount keypad first, then category chips, with favourites and “repeat last”, as spec 4.1 says.</li>
+        <li><b>Quick-capture bar is pinned</b> above the tab bar: a camera button, the text field and a pen button for adding by hand. Real build uses SF Symbols (<code>camera</code>, <code>square.and.pencil</code>), with labels for VoiceOver.</li>
+        <li><b>The text field is also the assistant’s door on Home.</b> “kopi 4.50 grab 12” saves straight away with Undo (local parsing, works with AI off). A question (“can I afford…”) opens the assistant sheet with the answer. So Home has no floating button.</li>
+        <li><b>The pen button opens a sheet</b>: amount keypad first, then category chips, with favourites and “repeat last”, as spec 4.1 says.</li>
       </ul>
     </div>
     <div class="shots">
@@ -322,7 +322,7 @@ body {
               <span class="hero">RM&nbsp;25.56</span>
               <span class="cap pdim money">RM 409 left for 16 days, after rent and bills</span>
             </div>
-            <div class="card"><span>🏠 Rent <span class="money">RM&nbsp;450</span> in 12 days — you’re covered.</span></div>
+            <div class="card"><span>Rent <span class="money">RM&nbsp;450</span> in 12 days — you’re covered.</span></div>
             <div class="card">
               <div class="row"><span class="strong money">RM 498 of RM 1,400</span><span class="cap dim">this month</span></div>
               <div class="track"><i style="width:36%"></i></div>
@@ -330,7 +330,7 @@ body {
             </div>
             <div class="card">
               <span class="lab">Today</span>
-              <span>It’s been 9 days since a Tealive. <span class="money">RM&nbsp;9.90</span> fits today. Treat yourself? 🧋</span>
+              <span>It’s been 9 days since a Tealive. <span class="money">RM&nbsp;9.90</span> fits today. Treat yourself?</span>
               <div class="row start" style="gap:16px"><span class="tbtn">Log it</span><span class="tbtn" style="color:var(--dim)">Not today</span></div>
             </div>
             <div class="row" style="justify-content:center"><span class="tbtn">Can I afford it?</span></div>
@@ -357,14 +357,14 @@ body {
               <span class="cap pdim">Rent comes first. This goes back up once it’s covered.</span>
             </div>
             <div class="card">
-              <span>🏠 Rent <span class="money">RM&nbsp;450</span> in 4 days — <span class="money">RM&nbsp;338</span> short.</span>
+              <span>Rent <span class="money">RM&nbsp;450</span> in 4 days — <span class="money">RM&nbsp;338</span> short.</span>
               <span class="cap dim">No stress. Pause the treat jar and Senbud will plan the next 4 days around rent.</span>
               <div class="btn secondary">Plan for rent</div>
             </div>
             <div class="card">
               <div class="row"><span class="strong money">RM 1,288 of RM 1,400</span><span class="cap dim">this month</span></div>
               <div class="track"><i class="close" style="width:92%"></i></div>
-              <span class="cap warn">RM 112 left. Cook tonight? 🍳</span>
+              <span class="cap warn">RM 112 left. Cook tonight?</span>
             </div>
             <div class="row" style="justify-content:center"><span class="tbtn">Can I afford it?</span></div>
           </div>
@@ -388,7 +388,7 @@ body {
               <span class="hero">RM&nbsp;29.26</span>
               <span class="cap pdim money">RM 907 left for 31 days, after rent and bills</span>
             </div>
-            <div class="card"><span>🏠 Rent <span class="money">RM&nbsp;450</span> in 27 days — you’re covered.</span></div>
+            <div class="card"><span>Rent <span class="money">RM&nbsp;450</span> in 27 days — you’re covered.</span></div>
             <div class="card">
               <div class="row"><span class="strong money">RM 0 of RM 1,400</span><span class="cap dim">this month</span></div>
               <div class="track"><i style="width:0"></i></div>
@@ -407,7 +407,7 @@ body {
       </figure>
 
       <figure class="shot">
-        <figcaption><b>✍️ Add by hand.</b> Sheet opens on the keypad. Category and date are pre-filled from last time.</figcaption>
+        <figcaption><b>Add by hand.</b> Sheet opens on the keypad. Category and date are pre-filled from last time.</figcaption>
         <div class="phone">
           <div class="sb"><span>9:41</span><i></i></div>
           <div class="navbar"><span class="lab">Thursday 16 Oct</span></div>
@@ -483,7 +483,7 @@ body {
           <div class="scroll">
             <span class="lab glab">Rent and bills</span>
             <div class="list">
-              <div class="li"><span class="grow stack"><span class="strong">🏠 Rent</span><span class="cap dim">Due 28th · in 12 days</span></span><span class="strong money">RM 450</span></div>
+              <div class="li"><span class="grow stack"><span class="strong">Rent</span><span class="cap dim">Due 28th · in 12 days</span></span><span class="strong money">RM 450</span></div>
               <div class="li"><span class="grow stack"><span class="strong">Unifi Mobile</span><span class="cap dim">Due 25th · in 9 days</span></span><span class="strong money">RM 35</span></div>
               <div class="li"><span class="grow stack"><span class="strong">Spotify Student</span><span class="cap dim">Renews 20th · subscription</span></span><span class="strong money">RM 7.90</span></div>
               <div class="li acc strong"><svg class="ic"><use href="#i-plus"/></svg>Add a bill</div>
@@ -552,7 +552,7 @@ body {
             </div>
             <span class="lab glab">Rent and bills</span>
             <div class="list">
-              <div class="li"><span class="grow stack"><span class="strong">🏠 Rent</span><span class="cap dim">Due 28th · in 27 days</span></span><span class="strong money">RM 450</span></div>
+              <div class="li"><span class="grow stack"><span class="strong">Rent</span><span class="cap dim">Due 28th · in 27 days</span></span><span class="strong money">RM 450</span></div>
               <div class="li acc strong"><svg class="ic"><use href="#i-plus"/></svg>Add a bill</div>
             </div>
           </div>
@@ -573,7 +573,7 @@ body {
       </div>
       <ul class="decide">
         <li><b>Price first:</b> one big <code>Field</code> with the numeric keyboard, an optional “What is it?”, and your treats’ last prices as one-tap picks.</li>
-        <li><b>Hero:</b> the cobalt panel answers. Verdict in words (“Yes!”, “Doable, but tight.”, “Not this month 😅”), the key number in highlighter, hours of work under a hairline.</li>
+        <li><b>Hero:</b> the cobalt panel answers. Verdict in words (“Yes!”, “Doable, but tight.”, “Not this month.”), the key number in highlighter, hours of work under a hairline.</li>
         <li><b>“No” never turns red.</b> The panel stays cobalt and the highlighter shows <i>when it fits</i>, which is something to do rather than a scolding.</li>
         <li><b>No hourly rate yet:</b> hours are swapped for one line that offers to add it. Allowance-only students can ignore it.</li>
         <li>The answer updates as you type (debounced), so there’s no “Check” button. “I bought it” saves it as spent with Undo.</li>
@@ -589,7 +589,7 @@ body {
             <div class="field"><span class="lab">What does it cost?</span><span class="input" style="min-height:64px;font:700 28px/34px var(--display)"><span class="money">RM 120</span><span class="caret" style="height:30px"></span></span></div>
             <div class="field"><span class="lab">What is it? (optional)</span><span class="input">Concert ticket</span></div>
             <div class="card panel">
-              <span class="title">Yes! Go for it 🎉</span>
+              <span class="title">Yes, go for it.</span>
               <span class="lab" style="margin-top:4px">After you buy it</span>
               <span class="hero">RM&nbsp;18.06</span>
               <span class="cap pdim">a day till the 31st. Rent’s still covered.</span>
@@ -631,7 +631,7 @@ body {
             <div class="field"><span class="lab">What does it cost?</span><span class="input" style="min-height:64px;font:700 28px/34px var(--display)"><span class="money">RM 899</span></span></div>
             <div class="field"><span class="lab">What is it? (optional)</span><span class="input">New phone</span></div>
             <div class="card panel">
-              <span class="title">Not this month 😅</span>
+              <span class="title">Not this month.</span>
               <span class="lab" style="margin-top:4px">It fits from</span>
               <span class="hero">1&nbsp;Nov</span>
               <span class="cap pdim">Rent’s in 12 days, and this would eat into it.</span>
@@ -745,7 +745,7 @@ body {
             <div class="grab"></div>
             <div class="row start" style="gap:12px;flex-wrap:nowrap"><span class="avatar">S</span><span class="grow stack" style="gap:0"><span class="heading">Sarah</span><span class="cap good">owes you RM 23.10</span></span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
             <div class="row"><span class="cap dim">Grab to Mid Valley · 13 Oct</span><span class="money strong">RM 23.10</span></div>
-            <div class="sunkbox">Hey Sarah! Grab to Mid Valley was RM 23.10 😊</div>
+            <div class="sunkbox">Hey Sarah! Grab to Mid Valley was RM 23.10!</div>
             <div class="btn secondary"><svg class="ic"><use href="#i-copy"/></svg>Copy message</div>
             <span class="cap dim">Senbud never sends anything. Paste it into WhatsApp yourself.</span>
             <div class="btn primary"><svg class="ic"><use href="#i-check"/></svg>Mark paid</div>
@@ -787,9 +787,9 @@ body {
         <p class="job">Guilt-free treats, paid for by leftover budget.</p>
       </div>
       <ul class="decide">
-        <li><b>Hero:</b> the jar total in highlighter on cobalt, translated into treats (“= 4 Tealives or 2 movies 🎬”).</li>
+        <li><b>Hero:</b> the jar total in highlighter on cobalt, translated into treats (“= 4 Tealives or 2 movies”).</li>
         <li><b>“Add to jar” goes inside the panel.</b> The yellow button sits next to the yellow number, so the screen still has one yellow zone. <b>The Marker on the jar name is dropped</b>; it would be a second yellow.</li>
-        <li><b>Treat rows</b> show your own last price, “every N days”, and a status in words with a ✓ (“Fits today”, “Next in 9 days”). Prices come from your history, never guessed.</li>
+        <li><b>Treat rows</b> show your own last price, “every N days”, and a status in words (“Fits today”, “Next in 9 days”). Prices come from your history, never guessed.</li>
         <li><b>Month-end leftover</b> is offered as a sheet on the 1st (or from the Home nudge): move it to the jar or keep it in the budget.</li>
         <li><b>History</b> is a short list under the treats; “See all” pushes the full log.</li>
       </ul>
@@ -805,14 +805,14 @@ body {
             <div class="card panel">
               <span class="lab">Treat jar</span>
               <span class="hero">RM&nbsp;46.50</span>
-              <span class="cap pdim">= 4 Tealives or 2 movies at GSC 🎬</span>
+              <span class="cap pdim">= 4 Tealives or 2 movies at GSC</span>
               <div class="btn hl" style="margin-top:4px">Add to jar</div>
             </div>
             <span class="lab glab">Your treats</span>
             <div class="list">
-              <div class="li"><span class="grow stack"><span class="strong">Tealive brown sugar</span><span class="cap dim">every 7 days · last 9 days ago</span><span class="cap good strong">✓ Fits today</span></span><span class="strong money">RM 9.90</span></div>
+              <div class="li"><span class="grow stack"><span class="strong">Tealive brown sugar</span><span class="cap dim">every 7 days · last 9 days ago</span><span class="cap good strong">Fits today</span></span><span class="strong money">RM 9.90</span></div>
               <div class="li"><span class="grow stack"><span class="strong">Big Mac meal</span><span class="cap dim">every 14 days · last 5 days ago</span><span class="cap dim">Next in 9 days</span></span><span class="strong money">RM 13.95</span></div>
-              <div class="li"><span class="grow stack"><span class="strong">GSC movie</span><span class="cap dim">every 30 days · last 40 days ago</span><span class="cap good strong">✓ Fits today</span></span><span class="strong money">RM 18.00</span></div>
+              <div class="li"><span class="grow stack"><span class="strong">GSC movie</span><span class="cap dim">every 30 days · last 40 days ago</span><span class="cap good strong">Fits today</span></span><span class="strong money">RM 18.00</span></div>
             </div>
             <span class="lab glab">History</span>
             <div class="list">
@@ -833,7 +833,7 @@ body {
           <div class="scrim"></div>
           <div class="sheet" style="top:380px">
             <div class="grab"></div>
-            <span class="title">September’s done 🎉</span>
+            <span class="title">September’s done</span>
             <span>You finished <span class="money strong">RM&nbsp;38</span> under budget. Move it to the treat jar?</span>
             <span class="cap dim">The jar would have RM 46.50, about 4 Tealives.</span>
             <div class="btn primary">Move RM 38 to the jar</div>
@@ -937,7 +937,7 @@ body {
             <span class="lab">Your top place</span>
             <span class="title" style="color:var(--on-panel);font-size:40px;line-height:46px">7-Eleven</span>
             <span class="hero" style="font-size:80px;line-height:84px;letter-spacing:-2.4px">31 visits</span>
-            <span class="heading" style="color:var(--on-panel)">That’s nearly one a day 😂</span>
+            <span class="heading" style="color:var(--on-panel)">That’s nearly one a day.</span>
             <span class="pdim">Next up: 123 hours of work, 6 treats and a 9-day streak.</span>
           </div>
           <div style="padding:0 24px 48px"><div class="btn onpanel"><svg class="ic"><use href="#i-share"/></svg>Share</div></div>
@@ -1112,7 +1112,7 @@ body {
             <div class="row"><span class="heading">Ask Senbud</span><span class="ibtn" aria-label="Close" style="color:var(--dim)"><svg class="ic"><use href="#i-x"/></svg></span></div>
             <div class="chat">
               <span class="bubble me">can I afford a RM 45 ticket on saturday?</span>
-              <span class="bubble bot">Yes! You’d still have <b class="money">RM 22.75</b> a day till the 31st 🎉<br><span class="cap dim">= 4.5 hours of work</span></span>
+              <span class="bubble bot">Yes! You’d still have <b class="money">RM 22.75</b> a day till the 31st.<br><span class="cap dim">= 4.5 hours of work</span></span>
               <span class="bubble me">kopi 4.50 grab 12</span>
               <span class="bubble bot">Added 2 items, <span class="money">RM 16.50</span>. <b class="acc">Undo</b></span>
             </div>

@@ -188,13 +188,13 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
   7. `CaptureBar`, pinned above the tab bar. `UndoBar` floats just above it.
 - **Nudges (spec 5):**
   - Rent (priority 1) and pace (priority 2) nudges go *inside* the rent and pace cards, so the same sentence isn't shown twice.
-  - Example: "🏠 Rent RM 450 in 4 days — RM 338 short." plus a caption and a `secondary` "Plan for rent".
+  - Example: "Rent RM 450 in 4 days — RM 338 short." plus a caption and a `secondary` "Plan for rent".
   - `NudgeCard` therefore only carries priorities 3–5: renewals, IOUs older than 7 days, treats.
 - **When rent isn't covered**, the hero shows RM 0 with "Rent comes first. This goes back up once it's covered." The panel stays cobalt.
 - **Capture bar:**
-  - 📸 opens the receipt flow (the Pro screen for free users).
-  - 💬 is the text field.
-  - ✍️ opens the "Add by hand" sheet.
+  - The camera button opens the receipt flow (the Pro screen for free users).
+  - The text field takes quick text.
+  - The pen button opens the "Add by hand" sheet.
   - The field is also the assistant's way in on Home:
     - Text with amounts saves straight away through `parseSpending`, with Undo. This works with AI off.
     - A question opens the assistant sheet with the answer.
@@ -236,9 +236,9 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 
 | Verdict | Title | Highlighter | Caption | Action |
 |---|---|---|---|---|
-| Yes | "Yes! Go for it 🎉" | per day after (RM 18.06) | "a day till the 31st. Rent's still covered." | "I bought it" |
+| Yes | "Yes, go for it." | per day after (RM 18.06) | "a day till the 31st. Rent's still covered." | "I bought it" |
 | Tight | "Doable, but tight." | per day after (RM 6.81) | "a day, down from RM 25.56. Wait till payday on the 25th?" | "I bought it" |
-| No | "Not this month 😅" | the date it fits ("1 Nov") | "Rent's in 12 days, and this would eat into it." | "Remind me on 1 Nov" |
+| No | "Not this month." | the date it fits ("1 Nov") | "Rent's in 12 days, and this would eat into it." | "Remind me on 1 Nov" |
 
 - **"No" never turns the panel coral.** The highlighter shows when it fits instead of a shortfall.
 - **No hourly rate:** the hours line is replaced by a card: "Want prices in hours of work? Add what you earn an hour." with an "Add hourly rate" `TextButton`.
@@ -257,7 +257,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 - **Friend sheet:**
   - Avatar, name, and what they owe.
   - Their IOUs.
-  - The pre-written message in a sunken box ("Hey Sarah! Grab to Mid Valley was RM 23.10 😊").
+  - The pre-written message in a sunken box ("Hey Sarah! Grab to Mid Valley was RM 23.10!").
   - `secondary` "Copy message", with "Senbud never sends anything. Paste it into WhatsApp yourself."
   - `primary` "Mark paid", which shows `UndoBar`.
 - **Split screen:**
@@ -271,15 +271,15 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 
 - **Hero:**
   - `panel` with the jar total in highlighter.
-  - A caption in treats: "= 4 Tealives or 2 movies at GSC 🎬".
+  - A caption in treats: "= 4 Tealives or 2 movies at GSC".
   - `highlight` "Add to jar" *inside* the panel, so the screen has one yellow zone.
 - **The `Marker` on the jar name is dropped:** it would be a second yellow thing.
 - **Your treats** list:
   - Name, your own last price, and "every N days · last 9 days ago".
-  - Status in words: "✓ Fits today" in `good`, or "Next in 9 days" in `textDim`.
+  - Status in words: "Fits today" in `good`, or "Next in 9 days" in `textDim`.
 - **History:** a short list with "See all".
 - **Month-end leftover:**
-  - A sheet on the 1st (or reached from the Home nudge): "September's done 🎉 You finished RM 38 under budget. Move it to the treat jar?"
+  - A sheet on the 1st (or reached from the Home nudge): "September's done. You finished RM 38 under budget. Move it to the treat jar?"
   - `primary` "Move RM 38 to the jar" and `secondary` "Keep it in October's budget".
   - In dark mode `primary` and `highlight` look the same (section 7). On this screen that's acceptable, because the sheet covers the panel.
 - **Learned treat:** "You've had Tealive 4 times this month. Make it a treat?" with two `secondary` buttons. This asks before adding, as spec 4.8 says.
@@ -295,7 +295,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 - **Cards (spec 4.9):**
   - total vs budget ("You spent 88% of your budget.")
   - top category (`BarChart` on a `ReceiptCard`)
-  - top place ("7-Eleven, 31 visits. That's nearly one a day 😂")
+  - top place ("7-Eleven, 31 visits. That's nearly one a day.")
   - treats
   - hours of work
   - money saved
