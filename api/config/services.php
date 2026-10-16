@@ -31,7 +31,9 @@ return [
     // Receipt reading. The key stays on this server; the app never sees it.
     'openrouter' => [
         'key' => env('OPENROUTER_API_KEY'),
-        'model' => env('OPENROUTER_MODEL', 'google/gemini-3-flash-preview'),
+        // Must have a zero-data-retention endpoint that supports response_format/structured_outputs, or
+        // the provider settings in ReceiptController leave nowhere to route: see GET /api/v1/endpoints/zdr.
+        'model' => env('OPENROUTER_MODEL', 'google/gemini-3.8-flash'),
         'url' => env('OPENROUTER_URL', 'https://openrouter.ai/api/v1/chat/completions'),
     ],
 

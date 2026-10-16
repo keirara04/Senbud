@@ -6,6 +6,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 // Reads a receipt photo with a vision model through OpenRouter and returns the line items.
 // Privacy contract (App Store 5.1.2, the app's consent screen and the store data forms rely on it):
@@ -53,15 +54,23 @@ class ReceiptController extends Controller
                         ],
                     ]],
                     'response_format' => ['type' => 'json_schema', 'json_schema' => self::schema()],
-                    'temperature' => 0,
+                    // No temperature: require_parameters drops any endpoint that doesn't support every
+                    // parameter sent, and the ZDR Gemini Flash endpoints don't list temperature.
                     'provider' => ['zdr' => true, 'data_collection' => 'deny', 'require_parameters' => true],
                 ]);
         } catch (ConnectionException) {
             return response()->json(['error' => 'receipt_reading_failed'], 502);
         }
 
-        // Upstream errors are not echoed: their bodies can quote the request.
-        $parsed = $response->successful() ? json_decode((string) $response->json('choices.0.message.content'), true) : null;
+        // Upstream errors are not echoed or logged in full: their bodies can quote the request. The
+        // status alone tells a bad key (401) from no eligible endpoint (404) or a rate limit (429).
+        if (! $response->successful()) {
+            Log::warning('receipt upstream failed', ['status' => $response->status()]);
+
+            return response()->json(['error' => 'receipt_reading_failed'], 502);
+        }
+
+        $parsed = json_decode((string) $response->json('choices.0.message.content'), true);
         if (! is_array($parsed)) {
             return response()->json(['error' => 'receipt_reading_failed'], 502);
         }

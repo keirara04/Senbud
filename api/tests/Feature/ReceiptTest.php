@@ -15,7 +15,12 @@ class ReceiptTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['services.openrouter.key' => 'test-key', 'services.openrouter.model' => 'test/model']);
+        // Pinned so a local .env (e.g. one pointing at a stub server) can't send tests to a real host.
+        config([
+            'services.openrouter.key' => 'test-key',
+            'services.openrouter.model' => 'test/model',
+            'services.openrouter.url' => 'https://openrouter.ai/api/v1/chat/completions',
+        ]);
         RateLimiter::clear('d:'.self::DEVICE);
     }
 
@@ -68,6 +73,7 @@ class ReceiptTest extends TestCase
 
             return $r->hasHeader('Authorization', 'Bearer test-key')
                 && $r['model'] === 'test/model'
+                && ! isset($r['temperature'])
                 && $r['provider'] === ['zdr' => true, 'data_collection' => 'deny', 'require_parameters' => true]
                 && $r['response_format']['type'] === 'json_schema'
                 && $r['response_format']['json_schema']['strict'] === true
@@ -144,5 +150,6 @@ class ReceiptTest extends TestCase
         $this->send()->assertStatus(502);
         Log::shouldNotHaveReceived('error');
         Log::shouldNotHaveReceived('info');
+        Log::shouldHaveReceived('warning')->once()->with('receipt upstream failed', ['status' => 500]);
     }
 }
