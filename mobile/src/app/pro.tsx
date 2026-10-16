@@ -11,16 +11,16 @@ import Purchases, { PACKAGE_TYPE, PURCHASES_ERROR_CODE, type PurchasesPackage } 
 
 import { loadSetup, setPro } from '@/db';
 import { hasPro, purchasesReady } from '@/purchases';
-import { Button, Card, Row, Screen, T, TextButton, useTheme } from '@/ui';
+import { Button, Card, Icon, type IconName, Row, Screen, T, TextButton, useTheme } from '@/ui';
 
 const TERMS = 'https://senbud.app/terms';
 const PRIVACY = 'https://senbud.app/privacy';
 
-const BENEFITS = [
-  ['📸', 'Snap receipts', 'Take a photo and it’s added and sorted.'],
-  ['💬', 'Unlimited AI assistant', 'Ask “can I afford it?” as often as you like.'],
-  ['🔔', 'Subscription reminders', 'See what renews before you’re charged.'],
-] as const;
+const BENEFITS: [IconName, string, string][] = [
+  [{ ios: 'camera', android: 'photo_camera' }, 'Snap receipts', 'Take a photo and it’s added and sorted.'],
+  [{ ios: 'bubble.left', android: 'chat' }, 'Unlimited AI assistant', 'Ask “can I afford it?” as often as you like.'],
+  [{ ios: 'bell', android: 'notifications' }, 'Subscription reminders', 'See what renews before you’re charged.'],
+];
 
 const PERIOD: Partial<Record<PACKAGE_TYPE, { name: string; per: string }>> = {
   [PACKAGE_TYPE.ANNUAL]: { name: 'Yearly', per: 'a year' },
@@ -64,7 +64,8 @@ export default function ProScreen() {
 
   async function unlockedOrNote(isPro: boolean, note: string) {
     await setPro(db, isPro);
-    if (isPro) return router.back();
+    // Opened over another screen: go back to it. Opened directly (deep link): there's nothing behind us.
+    if (isPro) return router.canGoBack() ? router.back() : router.replace('/');
     busy(false, note);
   }
 
@@ -124,9 +125,9 @@ export default function ProScreen() {
       <Card>
         {BENEFITS.map(([icon, title, body]) => (
           <Row key={title} style={{ alignItems: 'flex-start', justifyContent: 'flex-start', flexWrap: 'nowrap' }}>
-            <T variant="heading" accessibilityElementsHidden importantForAccessibility="no">
-              {icon}
-            </T>
+            <View style={{ width: 40, height: 40, borderRadius: radius.pill, backgroundColor: t.surfaceSunken, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name={icon} size={20} color={t.accent} />
+            </View>
             <View style={{ flex: 1, gap: space.xxs }}>
               <T variant="bodyStrong">{title}</T>
               <T variant="caption" tone="textDim">

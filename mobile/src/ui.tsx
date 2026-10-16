@@ -18,6 +18,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
+import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { DarkTheme, DefaultTheme } from 'expo-router';
 
 export const useTheme = (): Theme => themes[useColorScheme() === 'dark' ? 'dark' : 'light'];
@@ -204,6 +205,23 @@ export function Progress({ value, status }: { value: number; status: 'ok' | 'clo
     >
       <View style={[s.fill, { width: `${Math.min(100, Math.max(0, value * 100))}%`, backgroundColor: fill }]} />
     </View>
+  );
+}
+
+// System icons, never emoji: SF Symbols on iOS, Material Symbols on Android. Decorative unless given a label.
+export type IconName = { ios: Extract<SymbolViewProps['name'], string>; android: Exclude<SymbolViewProps['name'], string>['android'] };
+
+export function Icon({ name, size = 24, color, label }: { name: IconName; size?: number; color?: string; label?: string }) {
+  const t = useTheme();
+  return (
+    <SymbolView
+      name={name}
+      size={size}
+      tintColor={color ?? t.text}
+      accessibilityLabel={label}
+      accessibilityElementsHidden={!label}
+      importantForAccessibility={label ? 'yes' : 'no-hide-descendants'}
+    />
   );
 }
 
