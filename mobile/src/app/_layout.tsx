@@ -1,12 +1,12 @@
 import { Stack, ThemeProvider } from 'expo-router';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Platform } from 'react-native';
 
 import { loadApp, migrate } from '@/db';
 import { ProSync } from '@/purchases';
-import { applyTheme, useNavigationTheme } from '@/ui';
+import { applyTheme, Screen, T, useNavigationTheme } from '@/ui';
 
 // Dark by default, from the first frame. ThemeSync then applies the Light / Dark / System choice from Settings.
 applyTheme('dark');
@@ -26,6 +26,39 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
   };
 }
 
+// On web the database file can be open in one tab only (OPFS access handle); a second tab would sit
+// blank. Each tab waits for a Web Lock before opening it, says so while it waits, and takes over by
+// itself once the other tab closes. The lock is held for the life of the tab.
+function useDatabaseTurn() {
+  const web = Platform.OS === 'web';
+  const [turn, setTurn] = useState<'mine' | 'waiting' | null>(web ? null : 'mine');
+  useEffect(() => {
+    if (!web) return;
+    const hold = () => {
+      setTurn('mine');
+      return new Promise<void>(() => {});
+    };
+    if (!navigator.locks) return void Promise.resolve().then(hold);
+    navigator.locks.request('senbud-db', { ifAvailable: true }, (lock) => {
+      if (lock) return hold();
+      setTurn('waiting');
+      navigator.locks.request('senbud-db', hold);
+    });
+  }, [web]);
+  return turn;
+}
+
+function OpenElsewhere() {
+  return (
+    <Screen scroll={false}>
+      <T variant="title">Senbud is open in another tab</T>
+      <T tone="textDim" style={{ marginTop: 8 }}>
+        Your data can only be open in one tab at a time. Close the other tab and this one picks up.
+      </T>
+    </Screen>
+  );
+}
+
 function ThemeSync() {
   const db = useSQLiteContext();
   useEffect(() => {
@@ -35,8 +68,11 @@ function ThemeSync() {
 }
 
 export default function RootLayout() {
+  const turn = useDatabaseTurn();
+  const theme = useNavigationTheme();
+  if (turn !== 'mine') return turn === 'waiting' ? <OpenElsewhere /> : null;
   return (
-    <ThemeProvider value={useNavigationTheme()}>
+    <ThemeProvider value={theme}>
       <SQLiteProvider databaseName="senbud.db" onInit={migrate}>
         <StatusBar style="auto" />
         <ProSync />
