@@ -389,7 +389,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
   - Then `danger` "Erase all data" with "Privacy · Terms" under it.
 - **What gets sent** (pushed screen), three cards:
   1. "When you snap a receipt": the receipt consent text from `receipt.tsx`, word for word.
-  2. "When you ask a question": proposed as the question plus a short summary (budget, what's left, rent date, this month's category totals), never the full list. Needs sign-off.
+  2. "When you ask a question": the question plus a short summary (this month's totals, budget and rent, the last 20 expenses), never the full history. This is spec 3's "AI sees" rule.
   3. "Never leaves the phone": expenses, friends' names, treats and the jar.
   - Then the same `Switch` again.
 - **Erase:**
@@ -490,10 +490,9 @@ These are additions to `ui.tsx` for the screens above. Each takes colours from `
 1. **Friends hero in highlighter both ways?** Should the Friends hero use highlighter in both directions (4.5), instead of good/bad colour?
 2. **Treats Marker and dark `primary`:** should the Treats Marker be dropped? And should dark `primary` get its own fill? In dark mode `accent` is highlighter, so every `primary` button is yellow: Friends ("Split a bill", "Mark paid") and the assistant's "Yes, split it" show two yellow things on one screen.
 3. **Category limits free or Pro?** Spec 4.2 says they "exist already"; spec 8 makes "multiple budgets" Pro.
-4. **What does a chat question send?** Only the proposed summary, or more? This decides the privacy copy and the store data forms.
-5. **Nudges inside their cards?** Should rent and pace nudges live inside their own cards on Home (4.2)?
-6. **Share image link:** does the share image get a URL or handle? The domain isn't settled (spec 11).
-7. **Are by-item splits and full Wrapped still Pro?** Spec 8 says yes, and the concepts lock them. The paywall the user chose lists only receipts, the unlimited assistant and subscription reminders.
+4. **Nudges inside their cards?** Should rent and pace nudges live inside their own cards on Home (4.2)?
+5. **Share image link:** does the share image get a URL or handle? The domain isn't settled (spec 11).
+6. **Are by-item splits and full Wrapped still Pro?** Spec 8 says yes, and the concepts lock them. The paywall the user chose lists only receipts, the unlimited assistant and subscription reminders.
 
 ## 5. Voice
 

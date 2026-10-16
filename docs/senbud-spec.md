@@ -2,6 +2,8 @@
 
 Status: brainstorm locked, no code yet. Date: 16 October 2026.
 
+Screen designs: `docs/senbud-app-design-system.md` section 4, drawn in `docs/concepts/senbud-app-screens.html`. Updated 16 October 2026 with the design decisions below (accounts, no emoji, Bud, tab bar, jar goal, split flow, reminders).
+
 > **Pitch:** The money buddy for students. Snap your spending or type it in, and it handles the rest. It tells you when rent is coming and when you can actually afford that Big Mac.
 
 ---
@@ -17,6 +19,9 @@ Status: brainstorm locked, no code yet. Date: 16 October 2026.
 | Bank sync | Not now. Decide after launch. Marketing says "No bank password needed" |
 | Manual entry | First-class, always free, works with AI turned off |
 | Proactive nudges | At most 1 a day. Rules decide; AI only writes the sentence |
+| Accounts | None. Everything is stored on the phone; a backup file moves it to a new phone. Pro is restored through the Apple or Google account. Optional Sign in with Apple or Google comes later, as a Pro feature, only for encrypted sync between phones |
+| Copy | No emoji anywhere: app copy, notifications, share images, docs. Words carry the tone; system icons where a picture helps |
+| Assistant | Called Bud: a small receipt mascot with a face. It sits in the middle of the tab bar and prints its answers as receipt slips |
 
 ---
 
@@ -33,13 +38,13 @@ CAPTURE ──► UNDERSTAND ──► DECIDE ──► repeat
 
 ```
 INPUT
- 📸 photo/receipt · 🖼️ screenshot · 💬 quick text · 📄 CSV · ✍️ manual form
+ photo/receipt · screenshot · quick text · CSV · manual form
    │
    ├─ manual ─────────────────────────────────────────────┐
    ▼                                                        │
 ASSISTANT: extract → categorize → check (dupe / weird / unsure)
    │                                                        │
-   ├─ confident → auto-save + "Added $12 Dining 🍔 [Undo]"   │
+   ├─ confident → auto-save + "Added $12 Dining [Undo]"      │
    └─ unsure (blurry, unknown merchant, > $100) → ask 1 tap │
    ▼                                                        ▼
 LOCAL STORE (browser) ◄─────────────────────────────────────┘
@@ -76,13 +81,13 @@ NUDGE (max 1/day) → AI phrases it friendly
 - **Pace reminders:**
   - Stay quiet while on track.
   - Warn when spending runs ahead of time elapsed: "$70 of $100 gone and it's only Wednesday."
-  - At 90% used: "$10 left. Cook tonight? 🍳"
+  - At 90% used: "$10 left. Cook tonight?"
   - When over: "$12 over, no stress. Borrow from next week?"
   - When the week ends under budget, offer to send the leftover to the treat jar.
 
 ### 4.3 Rent countdown (new)
 - The user sets the rent amount and due day (and optionally other fixed bills).
-- Main card: "🏠 Rent $650 in 6 days — you're covered."
+- Main card: "Rent $650 in 6 days — you're covered."
 - Rent money is set aside first and never counted as spendable.
 
 ### 4.4 Safe to spend today (new, the main number)
@@ -91,45 +96,50 @@ safe_today = (budget_left − upcoming_fixed_bills_in_period) ÷ days_left_in_pe
 ```
 - Shown as the main figure on the dashboard. It drives "Can I afford it?" and the treat nudges.
 
-### 4.5 ⭐ Can I afford it? (new)
+### 4.5 Can I afford it? (new)
 - **Ask:** "Can I buy a $40 concert ticket?", or tap "Can I afford…" and enter an amount.
 - **Rules decide the answer:**
-  - **Yes:** the price fits within budget_left after rent. "Yes! You'd still have $8/day till Sunday 🎉"
+  - **Yes:** the price fits within budget_left after rent. "Yes! You'd still have $8/day till Sunday."
   - **Tight:** it fits, but safe_today drops below about 30% of normal. "Doable, but tight: $3/day after. Wait till payday on the 25th?"
-  - **No:** it doesn't fit, or it would eat into rent. "Not this week 😅 Rent's in 6 days. Next week it fits."
+  - **No:** it doesn't fit, or it would eat into rent. "Not this week. Rent's in 6 days. Next week it fits."
 - The answer is also shown in hours of work (4.6).
 
-### 4.6 ⭐ Price per hour of work (new)
+### 4.6 Price per hour of work (new)
 - **Setup:** "I earn $12/hour" (part-time). It's optional, and an allowance-only user can skip it.
-- Shown on "Can I afford it?" answers, large purchases, and the Wrapped recap: "$60 sneakers = 5 hrs of work 👟"
+- Shown on "Can I afford it?" answers, large purchases, and the Wrapped recap: "$60 sneakers = 5 hrs of work"
 - Calculation: price ÷ hourly rate, rounded to 0.5 hours.
 
-### 4.7 ⭐ Split with friends from a receipt (new)
+### 4.7 Split with friends from a receipt (new)
 - **Input:** a photo of the group receipt plus "split with Aiman and Sarah, I paid", or a manual split.
 - **Modes:**
   - **Even:** split the total equally.
   - **By item:** the AI lists the receipt items and you tap who had what.
   - **Custom amounts.**
+- **Flow:** three short steps. 1) Who was there, who paid, by item or evenly. 2) Pick a person, then tap what they had (shared items split evenly; anything unassigned is flagged). 3) Check everyone's share and save. Evenly skips step 2.
 - **What gets saved:**
   - Your share is recorded as your expense.
   - What others owe is recorded as IOUs, which don't count as spending.
 - **IOU list:** "Sarah owes you $14 (Friday dinner)". Mark it paid with one tap.
-- **Friendly reminder:** a pre-written message to copy: "Hey Sarah! Friday dinner was $14 😊". The app never sends anything itself.
+- **Friendly reminder:** a pre-written message: "Hey Sarah! Friday dinner was $14!"
+  - "Send on WhatsApp" opens WhatsApp with the message ready (`whatsapp://send?text=`); the person picks the chat and taps send. No phone number or contacts access is needed. Hidden if WhatsApp isn't installed.
+  - "Other apps" opens the share sheet (Telegram, Messages); "Copy" copies it.
+  - The app never sends anything itself.
 - **Friends:** just names. No accounts, no contacts access.
 
-### 4.8 ⭐ Treat jar + treat nudges (new)
+### 4.8 Treat jar + treat nudges (new)
 - **Treats:** items the user marks as treats, or that the app learns from repeated purchases (Big Mac, bubble tea, Starbucks).
 - **Treat price:** taken from the user's own history ("last Big Mac $5.99"), never guessed by AI.
-- **Treat jar:** leftover weekly budget can roll into it. "Treat jar: $23 = 4 Big Macs 🍔 or 1 movie night 🎬"
+- **Treat jar:** leftover weekly budget can roll into it. "Treat jar: $23 = 4 Big Macs or 1 movie night"
+- **Jar goal:** the jar fills toward something the user picks ("Movie night for two, RM 60"), drawn as a jar filling up. When it's full, one tap spends it on the goal.
 - **Treat nudge:** shows only when all three are true: the treat fits today's safe-to-spend, rent is covered, and it's been at least N days since the last one.
-  - Example: "It's been 3 weeks since a Big Mac. $5.99 fits today. Treat yourself? 🍔"
+  - Example: "It's been 3 weeks since a Big Mac. $5.99 fits today. Treat yourself?"
 
-### 4.9 ⭐ Wrapped recap (new)
+### 4.9 Wrapped recap (new)
 - **Monthly** (plus a year-end edition). A swipeable story of 5–7 cards, with a shareable image.
 - **Cards:**
   - total spent vs budget
   - top category
-  - top place ("7-Eleven, 31 visits 😂")
+  - top place ("7-Eleven, 31 visits. That's nearly one a day.")
   - treats eaten
   - hours of work spent
   - money saved
@@ -137,10 +147,10 @@ safe_today = (budget_left − upcoming_fixed_bills_in_period) ÷ days_left_in_pe
 - **Privacy:** the share image shows no amounts by default; percentages and fun facts only, and amounts only if you switch them on.
 - AI writes the captions; the numbers come from the local data.
 
-### 4.10 ⭐ Subscription detection (new)
+### 4.10 Subscription detection (new)
 - **Detected when:** the same merchant appears with a similar amount (±10%) at a regular interval (weekly, monthly or yearly), at least 2 times.
 - **The user confirms it** ("Is Spotify a subscription?"), after which it's tracked.
-- **Card:** "🔁 You pay $34/month in subscriptions."
+- **Card:** "You pay $34/month in subscriptions."
 - **Renewal nudge:** "Spotify renews tomorrow ($11.99)."
 - **Optional unused prompt:** "Haven't marked Netflix as watched in 6 weeks. Still using it?" This needs a user tap, so it's optional.
 - Upcoming subscriptions count as fixed bills in safe_today.
@@ -162,12 +172,15 @@ Weekly recap: Sunday evening. Wrapped: on the 1st of each month.
 
 ## 6. Screens
 
+**Navigation:** a tab bar with five slots: Home, Budgets, Bud (the assistant, raised in the middle), Friends, Treats. Activity, Can I afford it?, Wrapped and Settings open from those tabs.
+
+0. **Welcome:** first launch only. What Senbud is, "No bank login · No account · Stays on your phone", "Get started" (to setup) and "I've used Senbud before" (restore a backup or restore Pro). No sign-in.
 1. **Home:**
    - Safe to spend today
    - Rent countdown card
    - Budget pace bar
    - Today's nudge
-   - Quick capture bar (📸 / 💬 / ✍️)
+   - Quick capture bar: camera, quick text, add by hand
 2. **Activity:** transactions, with a filter for items added by the assistant.
 3. **Budgets:** overall and category budgets, rent and bills.
 4. **Friends:** IOUs and splits.
@@ -180,7 +193,7 @@ Weekly recap: Sunday evening. Wrapped: on the 1st of each month.
    - export/backup
    - theme
 
-**Assistant:** a floating chat button on every screen.
+**Assistant:** Bud, in the middle of the tab bar on every tab. Opens a sheet where Bud prints its answers as receipt slips.
 
 ---
 
@@ -196,6 +209,7 @@ New stores on top of the existing transactions and category budgets:
 - **treats:** `name`, `lastPrice`, `lastDate`, `minDaysBetween`
 - **treatJar:**
   - `balance`
+  - `goalName`, `goalCents` (optional; what the jar is filling toward)
   - history: `amount` and `date` for each entry
 - **ious:** `friend`, `amount`, `direction`, `note`, `date`, `paid`
 - **subscriptions:** `merchant`, `amount`, `interval`, `nextDate`, `confirmed`
@@ -217,7 +231,7 @@ New stores on top of the existing transactions and category budgets:
 | Rent countdown, safe to spend, Can I afford it, hours of work | Receipt splitting by item |
 | Manual splits + IOUs | Subscription detection + renewal nudges |
 | Treat jar | Full Wrapped + year-end edition |
-| Basic monthly Wrapped | Encrypted sync (later) |
+| Basic monthly Wrapped | Encrypted sync between phones, with optional Sign in with Apple or Google (later) |
 
 ---
 
