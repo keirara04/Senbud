@@ -98,7 +98,7 @@ export default function StudentBudgetCalculator() {
                 href="/#waitlist"
                 className="plausible-event-name=CTA plausible-event-place=calculator hl-sweep inline-flex min-h-11 items-center rounded-full bg-hl px-6 font-semibold text-panel"
               >
-                Get early access, free
+                Join the waitlist
               </Link>
             </div>
           </div>

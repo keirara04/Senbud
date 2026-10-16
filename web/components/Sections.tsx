@@ -1,41 +1,9 @@
 import { ArrowUp } from "lucide-react";
 import Link from "next/link";
 import { MobileBar } from "./MobileBar";
-import { BankAsk, StreakFade } from "./Problem";
 
 export const wrap = "mx-auto max-w-6xl px-4 sm:px-6";
 export const h2 = "font-display text-[clamp(2rem,4.4vw,3.25rem)] leading-[1.06]";
-
-export function Problem() {
-  return (
-    <section className={`${wrap} py-20 sm:py-28`}>
-      <h2 className={`${h2} max-w-4xl`}>
-        Most budget apps want your bank password or your patience.{" "}
-        <span className="marker">Senbud needs neither.</span>
-      </h2>
-      <div className="relative isolate mt-12 grid gap-4 md:grid-cols-2">
-        <div aria-hidden="true" className="paper-glow cobalt -left-10 top-10 h-64 w-72" />
-        <div aria-hidden="true" className="paper-glow hl -right-10 bottom-0 h-64 w-72" />
-        <div className="flex flex-col gap-6 rounded-3xl bg-paper-2 p-6 ring-1 ring-line sm:p-8">
-          <BankAsk />
-          <div>
-            <h3 className="text-lg font-semibold">The bank-login ask</h3>
-            <p className="mt-1.5 text-ink-dim">
-              Linking a bank account to an app you found last week feels like a lot to ask. So people don’t.
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-col gap-6 rounded-3xl bg-paper-2 p-6 ring-1 ring-line sm:p-8">
-          <StreakFade />
-          <div>
-            <h3 className="text-lg font-semibold">The typing marathon</h3>
-            <p className="mt-1.5 text-ink-dim">Typing in every coffee and bus fare gets old by week two. So people stop.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 // Bar widths for the decorative barcode (fixed, so the HTML is identical on every build).
 const BARS = [2, 1, 3, 1, 1, 2, 4, 1, 2, 1, 3, 2, 1, 1, 4, 2, 1, 3, 1, 2, 2, 1, 3, 1, 1, 4, 1, 2, 3, 1, 2, 1, 1, 3, 2, 1];
@@ -56,11 +24,12 @@ export function Footer() {
               <ul>
                 {[
                   ["How it works", "/#how"],
+                  ["Bud", "/#meet-bud"],
                   ["Pricing", "/#pricing"],
                   ["FAQ", "/#faq"],
                   ["Budget calculator", "/student-budget-calculator"],
                   ["Compare apps", "/alternatives"],
-                  ["Get early access", "/#waitlist"],
+                  ["Join the waitlist", "/#waitlist"],
                   ["Privacy", "/privacy"],
                   ["Terms", "/terms"],
                 ].map(([label, href], i) => (

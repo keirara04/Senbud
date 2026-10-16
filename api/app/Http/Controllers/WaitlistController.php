@@ -22,7 +22,7 @@ class WaitlistController extends Controller
     {
         $data = $request->validate([
             'email' => ['required', 'string', 'email', 'max:254'],
-            'feature' => ['required', 'string', 'in:'.implode(',', self::FEATURES)],
+            'feature' => ['nullable', 'string', 'in:'.implode(',', self::FEATURES)],
         ]);
 
         // A bad ref from a mangled share link must never block the signup: anything that isn't a
@@ -34,7 +34,7 @@ class WaitlistController extends Controller
         $signup = WaitlistSignup::createOrFirst(
             ['email' => Str::lower($data['email'])],
             [
-                'feature' => $data['feature'],
+                'feature' => $data['feature'] ?? null,
                 // ponytail: no retry on a code collision (1 in 62^8 per pair); add one if the list gets huge.
                 'referral_code' => Str::random(8),
                 'referred_by' => is_string($ref) ? WaitlistSignup::where('referral_code', $ref)->value('id') : null,
