@@ -143,6 +143,33 @@ class ReceiptTest extends TestCase
         $this->send()->assertStatus(429);
     }
 
+    public function test_the_web_app_gets_a_small_free_daily_allowance(): void
+    {
+        config(['app.app_origin' => 'https://app.senbud.com', 'cors.allowed_origins' => ['https://senbud.com', 'https://app.senbud.com']]);
+        self::fakeModel(['merchant' => null, 'date' => null, 'currency' => null, 'items' => [], 'total' => null]);
+        $web = ['Origin' => 'https://app.senbud.com'];
+        for ($i = 0; $i < \App\Providers\AppServiceProvider::WEB_FREE_RECEIPTS; $i++) {
+            $this->send([], $web)->assertOk()->assertHeader('Access-Control-Allow-Origin', 'https://app.senbud.com');
+        }
+        $limited = $this->send([], $web)->assertStatus(429);
+        // A day-sized wait, so the app can say "more tomorrow" rather than "try again in a minute".
+        $this->assertGreaterThan(3600, (int) $limited->headers->get('Retry-After'));
+        // The phone app (no browser Origin) isn't held to the web allowance.
+        $this->send()->assertOk();
+    }
+
+    public function test_cors_allows_the_web_app_and_its_device_id_header(): void
+    {
+        config(['cors.allowed_origins' => ['https://senbud.com', 'https://app.senbud.com']]);
+        $this->call('OPTIONS', '/v1/agent/receipt', [], [], [], [
+            'HTTP_ORIGIN' => 'https://app.senbud.com',
+            'HTTP_ACCESS_CONTROL_REQUEST_METHOD' => 'POST',
+            'HTTP_ACCESS_CONTROL_REQUEST_HEADERS' => 'content-type,x-device-id',
+        ])->assertNoContent()
+            ->assertHeader('Access-Control-Allow-Origin', 'https://app.senbud.com')
+            ->assertHeader('Access-Control-Allow-Headers', 'content-type, accept, x-device-id');
+    }
+
     public function test_never_logs_the_image(): void
     {
         Log::spy();

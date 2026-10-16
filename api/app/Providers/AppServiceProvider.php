@@ -10,6 +10,11 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
+    // Free AI on the web app, per device per day. The app shows the same numbers (mobile/src/api.ts).
+    public const WEB_FREE_RECEIPTS = 3;
+
+    public const WEB_FREE_QUESTIONS = 10;
+
     /**
      * Register any application services.
      */
@@ -39,12 +44,19 @@ class AppServiceProvider extends ServiceProvider
 
             return is_string($device) && preg_match('/^[0-9a-f-]{36}$/i', $device) ? 'd:'.$device : 'ip:'.$request->ip();
         };
+        // The web app has no Pro yet, so its browsers get a small free allowance a day. Browsers can't
+        // forge Origin; other clients can, but then they only get the app's caps above, as today.
+        $web = fn (Request $request) => $request->header('Origin') === config('app.app_origin');
+        // The web caps go first: the first limit hit sets Retry-After, and the app reads a day-sized one
+        // as "that's today's free allowance".
         RateLimiter::for('receipt', fn (Request $request) => [
+            ...($web($request) ? [Limit::perDay(self::WEB_FREE_RECEIPTS)->by('web:'.$who($request)), Limit::perDay(30)->by('web-ip:'.$request->ip())] : []),
             Limit::perMinute(6)->by($who($request)), Limit::perDay(60)->by($who($request)), Limit::perDay(200)->by('ip:'.$request->ip()),
         ]);
         // Separate keys from receipts (Laravel prefixes them with the limiter name), so asking never
         // uses up receipt reads.
         RateLimiter::for('ask', fn (Request $request) => [
+            ...($web($request) ? [Limit::perDay(self::WEB_FREE_QUESTIONS)->by('web:'.$who($request)), Limit::perDay(60)->by('web-ip:'.$request->ip())] : []),
             Limit::perMinute(10)->by($who($request)), Limit::perDay(100)->by($who($request)), Limit::perDay(300)->by('ip:'.$request->ip()),
         ]);
     }

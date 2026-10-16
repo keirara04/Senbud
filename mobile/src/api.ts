@@ -1,10 +1,19 @@
 // The Senbud API (api/, Laravel). Only receipt reading and Bud's questions talk to it; everything else
 // stays on the phone.
 import type { Category } from '@senbud/core';
+import { Platform } from 'react-native';
 
 // Development: the dev machine on localhost (Android through `adb reverse tcp:8000 tcp:8000`), or
 // EXPO_PUBLIC_API_URL for a phone on Wi-Fi. Release builds default to the production API.
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? (__DEV__ ? 'http://localhost:8000' : 'https://api.senbud.com');
+
+// Pro can't be bought on the web yet, so the web app gets a small free allowance a day instead. The API
+// enforces the same numbers for requests from the web app (AppServiceProvider::WEB_FREE_*).
+export const WEB = Platform.OS === 'web';
+export const WEB_FREE = { receipts: 3, questions: 10 };
+
+// A 429 with a day-sized Retry-After is the web allowance (or a daily cap), not "too fast".
+const usedUpToday = (res: Response) => Number(res.headers.get('Retry-After') ?? 0) > 3600;
 
 export type Receipt = {
   merchant: string | null;
@@ -30,6 +39,8 @@ export async function readReceipt(base64: string, currency: string | undefined, 
       body: JSON.stringify({ image: base64, currency }),
       signal: abort.signal,
     });
+    if (res.status === 429 && usedUpToday(res))
+      throw new Error(WEB ? `That’s today’s ${WEB_FREE.receipts} free receipts on the web. You get more tomorrow, or type it instead.` : 'That’s a lot of receipts for one day. Try again tomorrow, or type it instead.');
     if (!res.ok) throw new Error(MESSAGES[res.status] ?? 'Couldn’t read that receipt. Try again, or type it instead.');
     return (await res.json()) as Receipt;
   } catch (e) {
@@ -81,6 +92,8 @@ export async function askBud(question: string, about: AskSummary, deviceId: stri
   } finally {
     clearTimeout(timer);
   }
+  if (res.status === 429 && usedUpToday(res))
+    throw new Error(WEB ? `That’s today’s ${WEB_FREE.questions} free questions on the web. Ask again tomorrow; quick adds still work.` : 'That’s a lot of questions for one day. Ask again tomorrow; quick adds still work.');
   if (!res.ok) throw new Error(ASK_MESSAGES[res.status] ?? OFFLINE);
   const { answer } = (await res.json().catch(() => ({}))) as { answer?: unknown };
   if (typeof answer !== 'string' || !answer) throw new Error(OFFLINE);

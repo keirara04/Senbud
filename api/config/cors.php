@@ -20,13 +20,14 @@ return [
     'allowed_methods' => ['POST'],
 
     // Exact origin, port included, no trailing slash.
-    'allowed_origins' => [env('WEB_ORIGIN', 'http://localhost:3000')],
+    'allowed_origins' => [env('WEB_ORIGIN', 'http://localhost:3000'), env('APP_ORIGIN', 'http://localhost:8081')],
 
     'allowed_origins_patterns' => [],
 
-    'allowed_headers' => ['Content-Type', 'Accept'],
+    'allowed_headers' => ['Content-Type', 'Accept', 'X-Device-Id'],
 
-    'exposed_headers' => [],
+    // So the web app can tell "try again in a minute" from "that's today's free allowance".
+    'exposed_headers' => ['Retry-After'],
 
     'max_age' => 0,
 

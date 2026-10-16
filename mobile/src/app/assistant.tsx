@@ -10,7 +10,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View 
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { Bud, type BudFace, ReceiptCard } from '@/art';
-import { askBud, type AskSummary } from '@/api';
+import { askBud, type AskSummary, WEB } from '@/api';
 import { type AppState, addTransactions, deleteTransactions, giveAskConsent, loadApp } from '@/db';
 import { useMoney } from '@/money';
 import { Button, CATEGORIES, Icon, Marker, T, TextButton, useTheme } from '@/ui';
@@ -206,7 +206,8 @@ export default function Assistant() {
         note: 'AI is off, so I can’t answer questions. Quick adds still work, like “kopi 4.50”.',
         actions: <Button title="Turn on AI in Settings" variant="secondary" onPress={() => router.navigate('/settings')} />,
       });
-    if (!a.pro)
+    // On the web there's no Pro to buy yet: a few free questions a day instead (the API counts them).
+    if (!a.pro && !WEB)
       return replace(id, {
         face: 'happy',
         title: 'Senbud Pro',
