@@ -117,7 +117,7 @@ Dynamic Type and font scaling stay on (React Native's default). Layouts must sur
   - Ease: `cubic-bezier(0.22, 0.68, 0.14, 1)`, the web's highlighter curve.
   - Motion explains a change: Undo sliding in, a number updating. It is never decoration.
   - Reanimated layout animations follow the OS **Reduce Motion** setting, so they just appear.
-- **Elevation:** none. Cards are flat colour on paper, like the web. Use shadows only for things that float over content, such as the assistant button and bottom sheets.
+- **Elevation:** none. Cards are flat colour on paper, like the web. Use shadows only for things that float over content, such as Bud in the tab bar and bottom sheets.
 
 ## 3. Components (`mobile/src/ui.tsx`)
 
@@ -142,18 +142,22 @@ Dynamic Type and font scaling stay on (React Native's default). Layouts must sur
 
 Each screen gets one job, one hero element, and a plain sentence explaining it.
 
+**Concepts:** `docs/concepts/senbud-app-screens.html` draws every screen below at real size (375 pt wide) in light and dark, with Malaysian example data. Open it in a browser and use the theme switch at the top. Screens marked "Concept" are drawn there but not built, and the decisions in 4.1–4.10 are proposals until the user signs them off (open questions in 4.11).
+
 | Screen | Hero (one per screen) | Content, top to bottom | Status |
 |---|---|---|---|
-| **Setup** (first run, later "Budget & rent") | `title`: "How much can you spend?" | Period `Segmented`, budget `Field`, rent amount and due day, currency, `Save`, `danger` "Erase all data" | Built |
-| **Home** | `panel` with `hero` safe-to-spend in highlighter | Rent card ("🏠 Rent $650 in 6 days — you're covered."), pace card (`Progress` + spec 4.2 copy), quick add `Field` + `UndoBar`, links | Built |
+| **Welcome** (first launch) | Bud and one line: "Your money buddy" | Logo, Bud, one sentence, three promises (no bank login, no account, stays on your phone), `primary` "Get started", "I've used Senbud before" | Concept |
+| **Setup** (first run, later "Budget and rent") | `title`: "How much can you spend?" | Period `Segmented`, budget `Field`, rent amount and due day, currency, `Save`, `danger` "Erase all data" | Built |
+| **Home** | `panel` with `hero` safe-to-spend in highlighter | Rent card, pace card, today's nudge, pinned `CaptureBar` (see 4.2) | Built; v2 concept |
 | **Activity** | none; it's a list | Cards with label, `CategoryChip`, date, amount, delete. Later: filter chips, including "added by assistant". | Built |
-| **Budgets** | `Progress` for the overall budget | Category rows with `Progress` and amounts; rent and bills list with due days | Phase 1 |
-| **Can I afford it?** | `hero` verdict amount on `panel` | Price `Field`, verdict sentence ("Yes, go for it." / "Doable, but tight." / "Not this week."), hours of work in `caption` | Phase 1 |
-| **Friends** | Net balance (`hero`, `good` if owed, `bad` if you owe) | Per-friend rows with "Settle up" `secondary`; split flow uses `Segmented` (even / by item) and owner chips | Phase 1 |
-| **Treats** | Jar balance `hero` with `Marker` on the jar name | Treat list with "every N days", history, `highlight` "Add to jar" | Phase 1 |
-| **Wrapped** | One stat per page, full-bleed `panel` | Swipeable cards; category colours from 2.3; share image | Later |
-| **Settings** | none | Grouped rows: currency, hourly rate, AI on/off with "what gets sent", export, theme, `danger` erase | Phase 1 |
-| **Assistant** | – | Floating 56 pt cobalt button, bottom right, on every screen, with a shadow (it floats). Opens a bottom sheet (`radius.lg`). | Phase 2 |
+| **Budgets** | `panel` with what's left in highlighter and `Progress tone="panel"` | `StampLedger` by category; rent and bills list with due days; detected subscriptions | Concept |
+| **Can I afford it?** | `panel`: verdict in words, key number in highlighter | Price `Field`, optional "What is it?", treat price picks, hours of work under a hairline | Concept |
+| **Friends** | Net balance `hero` in highlighter, direction in words | Per-friend rows; friend sheet with "Send on WhatsApp", "Other apps", "Copy" and "Mark paid"; 3-step split flow with `PersonTabs` and `ClaimRow` | Concept |
+| **Treats** | `TreatJar` filling toward a goal, total in highlighter, `highlight` "Add to jar" inside the panel | Treat list with "every N days" and status, short history, month-end leftover sheet | Concept |
+| **Wrapped** | One stat per page, full-bleed `panel` | `StoryPager`, `BarChart` on a `ReceiptCard`, share image | Concept (later phase) |
+| **Settings** | none | Grouped `ListRow`s: Money, AI, Look, Your data, Senbud Pro, then `danger` Erase | Concept |
+| **Senbud Pro paywall** | selected plan as `panel`; the buy button is the one `highlight` | Title, three benefits, plan radio group, buy button, small print with Terms, Privacy, Restore (see 4.8b) | Concept; code in `pro.tsx` on `claude/senbud-pro` |
+| **Assistant** | – | `BudTab`, the middle of the tab bar, opens a native form sheet with chat | Concept (Phase 2) |
 
 **Empty states:**
 - One sentence with a concrete example of what to do: "Type 'lunch 12' on Home to add your first expense."
@@ -163,6 +167,333 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 - Shown inline, under the field, saying how to fix it.
 - Destructive confirmations use the native alert. The red button names the action ("Erase") and the body says what's lost.
 
+### 4.0 Bud, the assistant's face
+
+- **What it is:** a small thermal receipt with a face. It has a receipt-white body with torn edges, an ink outline, two printed lines as a fringe, and coral blush. The Highlighter-S tile and the `Sen[bud]` wordmark stay the app's logo; Bud is the assistant.
+- **No highlighter on Bud,** so it never competes with a screen's key number.
+- **Four faces:**
+  - happy (default)
+  - thinking (an answer is loading)
+  - oops (offline or AI off)
+  - yay (Pro unlocked, a jar goal reached)
+- **Where it shows:** inside `BudTab` in the middle of the tab bar (38 pt), the assistant sheet header (32 pt), Welcome (about 170 pt) and empty states. It's never in copy, and it never replaces words. Smallest size is 24 pt.
+- **Accessibility:** decorative (`accessibilityElementsHidden` / `importantForAccessibility="no"`). The button keeps its label "Ask Senbud". An idle wobble on the button is off under Reduce Motion.
+- **Same drawing in both themes:** the white body reads on paper, night and cobalt. It's drawn with `react-native-svg`.
+- **Name:** Bud (decided 16 Oct 2026).
+
+### 4.1b Welcome (first launch)
+
+- **Decided 16 Oct 2026:** Senbud stays account-free. Data lives in SQLite on the phone; a backup file covers moving phones. Optional Sign in with Apple or Google comes later, only for encrypted sync, as a Pro feature.
+- **No sign-in wall.** The spec promises no bank login and no accounts, and Pro uses an anonymous RevenueCat id, so "Get started" goes straight to Setup.
+- **Top to bottom:**
+  1. Logo.
+  2. Bud.
+  3. `title` "Your money buddy".
+  4. One sentence: "Snap or type what you spend. Senbud tells you what's safe to spend today and when rent is coming."
+  5. Three checkmarked promises: "No bank login", "No account", "Stays on your phone".
+  6. `primary` "Get started".
+  7. `TextButton` "I've used Senbud before".
+- **"I've used Senbud before"** opens a sheet: "Senbud keeps everything on your phone, so there's no account to log in to." It offers "Restore from a backup" (Files or Google Drive) and "Restore Senbud Pro" (Apple or Google account).
+- **Sign in (later, Pro, for encrypted sync only):**
+  - An optional sheet: "Use Senbud on more than one phone". It explains that spending is encrypted on the phone before it's sent.
+  - Buttons: Sign in with Apple first, then "Continue with Google", then "Not now".
+  - If Google sign-in is offered on iOS, Sign in with Apple is required (App Review 4.8).
+
+### 4.1 Navigation (all screens)
+
+- **Tab bar with five slots:** Home, Budgets, **Bud**, Friends, Treats (decided 16 Oct 2026).
+  - The four sides use SF Symbols (`house`, `chart.bar`, `person.2`, `gift`) and Material icons on Android. Tint is `accent`.
+  - Bud (`BudTab`) is raised in the middle and opens the assistant sheet over the current screen; it doesn't switch tabs.
+  - It's built with Expo Router's JS `Tabs` and a custom `tabBarButton` for the centre, because native tabs can't raise a button. That means we own Dynamic Type and safe-area handling for the bar.
+- **Pushed, not tabs:**
+  - Activity, from the pace card's "See activity".
+  - Can I afford it?, from Home.
+  - Wrapped, from the Home nudge on the 1st and from Budgets → Past recaps.
+  - Settings, from the button at the top right of Home.
+- **Titles:** tab roots other than Home use large titles. Home has no title; the date label sits in the nav bar and the panel is the first thing you see.
+- **No floating button.** Bud in the tab bar is the assistant on every tab, Home included. Pushed screens keep the tab bar; full-screen modals (Wrapped, paywall, sheets) hide it.
+
+### 4.2 Home v2
+
+- **Top to bottom:**
+  1. Date label and Settings button.
+  2. `panel`: safe to spend today.
+  3. Rent card.
+  4. Pace card, with "See activity".
+  5. Today's nudge (`NudgeCard`), only when there is one.
+  6. "Can I afford it?" `TextButton`.
+  7. `CaptureBar`, pinned above the tab bar. `UndoBar` floats just above it.
+- **Nudges (spec 5):**
+  - Rent (priority 1) and pace (priority 2) nudges go *inside* the rent and pace cards, so the same sentence isn't shown twice.
+  - Example: "Rent RM 450 in 4 days — RM 338 short." plus a caption and a `secondary` "Plan for rent".
+  - `NudgeCard` therefore only carries priorities 3–5: renewals, IOUs older than 7 days, treats.
+- **When rent isn't covered**, the hero shows RM 0 with "Rent comes first. This goes back up once it's covered." The panel stays cobalt.
+- **Capture bar:**
+  - The camera button opens the receipt flow (the Pro screen for free users).
+  - The text field takes quick text.
+  - The pen button opens the "Add by hand" sheet.
+  - The field is also the assistant's way in on Home:
+    - Text with amounts saves straight away through `parseSpending`, with Undo. This works with AI off.
+    - A question opens the assistant sheet with the answer.
+- **Add by hand sheet (spec 4.1):**
+  - `AmountPad` first.
+  - Category chips, with last time's category pre-selected (selected chip gets a 2 pt `text` ring).
+  - "What was it?" field, today's date, and "Repeat: Grab RM 12".
+  - `primary` "Add RM 6.50".
+- **First day:** the empty-state line sits right above the bar: "Type what you spent below, like 'nasi lemak 6.50'. Senbud does the rest." The field shows focus.
+
+### 4.3 Budgets
+
+- **Hero:** `panel` with the period label ("October · monthly"), what's left in highlighter, `Progress tone="panel"`, and "RM 498 of RM 1,400 spent. On track, 16 days to go."
+- **By category: `StampLedger`** (chosen over a chip-and-bar list, which read as generic):
+  - A `ReceiptCard` headed "OCTOBER · BY CATEGORY", one row per category: name, dotted leader, "248 / 400" in mono.
+  - Under it, 10 stamps, each 10% of the limit (rounded), filled with the category ink. The receipt is white in both themes, so the inks pass there in dark mode too.
+  - What's left sits at the end of the stamps: "152 left" in dim ink; amber "24 left, go easy" when close; coral "12 over" plus one coral stamp outside the ten when over.
+  - Categories with no limit show the amount and "No limit".
+  - Over budget also offers a fix in a card under the receipt: "Food is RM 12 over. Move it from Treat, which has RM 39 left?"
+- **Rent and bills:**
+  - A `List` with due day and countdown, then `+ Add a bill`.
+  - The caption under it says how much is set aside: "RM 492.90 is set aside and never counts as spendable."
+- **Detected subscription (Pro):** a card that asks first: "Netflix charged RM 17 on 3 Sep and 3 Oct. Is it a subscription?" with "Not really" / "Yes, track it".
+- **Budget settings rows:** Period, Until payday (`ProLock`), Past recaps.
+- **Over:** the category gets a coral stamp past its ten and "12 over" in `bad` ink. The panel never turns red.
+- **Empty:** "Give a category its own limit, like Food at RM 400 a month." with `secondary` "Add a category limit".
+
+### 4.4 Can I afford it?
+
+- **Top to bottom:**
+  1. Price `Field`: 28 pt text, numeric keyboard, focused on open.
+  2. Optional "What is it?" field.
+  3. Picks with your treats' last prices (empty state only).
+  4. `panel` with the answer.
+  5. A `secondary` action.
+- **The answer updates as you type** (debounced). There's no Check button.
+- **Panel:**
+  - Verdict in `title`, then a label, the key number in highlighter, and a caption.
+  - Under a hairline: "= 12 hours of work at RM 10/hr" (spec 4.6, rounded to 0.5).
+- **Verdicts:**
+
+| Verdict | Title | Highlighter | Caption | Action |
+|---|---|---|---|---|
+| Yes | "Yes, go for it." | per day after (RM 18.06) | "a day till the 31st. Rent's still covered." | "I bought it" |
+| Tight | "Doable, but tight." | per day after (RM 6.81) | "a day, down from RM 25.56. Wait till payday on the 25th?" | "I bought it" |
+| No | "Not this month." | the date it fits ("1 Nov") | "Rent's in 12 days, and this would eat into it." | "Remind me on 1 Nov" |
+
+- **"No" never turns the panel coral.** The highlighter shows when it fits instead of a shortfall.
+- **No hourly rate:** the hours line is replaced by a card: "Want prices in hours of work? Add what you earn an hour." with an "Add hourly rate" `TextButton`.
+- **Before you type,** the panel shows safe to spend today with "Type a price and Senbud checks it against this, rent first."
+
+### 4.5 Friends
+
+- **Hero:** net balance on `panel` in highlighter in *both* directions. The label carries the direction ("Owed to you" / "You owe overall"), and the caption says the rest ("across 3 friends, after the RM 8 you owe Wei Ling."). This replaces the earlier "`good` if owed, `bad` if you owe": painting "you owe" coral reads as a telling-off.
+- **Rows:**
+  - `Avatar` with initials, name, and the latest note and date.
+  - The amount, with "owes you" in `good` or "you owe" in `textDim`.
+  - IOUs older than 7 days get a sub-line with a "Remind" `TextButton`.
+- **Below the list:**
+  - `primary` "Split a bill" (also `+` in the nav bar).
+  - "2 settled this month" opens history.
+- **Friend sheet:**
+  - Avatar, name, and what they owe.
+  - Their IOUs.
+  - The pre-written message in a sunken box ("Hey Sarah! Grab to Mid Valley was RM 23.10!").
+  - **`primary` "Send on WhatsApp":**
+    - Calls `Linking.openURL('whatsapp://send?text=…')` with the message URL-encoded. WhatsApp opens with the text ready; the person picks the chat and taps send.
+    - No phone number is needed, so there's still no contacts access, and Senbud never sends anything itself.
+    - The button shows only when `Linking.canOpenURL` says WhatsApp is installed. That needs `LSApplicationQueriesSchemes: ["whatsapp"]` (iOS) and a `<queries>` entry (Android) in `app.json`.
+  - **`secondary` "Other apps"** calls `Share.share({ message })`, the native share sheet (Telegram, Messages, and so on).
+  - **`secondary` "Copy"** copies the message.
+  - Then "Opens WhatsApp with this message ready. You pick the chat and tap send."
+  - **`secondary` "Mark paid"** (`good` ink), which shows `UndoBar`.
+  - The row-level "Remind" opens this sheet.
+- **Split flow: three steps**, replacing the per-item, per-person circle grid:
+  1. **Who and how.**
+     - The receipt summary ("Restoran Ali Maju · RM 31.30 · 5 items from your photo").
+     - "Who was there?" as 48 pt name chips plus "+ Add".
+     - "Who paid?" as `Segmented`.
+     - "How to split it?" as two radio cards: By item (Pro) or Evenly ("About RM 10.43 each"). Evenly skips step 2.
+  2. **Who had what.**
+     - `PersonTabs` across the top, one per person, with running totals.
+     - Pick a person, then tap their items on the `ReceiptCard`. Each item is a full-width 52 pt `ClaimRow` with the owners' initials and a checkbox for the selected person.
+     - Shared items are tapped for each person and split evenly.
+     - Unassigned items get an amber hatch and "Not assigned". "1 item left: Milo ais" shows above a disabled "Next".
+  3. **Check and save.**
+     - One row per person: what they had, their total, and "your Food" or "owes you".
+     - "Total, paid by you".
+     - A line about service charge and SST: split by each person's part when present.
+     - `primary` "Save split" and "Change amounts" (the old "Amounts" mode).
+  - Your share becomes an expense; the rest become IOUs (`iousFromSplit`). Worked example: RM 31.30 becomes RM 12.00, RM 9.30 and RM 10.00.
+- **Empty:** "Paid for the group? Snap the receipt, or type something like 'dinner 45 with Aiman and Sarah'." with "Friends are just names. Senbud doesn't read your contacts."
+
+### 4.6 Treats
+
+- **Hero: `TreatJar`, a jar that fills,** on the `panel`:
+  - The jar is drawn in `onPanel` outline with a white lid, and the money inside is highlighter yellow with coin outlines. So the fill *is* the key number drawn, and the total in highlighter sits under it.
+  - Tick marks at each quarter, and a dashed line at the goal.
+  - Beside the jar: the goal ("Movie night for two, RM 60"), "78% full", and "Change goal".
+  - Under it: the total `hero`, a caption in treats ("= 4 Tealives or 2 movies at GSC. RM 13.50 to your goal."), then `highlight` "Add to jar". The screen has one yellow zone.
+- **The jar needs a size, so it gets a goal.**
+  - Fill = jar ÷ goal. This needs a new field, `treatJar.goalCents` (spec 7). Approved 16 Oct 2026.
+  - **No goal:** an empty jar with "Pick something to fill it for, like a concert." and "Set a goal".
+  - **Goal reached:** the jar overflows a little, the side says "Full", the caption says "Goal reached. Movie night for two is covered, with RM 1.90 spare.", and the button becomes "Spend RM 60 on movie night".
+  - Adding money animates the fill rising (`motion.slow`). It just updates under Reduce Motion.
+- **The `Marker` on the jar name is dropped:** it would be a second yellow thing.
+- **Your treats** list:
+  - Name, your own last price, and "every N days · last 9 days ago".
+  - Status in words: "Fits today" in `good`, or "Next in 9 days" in `textDim`.
+- **History:** a short list with "See all".
+- **Month-end leftover:**
+  - A sheet on the 1st (or reached from the Home nudge): "September's done. You finished RM 38 under budget. Move it to the treat jar?"
+  - `primary` "Move RM 38 to the jar" and `secondary` "Keep it in October's budget".
+  - In dark mode `primary` and `highlight` look the same (section 7). On this screen that's acceptable, because the sheet covers the panel.
+- **Learned treat:** "You've had Tealive 4 times this month. Make it a treat?" with two `secondary` buttons. This asks before adding, as spec 4.8 says.
+- **Empty:** the jar hero at RM 0 with "Leftover budget lands here at the end of each month.", the learned-treat card, then "Or add one yourself, like 'bubble tea'. Senbud remembers what you paid."
+
+### 4.7 Wrapped
+
+- **`StoryPager`** of full-bleed `panel` pages:
+  - Segment bars at the top, the month as a label, and Close.
+  - One stat per page in highlighter, up to 96 pt (above the `hero` size; Wrapped is the one place it grows).
+  - `Button` "Share" with an outline on cobalt.
+- **The pages are the same in light and dark:** cobalt and the white receipt don't follow the theme, as on the web.
+- **Cards (spec 4.9):**
+  - total vs budget ("You spent 88% of your budget.")
+  - top category (`BarChart` on a `ReceiptCard`)
+  - top place ("7-Eleven, 31 visits. That's nearly one a day.")
+  - treats
+  - hours of work
+  - money saved
+  - best streak
+- **The AI writes the captions; the numbers come from local data.**
+- **No autoplay.** Tap the right or left half to move, swipe down to close. With Reduce Motion, pages cut instead of sliding.
+- **Share screen:**
+  - A 9:16 `ReceiptCard` preview in mono type: the headline stat with a highlighter mark, then dotted-leader lines (Top category, Top place, Treats, Hours of work, Best streak), with "Made with Senbud" at the bottom.
+  - A "Show amounts" `Switch`, off by default.
+  - `primary` "Share image" opens the native share sheet.
+- **Pro:** free users get the basic monthly cards; Pro adds the full set and the year-end edition.
+
+### 4.8 Settings
+
+- **No hero.** Inset grouped `ListRow`s:
+  - **Money:** Currency, Hourly rate, Budget and rent (the existing Setup screen).
+  - **AI:**
+    - `Switch` "Use AI for photos and questions".
+    - A "What gets sent" row.
+    - Footer: "Typing 'kopi 4.50' always works, AI or not. Everything is stored on this phone."
+  - **Look:** `Segmented` Light / Dark / System. This closes the open item in section 7.
+  - **Your data:** "Export spending (CSV)", "Back up everything".
+  - **Senbud Pro:**
+    - A card with one line of what you get and `primary` "See plans", which opens the paywall (4.8b; code in `mobile/src/app/pro.tsx` on `claude/senbud-pro`). Card copy follows the paywall: "Senbud Pro does the typing for you: snap receipts, unlimited assistant, subscription reminders."
+    - A "Restore purchases" `TextButton`.
+    - Pro members see "Senbud Pro · Active" and "Manage".
+  - Then `danger` "Erase all data" with "Privacy · Terms" under it.
+- **What gets sent** (pushed screen), three cards:
+  1. "When you snap a receipt": the receipt consent text from `receipt.tsx`, word for word.
+  2. "When you ask a question": the question plus a short summary (this month's totals, budget and rent, the last 20 expenses), never the full history. This is spec 3's "AI sees" rule.
+  3. "Never leaves the phone": expenses, friends' names, treats and the jar.
+  - Then the same `Switch` again.
+- **Erase:**
+  - Native alert: "Erase all data?" / "This deletes every expense, budget, IOU and treat on this phone. Export first if you want a copy. It can't be undone."
+  - Buttons: Cancel and a destructive "Erase".
+
+### 4.8b Senbud Pro paywall
+
+- **Opened from:** Settings → "See plans", any `ProLock`, and the camera for free users. A full-screen modal with Close (48 pt) at the top right. There's no tab bar.
+- **Copy (chosen by the user):**
+  - Title (`title`): "Senbud Pro does the typing for you".
+  - Three benefit rows, each with a system icon on a `surface` circle, a `bodyStrong` name and a `caption` line:
+    - Snap receipts: "Take a photo. Senbud reads the shop, items and prices."
+    - Unlimited assistant: "Ask or add as much as you like."
+    - Subscription reminders: "A heads-up the day before Spotify or Netflix renews."
+  - No trial wording, ratings or countdowns.
+- **Plans:**
+  - A radio group of two cards, at least 64 pt tall: Yearly ("$39 a year", shown as "$3.25 a month") and Monthly ("$4.99 a month").
+  - Yearly is preselected.
+  - The selected card is the cobalt `panel`, and it moves when you pick the other plan.
+- **Prices come from RevenueCat** in the store's currency, never typed into the app. The monthly equivalent is the yearly price ÷ 12, formatted with `money`.
+- **One yellow thing:** the buy button is `highlight`, labelled with what you pay ("Subscribe for $39 a year"). Prices on the panel stay `onPanel` white. This holds in dark mode too, because the screen has no `primary` button.
+- **Small print:** "Renews automatically until you cancel. Cancel any time in your App Store settings, at least a day before it renews." Then Terms, Privacy and "Restore purchases" as `TextButton`s.
+- **States:**
+  - **Buying:** the button dims and shows a spinner with "Waiting for the App Store". Close is disabled until the store sheet returns.
+  - **Prices can't load** (offline, store down): a card says "Couldn't load prices. Check your connection and try again. Senbud keeps working without Pro." with `secondary` "Try again". Terms, Privacy and Restore stay.
+  - **Restore finds nothing:** an inline caption under the links: "No Senbud Pro purchase found on this Apple or Google account." (the copy already in `receipt.tsx`).
+  - **Done:**
+    - `panel` with the label "Senbud Pro", "You're in." in highlighter, and the renewal date.
+    - "Try it now: snap a receipt and Senbud fills in the items for you."
+    - `secondary` "Snap a receipt" and a "Done" `TextButton`.
+
+### 4.9 Assistant
+
+- **`BudTab`:** Bud (4.0) on a raised cobalt circle in the middle of the tab bar. On Home the capture bar's text field also opens the sheet when you type a question.
+- **Sheet:** a native form sheet, opening near full height so the conversation has room.
+  - **Background:** dotted notebook paper (the web's dot grid, 18 pt).
+  - **Header:** `Bud` (36 pt, its face matches the state), "Bud" with "Your money buddy" under it, and Close.
+  - **When it opens:** not an empty chat. Bud at 96 pt, "What's up?", one line ("Ask me anything about your money, or tell me what you spent."), and four starter cards in a 2×2 grid ("Can I afford…", "How's my month?", "Split a bill", "Add a few things"), each with a one-line hint. Tapping one fills the box.
+  - **Your messages:** `NoteBubble`, short cobalt notes on the right.
+  - **Bud's replies:** `BudSlip`. Bud is a receipt, so it prints its answers as small torn-edge receipt slips with Bud's face beside them:
+    - a mono header ("Can I afford it?", "Added", "Split this?")
+    - dotted-leader lines and a total
+    - one number marked with the highlighter stroke (the screen behind is dimmed, so it doesn't compete with that screen's hero)
+    - actions under the slip
+  - **While loading,** the slip starts "printing": the header plus shimmering placeholder lines, and Bud's thinking face. With Reduce Motion it shows static lines.
+  - **Input row:** camera, the field "Ask or add…", and a send button that is `accent` when there's text and `surfaceSunken` when empty.
+- **Answers reuse the rules.**
+  - "Can I afford" gives the same verdict as 4.4: "Concert ticket RM 45.00", then "Yes. RM 22.75 a day after", "till the 31st, rent still covered · 4.5 hrs of work", with actions "I bought it" and "Open in Can I afford it?".
+  - A quick add prints an "Added" slip with each line and "Today RM 16.50", with Undo and Edit.
+- **Asks first when unsure:** a "Split this?" slip showing exactly what would be saved ("Badminton court RM 32.00", "You RM 16.00", "Aiman owes you RM 16.00"), then `secondary` "Just mine" / `primary` "Yes, split it".
+- **AI off:** an "AI is off" slip with Bud's oops face: "AI is off, so I can't answer questions. Quick adds still work, like 'kopi 4.50'." with `secondary` "Turn on AI in Settings". The camera button is hidden, and the field's placeholder becomes "kopi 4.50, grab 12".
+- **Offline:** "Can't reach Senbud right now. Anything you add is still saved on your phone." with a "Try again" `TextButton`. Plain text, never red.
+
+### 4.10 Proposed components
+
+These are additions to `ui.tsx` for the screens above. Each takes colours from `useTheme()`, keeps 48 pt taps, and gets a row in the section 3 table when it's built. Native first; the only new dependency is `react-native-svg`, for `ReceiptCard`, `TreatJar` and `Bud`.
+
+| Component | Props and variants | States and rules |
+|---|---|---|
+| `Tabs` | Expo Router JS tabs | Five slots (4.1): four tabs with SF Symbols / Material icons and `accent` tint, plus `BudTab` in the middle. Labels scale with Dynamic Type. |
+| `NudgeCard` | `message`, `actions` (≤ 2), `onDismiss` | Surface card, "Today" `label`, one sentence, `TextButton`s. One a day at most; core picks it. Not a live region. |
+| `CaptureBar` | `onSnap`, `onSubmit(text)`, `onManual` | Pinned above the tab bar; rises with the keyboard. 48 pt icon buttons labelled "Snap a receipt" and "Add by hand". Amounts → `parseSpending` + `UndoBar`; questions → assistant sheet; camera without Pro → Pro screen. |
+| `Sheet` | Expo Router `presentation: 'formSheet'`, detents medium/large | `surface`, `radius.lg`, grabber, shadow (it floats). No JS sheet library. |
+| `AmountPad` | `value`, `onChange`, `currency` | 3×4 keys ≥ 48 pt; the decimal key is hidden for zero-decimal currencies (KRW, JPY). Keys are buttons; ⌫ is labelled "Delete". Light haptic on press. |
+| `List` + `ListRow` | `label`, `value`, `accessory` (chevron / `Switch` / none), `onPress` | Inset grouped, min 52 pt rows, hairline separators inset 16. At large text the value wraps under the label. |
+| `Switch` | RN `Switch` | `trackColor.true = accent`, `thumbColor = surface` (7.6:1 light, 15:1 dark). |
+| `Progress tone="panel"` | as `Progress` | Track is white at 22% on cobalt. Fills are mint, amber, and **coralLight** for over (plain coral is 2.7:1 on cobalt). Still paired with words. |
+| `PersonTabs` | `people: {name, totalCents}[]`, `selected`, `onSelect` | Split step 2. Equal-width tabs at least 52 pt tall, each with the name and a running total. The selected tab is `accent`. Role `tab`, label "Sarah, RM 10.00 so far". |
+| `ClaimRow` | `item`, `owners`, `mine`, `onToggle` | A full-width 52 pt row on a `ReceiptCard`: name, price, owners' initials (24 pt, decorative), and a 28 pt checkbox for the selected person. Unassigned rows get an amber hatch and "Not assigned". Role `checkbox`, label "Sarah had Maggi goreng". |
+| `TreatJar` | `cents`, `goalCents?` | `react-native-svg` jar on `panel`: `onPanel` outline, highlighter fill with coin outlines and a wavy top, quarter ticks, dashed goal line. It overflows a little past 100%. Decorative; the numbers next to it carry the meaning. |
+| `Bud` | `face: 'happy' \| 'thinking' \| 'oops' \| 'yay'`, `size` | The assistant mascot (4.0). `react-native-svg`, the same drawing in both themes, decorative. |
+| `Avatar` | `name` | 40 pt initials circle on `surfaceSunken`. Never a photo; no contacts access. |
+| `BudTab` | `onPress` | Centre slot of the tab bar: 56 pt `panel` circle raised 22 pt above the bar, `Bud` (38 pt) inside, label "Bud" under it, shadow, 1.5 pt `onPanelDim` ring in dark mode. Opens the assistant sheet (`tabPress` → `preventDefault`), never navigates. Role button, label "Ask Bud". Idle wobble off under Reduce Motion. |
+| `StoryPager` | `pages`, `onClose` | Full-bleed `panel` pages with segment bars. Tap the halves to move, swipe down to close, no autoplay, cuts under Reduce Motion. Each page is one accessibility element read as a sentence. |
+| `StampLedger` | `rows: {category, spentCents, limitCents?}[]` | Budgets by category (4.3). `ReceiptCard`, dotted leaders, 10 stamps per limit in category ink, words for left/close/over, a coral stamp outside the ten when over. Each row is one 48 pt button labelled "Food, RM 248 of 400, RM 152 left". |
+| `BarChart` | `data: {category, share}[]` (≤ 6) | Horizontal, sorted, with the % as text on every bar. Fill is the category **ink** on white or a receipt, and the category **tint** on a dark `surface`. |
+| `ReceiptCard` | `children` | White in both schemes with zig-zag torn edges (the web's `.receipt`), via `react-native-svg`. The share image is captured with `react-native-view-shot` and sent to the native share sheet. |
+| `ProLock` | `onPress` | Grey `Other`-style chip with a lock and "Pro" next to a locked option. Opens the paywall (`pro.tsx`). It never hides the option. |
+| `BudSlip` | `title`, `lines`, `total?`, `marked?`, `actions`, `state: 'ready' \| 'printing'` | Bud's reply: a `ReceiptCard` slip (8 pt teeth) in mono, with `Bud` beside it. One highlighter-marked number at most. Actions sit under the slip. Printing shows placeholder lines, which are static under Reduce Motion. Read by screen readers as one sentence. |
+| `NoteBubble` | `text` | Your message: `panel` fill, `onPanel` text, right-aligned, corner tucked at the bottom right. Cobalt in both schemes. |
+
+**Contrast added by these components** (add to 2.2 when built):
+
+| Pair | Ratio | Note |
+|---|---|---|
+| mint on cobalt | 4.0 | `Progress tone="panel"` fill (non-text, needs 3:1) |
+| amber on cobalt | 4.7 | same |
+| coralLight on cobalt | 3.3 | same; plain coral is 2.7 and fails |
+| cobalt `BudTab` on night | 2.4 | fails 3:1, hence the `onPanelDim` ring (12.5:1 on night) |
+| category inks on white | 7.3–9.9 | `BarChart` in light mode and on receipts |
+| category inks on night2 | 1.7–2.3 | fail, hence tints in dark mode |
+| category tints on night2 | 12.4–15.0 | `BarChart` fills in dark mode |
+| cobalt on moon | 6.7 | the `UndoBar` action in dark mode (see section 7) |
+
+### 4.11 Open questions (need the user's call before building)
+
+1. **Friends hero in highlighter both ways?** Should the Friends hero use highlighter in both directions (4.5), instead of good/bad colour?
+2. **Treats Marker and dark `primary`:** should the Treats Marker be dropped? And should dark `primary` get its own fill? In dark mode `accent` is highlighter, so every `primary` button is yellow: Friends ("Split a bill", "Mark paid") and the assistant's "Yes, split it" show two yellow things on one screen.
+3. **Category limits free or Pro?** Spec 4.2 says they "exist already"; spec 8 makes "multiple budgets" Pro.
+4. **Nudges inside their cards?** Should rent and pace nudges live inside their own cards on Home (4.2)?
+5. **Share image link:** does the share image get a URL or handle? The domain isn't settled (spec 11).
+6. **Are by-item splits and full Wrapped still Pro?** Spec 8 says yes, and the concepts lock them. The paywall the user chose lists only receipts, the unlimited assistant and subscription reminders.
+
 ## 5. Voice
 
 The voice is a friendly older cousin who's good with money.
@@ -170,8 +501,8 @@ The voice is a friendly older cousin who's good with money.
 - **Plain words, no finance jargon:** "safe to spend", not "discretionary balance".
 - **Never shames:**
   - "$12 over, no stress."
-  - "Cook tonight? 🍳"
-  - At most one emoji in a line, and only where the spec has one.
+  - "Cook tonight?"
+- **No emoji.** Not in app copy, notifications, share images or docs. Words carry the tone; where a picture helps, use a system icon (SF Symbols via `expo-symbols`, Material on Android) with an accessibility label. Spec copy that has emoji is written without them here.
 - **Numbers carry the message.** Format them through `money(cents / 100, currency, locale)` from the profile, never by hand.
 
 ## 6. Accessibility checklist (every screen)
@@ -185,9 +516,10 @@ The voice is a friendly older cousin who's good with money.
 
 ## 7. Not done yet (on purpose)
 
-- **Dotted-notebook background and torn receipt edges.** They need `react-native-svg`, which isn't worth adding for decoration yet. Revisit for Wrapped share images.
-- **No custom font, icon set or illustration style yet.** Use emoji sparingly and system symbols when an icon set is chosen. `expo-symbols` is already installed for SF Symbols on iOS.
+- **Dotted-notebook background.** Still left out. `react-native-svg` is needed from Phase 1 anyway, for `Bud`, `TreatJar` and the torn edges on `ReceiptCard`, so add it then; the background can follow if it's worth it.
+- **No custom font or icon set yet.** Use system symbols (never emoji) until an icon set is chosen. The one illustration is Bud (4.0); don't add others without a reason. `expo-symbols` is already installed for SF Symbols on iOS.
 - **In dark mode, `primary` and `highlight` buttons look the same** (both highlighter yellow), so the "single most important action" emphasis disappears at night. Accepted for now. If a screen ever needs both, give dark `primary` its own fill.
 - **Large text checked on iOS only.** At the largest accessibility size on the iPhone 17 simulator, Home and Activity wrap correctly. That's after three fixes: `Row` wraps, inputs drop their fixed line height, and the hero number is capped at 1.3× and shrinks to fit. Android at large font scale is not checked yet.
 - **`money` minor digits:** verified on iOS Hermes (KRW). Android is inferred, since it matched Node in every Phase 0 `Intl` probe.
-- **No user-selectable theme.** The app follows the system setting (`userInterfaceStyle: automatic`). Settings gets a light/dark/system choice in Phase 1.
+- **No user-selectable theme.** The app follows the system setting (`userInterfaceStyle: automatic`). Settings gets a light/dark/system choice in Phase 1. Drawn in 4.8.
+- **`UndoBar` action is unreadable in dark mode.** The bar fills with `text` (moon, `#eef0ff`) and the "Undo" button uses `highlight` (`#eeff5a`): 1.0:1. Light mode is fine (15:1 on ink). Fix: in dark mode, use `accent`'s light value, cobalt (6.7:1 on moon). The concepts page already draws it that way. Not changed in `ui.tsx` yet.
