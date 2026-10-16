@@ -1,5 +1,5 @@
 // Local storage: one SQLite file, plain SQL, numbered migrations. All money is integer cents.
-import type { Bill, BudgetPeriod, Category, Iou, IsoDate, Subscription, Transaction, Treat } from '@senbud/core';
+import { type Bill, type BudgetPeriod, type Category, type Iou, type IsoDate, periodRange, type Subscription, type Transaction, type Treat } from '@senbud/core';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 // A random v4 UUID from SQLite's own CSPRNG, so no native crypto module is needed.
@@ -39,6 +39,9 @@ const MIGRATIONS = [
    ALTER TABLE app ADD COLUMN theme TEXT NOT NULL DEFAULT 'system';`,
   // 4: Dark is the default look; Light and System stay in Settings.
   `UPDATE app SET theme = 'dark' WHERE theme = 'system';`,
+  // 5: the start of the budget period Senbud last looked back on (month-end leftover). NULL until the
+  // first check, which records the current period without asking.
+  `ALTER TABLE app ADD COLUMN period_handled TEXT;`,
 ];
 
 export async function migrate(db: SQLiteDatabase) {
@@ -77,6 +80,8 @@ export async function saveSetup(db: SQLiteDatabase, { budget, rent, profile }: S
     await db.runAsync('INSERT OR REPLACE INTO profile (id, currency, locale) VALUES (1, ?, ?)', profile.currency, profile.locale);
     await db.runAsync("DELETE FROM bills WHERE name = 'Rent'");
     if (rent) await db.runAsync('INSERT INTO bills (name, cents, due_day) VALUES (?, ?, ?)', 'Rent', rent.cents, rent.dueDay);
+    // A new or changed budget starts fresh: no month-end offer for a period it didn't cover.
+    await db.runAsync('UPDATE app SET period_handled = ?', periodRange(budget.period, today()).start);
   });
 }
 
@@ -152,12 +157,12 @@ export async function importAll(db: SQLiteDatabase, data: unknown) {
 }
 
 export type Theme = 'system' | 'light' | 'dark';
-export type AppState = { deviceId: string; aiConsentAt: string | null; pro: boolean; hourlyRateCents: number | null; aiEnabled: boolean; theme: Theme };
+export type AppState = { deviceId: string; aiConsentAt: string | null; pro: boolean; hourlyRateCents: number | null; aiEnabled: boolean; theme: Theme; periodHandled: IsoDate | null };
 
 export async function loadApp(db: SQLiteDatabase): Promise<AppState> {
-  const r = await db.getFirstAsync<{ device_id: string; ai_consent_at: string | null; pro: number; hourly_rate_cents: number | null; ai_enabled: number; theme: Theme }>('SELECT * FROM app');
+  const r = await db.getFirstAsync<{ device_id: string; ai_consent_at: string | null; pro: number; hourly_rate_cents: number | null; ai_enabled: number; theme: Theme; period_handled: string | null }>('SELECT * FROM app');
   if (!r) throw new Error('app row missing; migrations did not run');
-  return { deviceId: r.device_id, aiConsentAt: r.ai_consent_at, pro: r.pro === 1, hourlyRateCents: r.hourly_rate_cents, aiEnabled: r.ai_enabled === 1, theme: r.theme };
+  return { deviceId: r.device_id, aiConsentAt: r.ai_consent_at, pro: r.pro === 1, hourlyRateCents: r.hourly_rate_cents, aiEnabled: r.ai_enabled === 1, theme: r.theme, periodHandled: r.period_handled };
 }
 
 export const giveAiConsent = (db: SQLiteDatabase) => db.runAsync('UPDATE app SET ai_consent_at = ?', new Date().toISOString());
@@ -165,6 +170,7 @@ export const setPro = (db: SQLiteDatabase, pro: boolean) => db.runAsync('UPDATE 
 export const setHourlyRate = (db: SQLiteDatabase, cents: number | null) => db.runAsync('UPDATE app SET hourly_rate_cents = ?', cents);
 export const setAiEnabled = (db: SQLiteDatabase, on: boolean) => db.runAsync('UPDATE app SET ai_enabled = ?', on ? 1 : 0);
 export const setTheme = (db: SQLiteDatabase, theme: Theme) => db.runAsync('UPDATE app SET theme = ?', theme);
+export const setPeriodHandled = (db: SQLiteDatabase, start: IsoDate) => db.runAsync('UPDATE app SET period_handled = ?', start);
 
 // Budgets: category limits and bills.
 export async function loadLimits(db: SQLiteDatabase): Promise<Partial<Record<Category, number>>> {

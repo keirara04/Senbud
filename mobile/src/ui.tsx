@@ -2,9 +2,10 @@
 // Spec: docs/senbud-app-design-system.md.
 import type { Category } from '@senbud/core';
 import { categoryColors, motion, palette, radius, space, type Theme, themes, touch, type } from '@senbud/core/tokens';
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import {
   Appearance,
+  Platform,
   Pressable,
   ScrollView,
   type StyleProp,
@@ -24,6 +25,9 @@ import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 
 import { Bud } from '@/art';
 import { DarkTheme, DefaultTheme } from 'expo-router';
+
+// Receipt type: the thermal-printer look on ReceiptCards.
+export const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
 
 export const useTheme = (): Theme => themes[useColorScheme() === 'dark' ? 'dark' : 'light'];
 
@@ -86,7 +90,8 @@ export function Row({ children, style }: { children: ReactNode; style?: StylePro
   return <View style={[s.row, style]}>{children}</View>;
 }
 
-type ButtonVariant = 'primary' | 'highlight' | 'secondary' | 'danger';
+// onPanel: an outline button on the cobalt panel (Wrapped's Share).
+type ButtonVariant = 'primary' | 'highlight' | 'secondary' | 'danger' | 'onPanel';
 
 export function Button({
   title,
@@ -105,6 +110,7 @@ export function Button({
     highlight: { bg: t.highlight, pressed: palette.highlighterPressed, fg: t.onHighlight },
     secondary: { bg: 'transparent', pressed: t.surfaceSunken, fg: t.accent, border: t.line },
     danger: { bg: 'transparent', pressed: t.surfaceSunken, fg: t.bad, border: t.line },
+    onPanel: { bg: 'transparent', pressed: 'rgba(255, 255, 255, 0.12)', fg: t.onPanel, border: t.onPanelDim },
   };
   const v = look[variant];
   return (
@@ -351,9 +357,18 @@ export function ListGroup({ title, children, footer }: { title: string; children
 // The one AI switch, in Settings and again under "What gets sent".
 // The whole row is the control and the Switch only shows the state: on iOS 26 RN's Switch frame and
 // UIKit's drawing disagree, so taps on the drawn switch never reached it. Also one VoiceOver element.
-export function AiSwitch({ value, onChange, first = true }: { value: boolean; onChange: (on: boolean) => void; first?: boolean }) {
+export function AiSwitch({
+  value,
+  onChange,
+  first = true,
+  label = 'Use AI for photos and questions',
+}: {
+  value: boolean;
+  onChange: (on: boolean) => void;
+  first?: boolean;
+  label?: string;
+}) {
   const t = useTheme();
-  const label = 'Use AI for photos and questions';
   return (
     <Pressable
       onPress={() => onChange(!value)}
@@ -367,6 +382,83 @@ export function AiSwitch({ value, onChange, first = true }: { value: boolean; on
         <Switch value={value} trackColor={{ true: t.primary }} />
       </View>
     </Pressable>
+  );
+}
+
+// Wrapped's story: full-bleed cobalt pages, one stat each, with segment bars, a label and Close.
+// Tap the right or left half to move. No autoplay, and pages cut rather than slide, so Reduce Motion
+// needs nothing extra. Each page is one accessibility element read as its sentence.
+export function StoryPager({
+  title,
+  pages,
+  onClose,
+  footer,
+}: {
+  title: string;
+  pages: { label: string; body: ReactNode }[];
+  onClose: () => void;
+  footer?: (index: number) => ReactNode;
+}) {
+  const t = useTheme();
+  const [i, setI] = useState(0);
+  const page = pages[Math.min(i, pages.length - 1)];
+  return (
+    <View style={{ flex: 1, gap: space.md }}>
+      <View style={{ flexDirection: 'row', gap: space.xs }}>
+        {pages.map((p, k) => (
+          <View key={k} style={{ flex: 1, height: 3, borderRadius: radius.pill, backgroundColor: k <= i ? t.onPanel : 'rgba(255, 255, 255, 0.3)' }} />
+        ))}
+      </View>
+      <Row style={{ flexWrap: 'nowrap' }}>
+        <T variant="label" tone="onPanelDim">
+          {title}
+        </T>
+        <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" hitSlop={12} style={{ padding: space.xs }}>
+          <Icon name={{ ios: 'xmark', android: 'close' }} color={t.onPanel} />
+        </Pressable>
+      </Row>
+      <View style={{ flex: 1 }}>
+        <View
+          accessible
+          accessibilityLabel={`${page.label} Card ${i + 1} of ${pages.length}.`}
+          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+          onAccessibilityAction={(e) => setI((k) => Math.max(0, Math.min(pages.length - 1, k + (e.nativeEvent.actionName === 'increment' ? 1 : -1))))}
+          accessibilityRole="adjustable"
+          style={{ flex: 1, justifyContent: 'center', gap: space.sm }}
+        >
+          {page.body}
+        </View>
+        <View style={[StyleSheet.absoluteFill, { flexDirection: 'row' }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Pressable style={{ flex: 1 }} onPress={() => setI((k) => Math.max(0, k - 1))} />
+          <Pressable style={{ flex: 1 }} onPress={() => (i < pages.length - 1 ? setI(i + 1) : onClose())} />
+        </View>
+      </View>
+      {footer?.(i)}
+    </View>
+  );
+}
+
+// Horizontal bars by category, sorted, the % written on every bar. Drawn on a white ReceiptCard, so
+// fills are the category inks (7.3–9.9:1 on white). On a dark surface it would need the tints instead.
+export function BarChart({ data, font }: { data: { category: Category; share: number }[]; font?: string }) {
+  const top = Math.max(...data.map((d) => d.share), 0.0001);
+  const pct = (n: number) => `${Math.round(n * 100)}%`;
+  return (
+    <View accessible accessibilityLabel={data.map((d) => `${d.category} ${pct(d.share)}`).join(', ')} style={{ gap: space.sm }}>
+      {data.map((d) => (
+        <View key={d.category} style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+          <T variant="caption" numberOfLines={1} style={{ width: 92, color: palette.ink, fontFamily: font }}>
+            {d.category}
+          </T>
+          <View style={{ flex: 1 }}>
+            <View style={{ width: `${(d.share / top) * 100}%`, minWidth: 4, height: 14, borderRadius: 3, backgroundColor: categoryColors[d.category].fg }} />
+          </View>
+          <T variant="caption" money style={{ width: 40, textAlign: 'right', color: palette.ink, fontFamily: font }}>
+            {pct(d.share)}
+          </T>
+        </View>
+      ))}
+    </View>
   );
 }
 
