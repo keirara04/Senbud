@@ -34,7 +34,7 @@ Apple counts data as **collected** only if it leaves the device and is kept long
   - system boot time `35F9.1`
   - disk space `85F4.1`, `E174.1`
 
-  These were collected from every `PrivacyInfo.xcprivacy` under `node_modules`. **Re-run that collection after adding any native library.** The script is in "Phase 2 results" in `docs/senbud-mobile-audit.md`. Apple emails about anything missing after a TestFlight upload.
+  These were collected from every `PrivacyInfo.xcprivacy` under `node_modules`. Last re-run 16 Oct 2026, after adding `expo-file-system`, `expo-sharing` and `expo-clipboard`: no change. `expo-file-system` declares only file timestamps and disk space, which were already listed; `expo-sharing` and `expo-clipboard` ship no manifest. **Re-run that collection after adding any native library.** The script is in "Phase 2 results" in `docs/senbud-mobile-audit.md`. Apple emails about anything missing after a TestFlight upload.
 
 ## Google Play: Data safety
 
