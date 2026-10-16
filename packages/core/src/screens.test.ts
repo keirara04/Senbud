@@ -1,0 +1,49 @@
+import { describe, expect, it } from "vitest";
+import { jarFill, pickNudge, stamps } from "./index";
+import type { Iou, Subscription, Treat } from "./types";
+
+describe("stamps", () => {
+  it("fills one stamp per 10% of the limit, rounded", () => {
+    expect(stamps(24800, 40000)).toEqual({ filled: 6, over: false, left: 15200, status: "ok" });
+    expect(stamps(500, 40000)?.filled).toBe(0);
+  });
+  it("is close from 90% and over past the limit, with all ten filled", () => {
+    expect(stamps(37600, 40000)).toMatchObject({ filled: 9, over: false, status: "close" });
+    expect(stamps(41200, 40000)).toEqual({ filled: 10, over: true, left: -1200, status: "over" });
+  });
+  it("has nothing to stamp without a limit", () => {
+    expect(stamps(1000, undefined)).toBeNull();
+    expect(stamps(1000, 0)).toBeNull();
+  });
+});
+
+describe("jarFill", () => {
+  it("fills toward the goal", () => {
+    expect(jarFill(4650, 6000)).toEqual({ share: 0.775, percent: 77, reached: false, toGo: 1350 });
+  });
+  it("reaches the goal and can overflow", () => {
+    expect(jarFill(6190, 6000)).toMatchObject({ percent: 100, reached: true, toGo: 0 });
+    expect(jarFill(6190, 6000)!.share).toBeGreaterThan(1);
+  });
+  it("has no fill without a goal", () => expect(jarFill(500, undefined)).toBeNull());
+});
+
+describe("pickNudge", () => {
+  const today = "2026-10-16";
+  const netflix: Subscription = { merchant: "Netflix", cents: 1700, interval: "month", nextDate: "2026-10-17", confirmed: true };
+  const iou: Iou = { friend: "Sarah", cents: 1400, direction: "theyOweMe", note: "Dinner", date: "2026-10-01", paid: false };
+  const tealive: Treat = { name: "Tealive", lastCents: 900, lastDate: "2026-10-01", minDaysBetween: 7 };
+  const base = { today, subscriptions: [], ious: [], treats: [], safe: { perDay: 2500, covered: true }, onTrack: true };
+
+  it("prefers a renewal tomorrow, then an old IOU, then a treat", () => {
+    expect(pickNudge({ ...base, subscriptions: [netflix], ious: [iou], treats: [tealive] })?.kind).toBe("renewal");
+    expect(pickNudge({ ...base, ious: [iou], treats: [tealive] })?.kind).toBe("iou");
+    expect(pickNudge({ ...base, treats: [tealive] })?.kind).toBe("treat");
+  });
+  it("skips unconfirmed subscriptions and IOUs you owe", () => {
+    expect(pickNudge({ ...base, subscriptions: [{ ...netflix, confirmed: false }], ious: [{ ...iou, direction: "iOweThem" }] })).toBeNull();
+  });
+  it("never nudges a treat when spending isn't on track", () => {
+    expect(pickNudge({ ...base, treats: [tealive], onTrack: false })).toBeNull();
+  });
+});

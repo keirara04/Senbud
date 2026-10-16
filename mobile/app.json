@@ -43,6 +43,11 @@
             ]
           }
         ]
+      },
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": [
+          "whatsapp"
+        ]
       }
     },
     "android": {
@@ -78,7 +83,8 @@
           "cameraPermission": "Senbud uses the camera to photograph receipts.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "./plugins/with-whatsapp-query"
     ],
     "experiments": {
       "typedRoutes": true,
