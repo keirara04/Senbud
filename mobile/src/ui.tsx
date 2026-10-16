@@ -568,10 +568,10 @@ export function BudTab({ onPress }: { onPress: () => void }) {
 }
 
 // Highlighter stroke behind a word, the web's .marker. Use once per screen, on the phrase that matters.
-export function Marker({ children }: { children: ReactNode }) {
+export function Marker({ children, align = 'flex-start' }: { children: ReactNode; align?: 'flex-start' | 'center' }) {
   const t = useTheme();
   return (
-    <View style={{ alignSelf: 'flex-start' }}>
+    <View style={{ alignSelf: align }}>
       <View style={[s.marker, { backgroundColor: t.highlight }]} />
       {children}
     </View>

@@ -190,7 +190,7 @@ export function ReadyStep({ budget, rent, profile, onDone }: { budget: Budget; r
         <T variant="label" tone="textDim">
           Safe to spend today
         </T>
-        <Marker>
+        <Marker align="center">
           <T variant="hero" money numberOfLines={1} adjustsFontSizeToFit maxFontSizeMultiplier={1.3} style={{ color: t.text }}>
             {fmt(shown)}
           </T>
