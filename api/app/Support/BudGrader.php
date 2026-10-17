@@ -9,8 +9,6 @@ use App\Http\Controllers\AskController;
 // answer that isn't in what Bud was sent may be a sum, or may be made up).
 class BudGrader
 {
-    public const ACTIONS = ['set_limit', 'add_bill', 'open_jar', 'open_budgets'];
-
     public const CASES = 'tests/evals/bud.jsonl';
 
     /** The eval cases, one JSON object per line. @return array<int, array> */
@@ -75,7 +73,7 @@ class BudGrader
             $fail[] = 'markdown or em dash in the answer';
         }
         foreach ($actions as $a) {
-            if (! in_array($a['type'] ?? null, self::ACTIONS, true)) {
+            if (! in_array($a['type'] ?? null, AskController::ACTIONS, true)) {
                 $fail[] = 'unknown action '.json_encode($a);
             }
         }

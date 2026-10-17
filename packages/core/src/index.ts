@@ -259,7 +259,8 @@ export function readIntent(text: string, currency?: string): Intent {
   // Questions Bud answers from the phone's own numbers. Before "month", so "how much on food" isn't a
   // month summary; "how much is left" stays one.
   const on = line.match(/\b(?:how much (?:(?:did|have) i (?:spend|spent|spending) |(?:have i |i )?(?:spent|spend) )?on|spent on|spending on)\s+(.+?)(?:\s+(?:this|so far|in total)\b.*)?\s*\??$/i);
-  if (on && !/\d/.test(on[1])) return { kind: "spentOn", query: on[1].replace(/^(my|the)\s+/i, "").trim() };
+  // A number anywhere means it's not "how much": "can you log the 12 I spent on lunch" is for Bud.
+  if (on && !digits) return { kind: "spentOn", query: on[1].replace(/^(my|the)\s+/i, "").trim() };
   // "berapa dah belanja kat makan bulan ni", "brp habis untuk grab". Not "berapa baki untuk minggu ni".
   const kat = line.match(new RegExp(String.raw`\b(?:${BERAPA})\b.*?\b(?:kat|dekat|kt|dkt|untuk|utk|on|pada|for)\s+(.+?)(?:\s+(?:bulan|minggu|bln|mgu|setakat|so far|this|ni|tahun)\b.*)?\s*\??$`, "i"));
   const katQuery = kat?.[1].replace(/^(my|the)\s+/i, "").trim();

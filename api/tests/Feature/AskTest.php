@@ -263,8 +263,38 @@ class AskTest extends TestCase
         ]);
         $this->send(self::body())->assertOk()->assertExactJson(['answer' => 'Cap treats.', 'actions' => [
             ['type' => 'set_limit', 'category' => 'Treat', 'amount' => null],
-            ['type' => 'add_bill', 'label' => 'Phone plan', 'amount' => 35.56],
+            ['type' => 'add_bill', 'label' => 'Phone plan', 'amount' => 35.56, 'day' => null],
         ]]);
+    }
+
+    public function test_the_new_actions_are_checked_field_by_field(): void
+    {
+        $a = fn (array $f) => ['category' => null, 'amount' => null, 'label' => null, 'period' => null, 'day' => null, 'kind' => null, ...$f];
+        $cases = [
+            // [what the model sent, what the app gets (null = dropped)]
+            [$a(['type' => 'add_expense', 'label' => 'Nasi lemak', 'amount' => 6, 'category' => 'Food']), ['type' => 'add_expense', 'label' => 'Nasi lemak', 'amount' => 6, 'category' => 'Food']],
+            [$a(['type' => 'add_expense', 'label' => '<b>Kopi</b>', 'amount' => 4.5, 'category' => 'Rent']), ['type' => 'add_expense', 'label' => 'b Kopi /b', 'amount' => 4.5, 'category' => 'Other']],
+            [$a(['type' => 'add_expense', 'label' => 'Kopi', 'amount' => null]), null],
+            [$a(['type' => 'set_budget', 'amount' => 500, 'period' => 'week']), ['type' => 'set_budget', 'amount' => 500, 'period' => 'week']],
+            [$a(['type' => 'set_budget', 'amount' => 500, 'period' => 'until']), null],
+            [$a(['type' => 'start_split', 'amount' => 60, 'label' => 'Dinner']), ['type' => 'start_split', 'amount' => 60, 'label' => 'Dinner']],
+            [$a(['type' => 'jar_add', 'amount' => 20]), ['type' => 'jar_add', 'amount' => 20]],
+            [$a(['type' => 'jar_add', 'amount' => 999999999]), null],
+            [$a(['type' => 'turn_on_reminder', 'kind' => 'pace']), ['type' => 'turn_on_reminder', 'kind' => 'pace']],
+            [$a(['type' => 'turn_on_reminder', 'kind' => 'analytics']), null],
+            [$a(['type' => 'add_bill', 'label' => 'Unifi', 'amount' => 99, 'day' => 5]), ['type' => 'add_bill', 'label' => 'Unifi', 'amount' => 99, 'day' => 5]],
+            [$a(['type' => 'add_bill', 'label' => 'Unifi', 'amount' => 99, 'day' => 40]), ['type' => 'add_bill', 'label' => 'Unifi', 'amount' => 99, 'day' => null]],
+            [$a(['type' => 'open_friends']), ['type' => 'open_friends']],
+        ];
+        $sent = null;
+        Http::fake(function () use (&$sent) {
+            return Http::response(['choices' => [['message' => ['content' => json_encode(['on_topic' => true, 'answer' => 'Okay.', 'actions' => [$sent]])]]]]);
+        });
+        foreach ($cases as $i => [$sent, $want]) {
+            // A device per case: thirteen questions in a row would hit the per-minute limit.
+            $this->postJson('/v1/agent/ask', self::body(), ['X-Device-Id' => sprintf('00000000-0000-4000-8000-%012d', $i)])
+                ->assertOk()->assertJsonPath('actions', $want ? [$want] : []);
+        }
     }
 
     public function test_upstream_failures_are_a_502_without_upstream_details(): void

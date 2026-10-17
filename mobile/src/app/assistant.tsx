@@ -13,14 +13,23 @@ import { Bud, type BudFace, ReceiptCard } from '@/art';
 import { askBud, type AskSummary, type BudAction, COOLDOWN, type Turn, WEB } from '@/api';
 import { askAiConsent } from '@/consent';
 import { drinkExample, quickAddExample, typed } from '@/currencies';
-import { type AppState, addTransactions, type Budget, deleteTransactions, listTransactions, loadApp, loadLimitPeriod, loadLimits, loadSetup, saveSetup, setLimit } from '@/db';
+import { type AppState, addToJar, addTransactions, type Budget, deleteTransactions, listTransactions, loadApp, loadLimitPeriod, loadLimits, loadSetup, saveSetup, setLimit, setReminders } from '@/db';
 import { useMoney } from '@/money';
 import { budgetOf, periodWord, perPeriod } from '@/onboarding';
 import { usePro } from '@/purchases';
+import { allowReminders, syncReminders } from '@/reminders';
 import { NoteCard, useBudNotes } from '@/notes';
 import { Button, CATEGORIES, Icon, Marker, noWebOutline, ReceiptLine, T, TextButton, useTheme } from '@/ui';
 
 const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
+
+// What Bud's "turn on a reminder" button says, per reminder.
+const REMINDER_WORDS: Record<string, string> = {
+  bills: 'Remind me before bills are due',
+  renewals: 'Remind me before renewals',
+  reset: 'Remind me before my budget resets',
+  pace: 'Warn me when I’m spending fast',
+};
 
 type Line = [label: string, value: string];
 // `ai` marks an answer the model wrote, so the slip says to check its numbers.
@@ -373,16 +382,86 @@ export default function Assistant() {
     };
   }
 
-  // Bud's suggestions open a prefilled screen; nothing changes until the person saves it there.
-  function actionButton(a: BudAction, i: number) {
+  // Bud's suggestions are buttons: nothing changes until the person taps one, and every saved change has
+  // Undo. The server checked them; the app checks again (an older server or a forged reply). `id` is the
+  // answer's slip, whose buttons go once one is used.
+  function actionButton(a: BudAction, i: number, id: number) {
     const go = (path: string, params: Record<string, string> = {}) => () => {
       const query = new URLSearchParams(params).toString();
       router.push((query ? `${path}?${query}` : path) as never);
     };
+    const cents = 'amount' in a && typeof a.amount === 'number' && a.amount > 0 ? Math.round(a.amount * 100) : 0;
+    // Runs once: drops the answer's buttons, then prints what happened on a new slip.
+    const once = (run: (slip: number) => Promise<void> | void) => async () => {
+      setMsgs((cur) => cur.map((x) => (x.id === id && 'slip' in x ? { id, slip: { ...x.slip, actions: undefined } } : x)));
+      const slip = newId();
+      add({ id: slip, slip: { face: 'thinking', title: 'Bud', printing: true } });
+      await run(slip);
+    };
+    if (a.type === 'add_expense' && a.label && cents)
+      return (
+        <Button
+          key={i}
+          variant="secondary"
+          title={`Add ${a.label}, ${fmt(cents)}`}
+          onPress={once((slip) => addSlip(slip, [{ date: day, cents, label: a.label.slice(0, 60), category: CATEGORIES.includes(a.category) ? a.category : 'Other', source: 'bud' }]))}
+        />
+      );
+    if (a.type === 'set_budget' && cents && (a.period === 'week' || a.period === 'month'))
+      return <Button key={i} variant="secondary" title={`Make it ${fmt(cents)} a ${a.period}`} onPress={once((slip) => budgetSlip(slip, cents, a.period, undefined))} />;
+    if (a.type === 'start_split' && cents) return <Button key={i} variant="secondary" title={`Split ${fmt(cents)}`} onPress={go('/split', { amount: String(cents / 100), merchant: a.label ?? '' })} />;
+    if (a.type === 'jar_add' && cents)
+      return (
+        <Button
+          key={i}
+          variant="secondary"
+          title={`Put ${fmt(cents)} in the jar`}
+          onPress={once(async (slip) => {
+            await addToJar(db, cents, 'From Bud', day);
+            reload();
+            replace(slip, {
+              face: 'yay',
+              title: 'In the jar',
+              lines: [['Treat jar', `+${fmt(cents)}`]],
+              actions: (
+                <TextButton
+                  title="Undo"
+                  onPress={async () => {
+                    await addToJar(db, -cents, 'Undo', day);
+                    reload();
+                    replace(slip, { face: 'happy', title: 'Treat jar', note: 'Taken back out.' });
+                  }}
+                />
+              ),
+            });
+          })}
+        />
+      );
+    if (a.type === 'turn_on_reminder' && REMINDER_WORDS[a.kind] && Platform.OS !== 'web' && !app!.reminders.includes(a.kind))
+      return (
+        <Button
+          key={i}
+          variant="secondary"
+          title={REMINDER_WORDS[a.kind]}
+          onPress={
+            a.kind === 'renewals' && !pro
+              ? () => router.push('/pro')
+              : once(async (slip) => {
+                  if (!(await allowReminders())) return replace(slip, { face: 'oops', title: 'Reminders', note: 'Notifications are off for Senbud. Turn them on in your phone’s Settings, then try again.' });
+                  const fresh = await loadApp(db);
+                  await setReminders(db, [...new Set([...fresh.reminders, a.kind])]);
+                  syncReminders(db).catch(() => {});
+                  setApp(await loadApp(db));
+                  replace(slip, { face: 'yay', title: 'Reminder on', note: 'Change it any time in Settings, Reminders.' });
+                })
+          }
+        />
+      );
+    if (a.type === 'open_friends') return <Button key={i} variant="secondary" title="Open Friends" onPress={() => router.navigate('/friends')} />;
     if (a.type === 'set_limit' && CATEGORIES.includes(a.category))
       return <Button key={i} variant="secondary" title={`Set a ${a.category} limit${a.amount ? ` of ${fmt(Math.round(a.amount * 100))}` : ''}`} onPress={go('/limit', { category: a.category, ...(a.amount ? { amount: String(a.amount) } : {}) })} />;
     if (a.type === 'add_bill' && a.label && a.amount > 0)
-      return <Button key={i} variant="secondary" title={`Add ${a.label} as a bill`} onPress={go('/bill', { name: a.label, amount: String(a.amount) })} />;
+      return <Button key={i} variant="secondary" title={`Add ${a.label} as a bill`} onPress={go('/bill', { name: a.label, amount: String(a.amount), ...(a.day ? { day: String(a.day) } : {}) })} />;
     if (a.type === 'open_jar') return <Button key={i} variant="secondary" title="Open the treat jar" onPress={go('/jar')} />;
     if (a.type === 'open_budgets') return <Button key={i} variant="secondary" title="See Budgets" onPress={() => router.navigate('/budgets')} />;
     return null;
@@ -432,7 +511,7 @@ export default function Assistant() {
           ),
         });
       turns.current = [...turns.current, { q: line, a: r.answer }].slice(-4);
-      const buttons = r.actions.map(actionButton).filter((b) => b !== null);
+      const buttons = r.actions.map((a, i) => actionButton(a, i, id)).filter((b) => b !== null);
       replace(id, { face: 'happy', title: 'Bud', note: r.answer, ai: true, actions: buttons.length ? <View style={{ gap: space.xs }}>{buttons}</View> : undefined });
     } catch (e) {
       const note = e instanceof Error ? e.message : String(e);
