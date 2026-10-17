@@ -1,11 +1,11 @@
 // Local reminders (build plan phase 1): what to notify and when, worked out from data on the phone.
 // The app schedules these as local notifications; nothing here reads the clock or knows the platform.
 import { aheadOfPace, billDue, budgetStatus, periodRange } from "./budget";
-import { addDays, type IsoDate, nextDueDate } from "./dates";
+import { addDays, daysBetween, type IsoDate, nextDueDate, weekday } from "./dates";
 import { nextRenewal } from "./subscriptions";
 import type { Bill, BudgetPeriod, Subscription } from "./types";
 
-export type ReminderKind = "bills" | "renewals" | "reset" | "pace";
+export type ReminderKind = "bills" | "renewals" | "reset" | "pace" | "checkin";
 export type Reminder = { key: string; date: IsoDate; hour: number; title: string; body: string };
 
 const EVENING = 19; // "due tomorrow" the evening before
@@ -26,8 +26,11 @@ export function reminderSchedule(opts: {
   horizonDays?: number;
   /** This period's spending and budget, for the pace warning. */
   pace?: { spent: number; limit: number };
+  /** For the weekly check-in: the last day anything was logged, the category nearest its limit (cents
+   *  left, below zero when over) and the treat jar's goal, if set. */
+  checkin?: { lastLogged: IsoDate | null; tightest?: { category: string; left: number }; jar?: { name: string; toGo: number } };
 }): Reminder[] {
-  const { kinds, bills, subscriptions, period, today, fmt, horizonDays = 62, pace } = opts;
+  const { kinds, bills, subscriptions, period, today, fmt, horizonDays = 62, pace, checkin } = opts;
   // Two months, so a bill paid early still has its next due date covered if the app stays closed.
   const end = addDays(today, horizonDays);
   const out: Reminder[] = [];
@@ -71,6 +74,34 @@ export function reminderSchedule(opts: {
           ? `${fmt(limit - spent)} left. Cook tonight?`
           : `${fmt(spent)} of ${fmt(limit)} gone and it's only ${WEEKDAYS[new Date(`${today}T12:00:00Z`).getUTCDay()]}`;
     if (title) out.push({ key: `pace:${today}`, date: today, hour: DINNER, title, body: `See what's safe to spend for the rest of the ${unit}.` });
+  }
+
+  // Weekly check-in (build plan P3.7): one encouraging look at the week, at 6 pm. Sunday for week and
+  // month budgets; two days before payday for until-payday ones (the reset notice has the day before).
+  // Written from the numbers as of the last sync: spending only changes in the app, and a week with
+  // nothing logged stays quiet, so the numbers are never stale. Only dates inside this period, so a new
+  // month never gets last month's figures.
+  if (kinds.includes("checkin") && pace && checkin?.lastLogged) {
+    const { start, nextStart } = periodRange(period, today);
+    const sunday = addDays(today, (7 - weekday(today)) % 7);
+    const days = period.kind === "until" ? [addDays(nextStart, -2)] : [sunday, addDays(sunday, 7)];
+    const unit = period.kind === "until" ? "pay period" : period.kind;
+    for (const date of days) {
+      if (date < today || date < start || date >= nextStart || checkin.lastLogged < addDays(date, -6)) continue;
+      const n = daysBetween(date, nextStart);
+      const left = pace.limit - pace.spent;
+      const span = `${n} ${n === 1 ? "day" : "days"}`;
+      const title = left >= 0 ? `${fmt(left)} left for the next ${span}` : `${fmt(-left)} over, ${span} until a fresh ${unit}`;
+      const t = checkin.tightest;
+      const body =
+        [
+          t && (t.left < 0 ? `${t.category} is ${fmt(-t.left)} over its limit.` : `${t.category} has ${fmt(t.left)} left.`),
+          checkin.jar && checkin.jar.toGo > 0 && `${fmt(checkin.jar.toGo)} to go for your ${checkin.jar.name} jar.`,
+        ]
+          .filter(Boolean)
+          .join(" ") || "Open Senbud for this week's numbers.";
+      out.push({ key: `checkin:${date}`, date, hour: DINNER, title, body });
+    }
   }
 
   // A reminder for an evening that's already past today is dropped by the app (it compares the clock).

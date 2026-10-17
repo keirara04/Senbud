@@ -50,6 +50,28 @@ describe("reminderSchedule", () => {
     expect(run({ kinds: ["pace"], pace: { spent: 92_00, limit: 100_00 }, today: "2026-10-30" })).toEqual([]);
   });
 
+  it("checks in on Sundays inside the period, quiet when nothing was logged that week", () => {
+    // 17 Oct 2026 is a Saturday; the month runs to 31 Oct.
+    const checkin = (o: object = {}) =>
+      run({ kinds: ["checkin"], pace: { spent: 60_00, limit: 100_00 }, checkin: { lastLogged: "2026-10-17", tightest: { category: "Food", left: 12_00 }, jar: { name: "Laptop", toGo: 60_00 }, ...o } });
+    expect(checkin().map((x) => [x.date, x.hour, x.title, x.body])).toEqual([
+      ["2026-10-18", 18, "$40 left for the next 14 days", "Food has $12 left. $60 to go for your Laptop jar."],
+    ]);
+    // The Sunday after is more than 6 days past the last log, so it waits for the next sync.
+    expect(checkin({ lastLogged: "2026-10-10" })).toEqual([]);
+    expect(checkin({ lastLogged: null })).toEqual([]);
+    // Over, with a category over its limit and no jar goal: still kind.
+    expect(run({ kinds: ["checkin"], pace: { spent: 112_00, limit: 100_00 }, checkin: { lastLogged: "2026-10-17", tightest: { category: "Treat", left: -5_00 } } })[0]).toMatchObject({
+      title: "$12 over, 14 days until a fresh month",
+      body: "Treat is $5 over its limit.",
+    });
+    // Until payday: two days before it.
+    const until: BudgetPeriod = { kind: "until", start: "2026-10-01", payday: "2026-10-25" };
+    expect(run({ kinds: ["checkin"], period: until, pace: { spent: 0, limit: 100_00 }, checkin: { lastLogged: "2026-10-17" } }).map((x) => [x.date, x.body])).toEqual([
+      ["2026-10-23", "Open Senbud for this week's numbers."],
+    ]);
+  });
+
   it("says the budget resets the evening before each new period", () => {
     expect(run({ kinds: ["reset"] }).map((x) => x.date)).toEqual(["2026-10-31", "2026-11-30"]);
     // 17 Oct 2026 is a Saturday; weeks start Monday.

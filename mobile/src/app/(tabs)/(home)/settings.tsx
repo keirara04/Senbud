@@ -112,9 +112,10 @@ export default function Settings() {
       </ListGroup>
 
       {Platform.OS !== 'web' && (
-        <ListGroup title="Reminders" footer="Sent by this phone at 7 pm the evening before, and 9 am on the day a bill is due. Pace warnings come at 6 pm, at most one a day. Nothing leaves the phone.">
+        <ListGroup title="Reminders" footer="Sent by this phone at 7 pm the evening before, and 9 am on the day a bill is due. Pace warnings come at 6 pm, at most one a day, and the check-in on Sunday at 6 pm (two days before payday on an until-payday budget). Nothing leaves the phone.">
           <AiSwitch label="Rent and bills" value={app.reminders.includes('bills')} onChange={(on) => toggleReminder('bills', on)} />
           <AiSwitch first={false} label="Spending ahead of pace" value={app.reminders.includes('pace')} onChange={(on) => toggleReminder('pace', on)} />
+          <AiSwitch first={false} label="Weekly check-in" value={app.reminders.includes('checkin')} onChange={(on) => toggleReminder('checkin', on)} />
           <AiSwitch first={false} label="Budget resets tomorrow" value={app.reminders.includes('reset')} onChange={(on) => toggleReminder('reset', on)} />
           <AiSwitch first={false} label={app.pro ? 'Subscription renewals' : 'Subscription renewals (Pro)'} value={app.pro && app.reminders.includes('renewals')} onChange={(on) => toggleReminder('renewals', on)} />
         </ListGroup>
