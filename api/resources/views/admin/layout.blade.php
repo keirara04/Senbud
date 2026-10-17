@@ -22,7 +22,8 @@
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font: 17px/24px -apple-system, BlinkMacSystemFont, "SF Pro Text", Roboto, "Segoe UI", sans-serif; }
-  main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 48px; }
+  main { padding: 24px 16px 48px; }
+  @media (min-width: 768px) { main { padding: 32px 32px 48px; } }
   a { color: var(--accent); }
   .num { font-variant-numeric: tabular-nums; }
   header { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; margin-bottom: 24px; }
@@ -33,9 +34,12 @@
   form { display: flex; gap: 8px; flex: 0 1 460px; }
   input { min-height: 48px; min-width: 0; flex: 1; padding: 0 16px; border: 0; border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; }
   button { min-height: 48px; padding: 0 20px; border: 0; border-radius: 8px; background: var(--accent); color: var(--bg); font: inherit; font-weight: 600; cursor: pointer; }
-  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  /* Full-width cards on top, then a masonry of the rest: each card keeps its own height and the next
+     one slots in under it, so no half-empty cards or holes. Order runs down each column. */
+  .stack { display: grid; gap: 16px; }
+  .masonry { columns: 320px; column-gap: 16px; }
+  .masonry > .card { break-inside: avoid; margin-bottom: 16px; }
   .card { background: var(--surface); border-radius: 16px; padding: 16px; min-width: 0; }
-  .wide { grid-column: 1 / -1; }
   .panel { background: var(--panel); color: var(--on-panel); }
   .panel .label, .panel .caption { color: var(--on-panel-dim); }
   .hero { font-size: 52px; line-height: 58px; font-weight: 800; letter-spacing: -1.4px; color: var(--highlight); }
@@ -49,7 +53,7 @@
   .good { color: var(--good); } .bad { color: var(--bad); }
   code { font: 14px ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
   /* Bar charts: thin bars, 4px rounded tops on the baseline, a 2px gap, the whole column is the hover target. */
-  .bars { display: flex; align-items: stretch; gap: 2px; height: 120px; margin-top: 12px; border-bottom: 1px solid var(--sunken); }
+  .bars { display: flex; align-items: stretch; gap: 2px; height: 160px; margin-top: 12px; border-bottom: 1px solid var(--sunken); }
   .bars span { flex: 1; display: flex; align-items: flex-end; min-width: 0; }
   .bars i { display: block; width: 100%; background: var(--bar); border-radius: 4px 4px 0 0; }
   .bars span:hover i { opacity: 0.7; }
