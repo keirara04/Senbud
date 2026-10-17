@@ -58,6 +58,10 @@ class AppServiceProvider extends ServiceProvider
             ...($web($request) ? [Limit::perDay(self::WEB_FREE_QUESTIONS)->by('web:'.$who($request)), Limit::perDay(60)->by('web-ip:'.$request->ip())] : []),
             Limit::perMinute(10)->by($who($request)), Limit::perDay(100)->by($who($request)), Limit::perDay(300)->by('ip:'.$request->ip()),
         ]);
+        // Wrapped captions: one call per story opened, so a few a day is plenty.
+        RateLimiter::for('caption', fn (Request $request) => $unlimited($request) ? Limit::none() : [
+            Limit::perMinute(3)->by($who($request)), Limit::perDay(20)->by($who($request)), Limit::perDay(100)->by('ip:'.$request->ip()),
+        ]);
     }
 
     // Model calls cost money. Keyed by the app's anonymous device id when it sends one, else the IP;
