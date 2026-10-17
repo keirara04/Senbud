@@ -22,13 +22,14 @@ const RULES: [RegExp, Category][] = (
     // Delivery first, so "GRAB*FOOD" on a bank statement is food, not a ride.
     ["grab\\W?food|food ?panda|deliveroo|uber ?eats|doordash|shopee ?food|swiggy|zomato", "Food"],
     // Malay groceries before Transport, so cooking oil ("minyak masak") isn't petrol ("minyak").
-    ["minyak masak|barang dapur|barang basah|barang runcit|kedai runcit|runcit|99 ?speed ?mart|speedmart|econsave|jaya grocer|village grocer|nsk|giant|aeon big|aeon|tong gas|gas dapur|lulu|hero|the store|tf value ?mart|cold storage|mercato|gardenia|massimo|pasar basah|wet market|sabun|syampu|shampoo|ubat gigi|tisu|detergent|lampin|pampers|beras|tepung|sayur(?:an)?", "Groceries"],
+    ["minyak masak|barang dapur|barang basah|barang runcit|kedai runcit|runcit|99 ?speed ?mart|speedmart|econsave|jaya grocer|village grocer|nsk|aeon big|aeon|tong gas|gas dapur|lulu|the store|tf value ?mart|cold storage|mercato|gardenia|massimo|pasar basah|wet market|sabun|syampu|shampoo|ubat gigi|tisu|detergent|lampin|pampers|beras|tepung|sayur(?:an)?", "Groceries"],
     ["bubble ?tea|boba|coffee|tealive|chatime|gong ?cha|tiger sugar|koi|zus|tim hortons|dunkin|kopi|kopi susu|kape|ca phe|cha yen|milk ?tea|karak|chai|americano|flat white|latte|starbucks|cake|ice ?cream|dessert|burger|big ?mac|fries|snack|teh|teh tarik|teh o|milo|neslo|nescafe|cendol|ais kacang|abc|ais ?krim|aiskrim|kek|kuih|keropok|jajan|snek|coklat|chocolate|minum|minuman|ais|bandung|sirap|air tebu|air kelapa|tealive|bask bear|llao llao|mixue|richiamo|chagee|kenangan|luckin|coffee bean|air (?:kosong|mineral|botol|sejuk|suam|tin|soya|batu)|wayang|movie|cinema|gsc|tgv|mbo|karaoke|ktv|bowling|futsal|badminton|concert|konsert|top ?up game|mlbb|steam wallet|shopee|lazada|tiktok shop|zalora|baju|kasut|seluar|tudung|shoes|clothes|barber|gunting rambut|salon|7 ?-?eleven|seven ?eleven|family ?mart|kk ?mart|mynews", "Treat"],
     ["netflix|spotify|youtube|icloud|disney|prime|gym|chatgpt|subscription|langganan|astro|unifi|maxis|hotlink|celcom|xpax|digi|celcomdigi|u ?mobile|yes [45]g|tune ?talk|redone|yoodo|sooka|viu|iqiyi|prepaid|postpaid|tnb|air selangor|syabas|indah water|iwk|bil (?:api|air|elektrik|letrik|tnb|phone|fon|telefon|internet|wifi|astro|unifi)|ptptn|wifi|internet", "Subscription"],
     ["grab|gojek|dart|didi|careem|uber|lyft|taxi|bus|train|tram|tube|mtr|mrt|lrt|metro|auto|rickshaw|petrol|gas|parking|fare|bas|teksi|tambang|minyak|isi minyak|tol|toll|parkir|komuter|ktm|ets|rapid ?kl|touch ?n ?go|tng|indrive|maxim|e-?hailing|grab ?(?:car|bike)|ron ?9[57]|monorail|brt|my ?50|my ?30|servis motor|servis kereta|service motor|minyak hitam|tayar|airasia|flight|ferry|feri|roadtax|road tax|cukai jalan", "Transport"],
     ["grocer(?:y|ies)?|market|tesco|walmart|aldi|lotus|mydin|trader joe|costco", "Groceries"],
     ["lunch|dinner|breakfast|brunch|food|kopitiam|hawker|restaurant|cafe|mcdonald'?s?|mcd|kfc|subway|nasi|mee|pizza|sushi|ramen|mamak|meal|chipotle|kimbap|gimbap|kimchi|bibimbap|pho|banh mi|onigiri|noodle|biryani|thali|shawarma|poutine|pie|sandwich|hot ?dog|chicken rice|silog|pad kra pao|baozi|sausage roll|makan|mkn|makanan|sarapan|tengah ?hari|makan malam|roti|roti canai|capati|thosai|tosai|bihun|mi|maggi|kuey ?teow|kueyteow|laksa|satay|sate|ayam|ikan|lauk|tapau|bungkus|warung|gerai|kedai makan|pasar malam|nandos|marrybrown|secret recipe|oldtown|old town|pappa ?rich|texas chicken|domino'?s?|pizza hut|ramly|supper|sahur|berbuka|iftar|moreh|murtabak|chapati|ckt|char kuey teow|mihun|mee ?hoon|dim sum|yong tau foo|ytf|chicken chop|mekdi|kenny rogers|ayam gepuk", "Food"],
-    ["telur|gula|susu|garam|kicap", "Groceries"],
+    // Last, so "roti telur", "kopi susu" and "giant pizza" keep their own category.
+    ["telur|gula|susu|garam|kicap|giant|hero", "Groceries"],
   ] as const
 ).map(([words, cat]) => [new RegExp(`\\b(?:${words})(?:e?s)?\\b`), cat]);
 
@@ -60,7 +61,7 @@ export function parseSpending(text: string, currency?: string): Item[] {
     .replace(/(\d),(?=\d{3}\b)/g, "$1") // "1,200" -> "1200" before splitting on commas
     // Malay "dan" / "n" join items only after an amount ("roti 2 dan teh 3"), so "lunch with dan 20" stays one.
     .replace(/(\d(?:k|\s?sen)?)\s+(?:dan|n)\s+/gi, "$1, ")
-    .split(/,|;|\n|\band\b|\+|&/i)
+    .split(/,|;|\n|\band\b|\+|\s&\s/i) // "h&m 50" stays one item
     .map((chunk) => chunk.trim())
     .flatMap((chunk) => {
       const m = [...chunk.matchAll(AMOUNT)].at(-1); // "2 coffees 9" -> 9
@@ -181,7 +182,7 @@ const BUDGET = new RegExp(
     String.raw`\bhad\s+(?:untuk\s+|utk\s+)?(?:makan|mkn|makanan|belanja|jajan|snek|tambang|runcit|barang dapur|langganan)\b.*\d`,
     String.raw`\d\s*(?:je\s+|jer\s+)?(?:sampai|smpai|sblm|sebelum|hingga)\s+gaji\b`,
     String.raw`\b(?:jangan|jgn)\s+(?:lebih|lbh)\b`,
-    String.raw`\btarget\s+(?:rm\s*)?\d`,
+    String.raw`\btarget\s+(?:rm\s*)?\d+(?:\.\d+)?k?\s*(?:se(?:hari|minggu|bulan)|(?:bulan|minggu) ni|a (?:week|month)|this (?:week|month))`,
     String.raw`\bmax\s+(?:rm\s*)?\d+\s*(?:se(?:hari|minggu|bulan)|utk|untuk)`,
     String.raw`\blimit\s+(?:untuk\s+|utk\s+|for\s+)?(?:makan|makanan|food|transport|tambang|treats?|jajan|grocer(?:y|ies)|barang dapur|runcit|langganan|subscriptions?)\b`,
   ].join("|"),
@@ -225,7 +226,9 @@ export function readIntent(text: string, currency?: string): Intent {
   }
   if (/\b(?:split|kongsi|bahagi)\b/i.test(line) || /\b(?:share|bayar dulu|cover dulu)\b.*\b(?:with|dengan|dgn|ngan)\b/i.test(line)) {
     const [before, after = ""] = line.split(/\b(?:with|dengan|dgn|ngan)\b/i);
-    const people = after.split(/,|\band\b|\bdan\b|\bn\b|&/i).map((p) => p.replace(/[^\p{L}\s'-]/gu, "").trim()).filter(Boolean);
+    // "dan" and "n" join names only after a Malay "dengan": "split with dan and sarah" keeps Dan.
+    const malay = /\b(?:dengan|dgn|ngan)\b/i.test(line);
+    const people = after.split(malay ? /,|\band\b|\bdan\b|\bn\b|&/i : /,|\band\b|&/i).map((p) => p.replace(/[^\p{L}\s'-]/gu, "").trim()).filter(Boolean);
     const [item] = parseSpending(before.replace(/\b(?:split|kongsi|bahagi|share|aku bayar dulu|bayar dulu|cover dulu)\b/gi, " "), currency);
     return { kind: "split", amount: item?.amount, label: item ? article(item.label) : "", people: people.map(article) };
   }
@@ -248,6 +251,8 @@ export function readIntent(text: string, currency?: string): Intent {
     const on = line.match(/\b(?:on|for|untuk|utk|kat|dekat|kt|pada|bagi) (?:my |the )?([\p{L}-]+(?: [\p{L}-]+)?)/iu)?.[1].toLowerCase();
     const named = line.match(/\b(?:bajet|budget|limit|had|max|target)\s+(?:untuk\s+|utk\s+|for\s+)?([\p{L}-]+(?: [\p{L}-]+)?)/iu)?.[1];
     const category = (on && categoryNamed(on)) || (named && categoryNamed(named)) || undefined;
+    // No per-day budgets: "jgn lebih 20 sehari" would print as "20 a month".
+    if (!period && /\b(?:sehari|a day|per day|daily|harian)\b/i.test(line)) return { kind: "ask" };
     if (on && !category && !/^(?:a|the|this|next|each|every|per) |^(?:week|month|now|today|pay|minggu|bulan|hari|seminggu|sebulan|gaji|ni|tu|je|jer|sahaja|aku|saya|diri)/.test(on)) return { kind: "ask" };
     return { kind: "budget", amount: item?.amount, period, category };
   }
@@ -261,10 +266,12 @@ export function readIntent(text: string, currency?: string): Intent {
   if (katQuery && !/\d/.test(katQuery) && !/^(?:minggu|bulan|bln|mgu|hari|ni|lepas|lalu|gaji|tahun|week|month|day|year)\b/i.test(katQuery)) return { kind: "spentOn", query: katQuery };
   const cw = line.match(new RegExp(String.raw`(?:\b(?:${BERAPA})\b.*\b(?:habis|belanja|spend|guna)\s+|\b(?:total|jumlah)\s+)(?:kat\s+|utk\s+|untuk\s+)?(makan|mkn|makanan|jajan|snek|transport|tambang|runcit|barang dapur|langganan|food|treats?|grocer(?:y|ies))\b`, "i"));
   if (!digits && cw) return { kind: "spentOn", query: cw[1] };
+  // "limit grab 100" names a place, not a category: Bud takes it rather than saving a 100 expense.
+  if (/\blimit\s+\S+\s+(?:rm\s*)?\d/i.test(line) && !BUDGET.test(line)) return { kind: "ask" };
   if (/\b(biggest|largest|most expensive)\b.*\b(spend|spends|expense|expenses|purchase|purchases|buy|buys)\b/i.test(line) || (!digits && /\b(?:paling|yang paling)\s+(?:mahal|banyak|byk|bnyk|besar)\b|\b(?:termahal|terbesar|terbanyak)\b/i.test(line)))
     return { kind: "biggest" };
   if (/\bwhen(['’]?s| is| are| do)\b.*\b(rent|bills?)\b|\bnext (bill|rent)\b|\b(rent|bills?) due\b|\bwhat bills\b|\b(?:bila|bile)\b.*\b(?:sewa|rent|bil|bills?)\b|\b(?:sewa|rent|bil|bills?)\b.*\b(?:bila|bile)\b|\bbil (?:apa|seterusnya)\b/i.test(line)) return { kind: "bills" };
-  if (new RegExp(String.raw`\bhow many days\b|\bdays left\b|\b(?:${BERAPA})\s+hari\b|\bhari\s+(?:lagi|lg)\b|\b(?:bila|bile)\b.*\b(?:gaji|elaun|ptptn|biasiswa)\b`, "i").test(line)) return { kind: "daysLeft" };
+  if (new RegExp(String.raw`\bhow many days\b|\bdays left\b|\b(?:${BERAPA})\s+hari\b|\bhari\s+(?:lagi|lg)\b|\b(?:bila|bile)\b.*\b(?:gaji|elaun)\b`, "i").test(line)) return { kind: "daysLeft" };
   if ((/\b(last|previous) (week|month|pay period)\b|\bcompared?\b/i.test(line) && isQuestion(line)) || (/\b(?:bulan|minggu|bln|mgu) (?:lepas|lalu|lps)\b|\b(?:ber)?banding/i.test(line) && (isQuestion(line) || !digits))) return { kind: "compare" };
   if (
     /\bhow(['’]?s| is| am)\b.*\b(month|week|period|doing|budget)\b|\bwhere did\b.*\bgo\b|\bhow much (is )?left\b/i.test(line) ||

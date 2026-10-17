@@ -305,6 +305,15 @@ describe("Malay and bahasa pasar", () => {
     expect(await read("300 sampai gaji")).toEqual({ kind: "budget", amount: 300, period: "until", category: undefined });
     expect((await read("had lunch with ali 12")).kind).toBe("add");
     expect((await read("had food 12")).kind).toBe("add");
+    expect(parseSpending("h&m 50", "MYR")).toHaveLength(1);
+    expect(parseSpending("kopi 5 & roti 3", "MYR")).toHaveLength(2);
+    expect((await read("target 45")).kind).toBe("add");
+    expect(await read("target 800 bulan ni")).toEqual({ kind: "budget", amount: 800, period: "month", category: undefined });
+    expect(await read("dinner 60 split with dan and sarah")).toEqual({ kind: "split", amount: 60, label: "Dinner", people: ["Dan", "Sarah"] });
+    expect(await read("jgn lebih 20 sehari")).toEqual({ kind: "ask" });
+    expect(await read("limit grab 100")).toEqual({ kind: "ask" });
+    expect(parseSpending("giant pizza 30", "MYR")[0].category).toBe("Food");
+    expect(parseSpending("giant 60", "MYR")[0].category).toBe("Groceries");
   });
   it("names categories in English or Malay", async () => {
     const { categoryNamed } = await import("./index");
