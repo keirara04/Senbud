@@ -217,7 +217,7 @@ export const setAnalytics = (db: SQLiteDatabase, on: boolean) =>
   db.execAsync(on ? 'UPDATE app SET analytics = 1' : 'UPDATE app SET analytics = 0; DELETE FROM events_queue');
 // Queues one usage event, only while usage stats are on. Must be a name in api EventController::APP_EVENTS.
 // Props are labels and counts only: never amounts, shop names or anything typed.
-export type EventName = 'app_open' | 'screen' | 'setup_done' | 'txn_added' | 'limit_set' | 'treat_added';
+export type EventName = 'app_open' | 'screen' | 'setup_done' | 'txn_added' | 'limit_set' | 'treat_added' | 'pro_bought';
 export function track(db: SQLiteDatabase, name: EventName, props?: Record<string, string | number | boolean>) {
   return db
     .runAsync(`INSERT INTO events_queue (id, name, props, at) SELECT ${UUID_SQL}, ?, ?, ? WHERE (SELECT analytics FROM app) = 1`, name, props ? JSON.stringify(props) : null, new Date().toISOString())
