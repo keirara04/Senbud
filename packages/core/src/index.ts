@@ -1,5 +1,6 @@
 // Senbud's shared money logic, used by web and mobile. Pure functions: no AI, no network, no platform APIs.
 export * from "./budget";
+export * from "./csv";
 export * from "./dates";
 export * from "./examples";
 export * from "./iou";
@@ -17,11 +18,13 @@ export type Item = { label: string; amount: number; category: Category };
 const RULES: [RegExp, Category][] = (
   [
     // The local examples in mobile/src/currencies.ts must land in the right category here too.
-    ["bubble ?tea|boba|coffee|kopi|kopi susu|kape|ca phe|cha yen|milk ?tea|karak|chai|americano|flat white|latte|starbucks|cake|ice ?cream|dessert|burger|big ?mac|fries|snack", "Treat"],
+    // Delivery first, so "GRAB*FOOD" on a bank statement is food, not a ride.
+    ["grab\\W?food|food ?panda|deliveroo|uber ?eats|doordash|shopee ?food|swiggy|zomato", "Food"],
+    ["bubble ?tea|boba|coffee|tealive|chatime|gong ?cha|tiger sugar|koi|zus|tim hortons|dunkin|kopi|kopi susu|kape|ca phe|cha yen|milk ?tea|karak|chai|americano|flat white|latte|starbucks|cake|ice ?cream|dessert|burger|big ?mac|fries|snack", "Treat"],
     ["netflix|spotify|youtube|icloud|disney|prime|gym|chatgpt|subscription", "Subscription"],
     ["grab|gojek|dart|didi|careem|uber|lyft|taxi|bus|train|tram|tube|mtr|mrt|lrt|metro|auto|rickshaw|petrol|gas|parking|fare", "Transport"],
     ["grocer(?:y|ies)?|market|tesco|walmart|aldi|lotus|mydin|trader joe|costco", "Groceries"],
-    ["lunch|dinner|breakfast|brunch|food|nasi|mee|pizza|sushi|ramen|mamak|meal|chipotle|kimbap|gimbap|kimchi|bibimbap|pho|banh mi|onigiri|noodle|biryani|thali|shawarma|poutine|pie|sandwich|hot ?dog|chicken rice|silog|pad kra pao|baozi|sausage roll", "Food"],
+    ["lunch|dinner|breakfast|brunch|food|kopitiam|hawker|restaurant|cafe|mcdonald'?s?|mcd|kfc|subway|nasi|mee|pizza|sushi|ramen|mamak|meal|chipotle|kimbap|gimbap|kimchi|bibimbap|pho|banh mi|onigiri|noodle|biryani|thali|shawarma|poutine|pie|sandwich|hot ?dog|chicken rice|silog|pad kra pao|baozi|sausage roll", "Food"],
   ] as const
 ).map(([words, cat]) => [new RegExp(`\\b(?:${words})(?:e?s)?\\b`), cat]);
 

@@ -95,7 +95,13 @@ All four are in. Bud's adds are now saved with `source: 'bud'` (older ones stay 
 - **Year-end edition (Pro):** the same story pager over a year: total, top category and place, treats, best month, hours of work. **Size:** M. **Files:** `packages/core/src/recap.ts`, `wrapped.tsx`, `share.tsx`.
 - **AI captions:** captions are rule-written today. Send only the numbers (never labels) through `/agent/ask`, and add them to the data forms (`docs/senbud-store-data-forms.md`) and "What gets sent". **Depends on:** the proxy decision. **Size:** M.
 
-### 4.5 CSV import
+### 4.5 CSV import (built 17 October 2026)
+
+- Settings, Your data: "Import spending (CSV)". Core's `fromCsv` (`packages/core/src/csv.ts`, tested) reads Senbud's own export and bank statements: columns by header name (date; description, details, merchant...; amount, or debit / money out), commas or semicolons, quotes, a BOM, "RM 1,234.50", "(8.40)", "12,50". Only money out comes in: with a signed amount column, positives are income and skipped; with debit and credit columns, only debits. Day or month first is settled by the file when any day is over 12, otherwise by the locale (month first only for en-US).
+- Rows already there (same date, amount and label) are skipped, so importing a statement twice adds nothing. A confirm shows the count, date range, currency and what was skipped first. Imports save as `source: 'csv'`; categories come from the core rules, which now know delivery apps ("GRAB*FOOD" is Food), bubble tea chains, kopitiams and fast food.
+- Checked in the browser with a bank-style file: 3 added, the salary skipped, a second import "Nothing new to add". Not checked: the native file picker.
+- Later: bank presets, and a currency column that differs from the profile (amounts are taken as the profile's currency today).
+
 
 - **What:** import a spending CSV. Reuse the backup file picker (`backup.ts`) and the `importAll` transaction shape; labels go through core's category rules. Bank presets (per-bank column maps) come after. **Size:** M. **Free.**
 

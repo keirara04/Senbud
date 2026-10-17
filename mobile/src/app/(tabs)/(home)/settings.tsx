@@ -10,7 +10,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Linking, Platform, View } from 'react-native';
 import Purchases from 'react-native-purchases';
 
-import { restoreBackup, shareFile } from '@/backup';
+import { importCsv, restoreBackup, shareFile } from '@/backup';
 import { drinkExample } from '@/currencies';
 import { ordinal, perPeriod } from '@/onboarding';
 import { type AppState, eraseAll, exportAll, listTransactions, loadApp, loadSetup, setAiEnabled, setAnalytics, setReminders, type Setup, setTheme, type Theme, today } from '@/db';
@@ -143,8 +143,9 @@ export default function Settings() {
         />
       </View>
 
-      <ListGroup title="Your data" footer="A backup is how your data moves to a new phone. Senbud has no account to sync.">
+      <ListGroup title="Your data" footer="A backup is how your data moves to a new phone. Senbud has no account to sync. Import takes Senbud’s own export or a bank’s CSV.">
         <ListRow first label="Export spending (CSV)" onPress={exportCsv} />
+        <ListRow label="Import spending (CSV)" onPress={() => importCsv(db, profile, load)} />
         <ListRow label="Back up everything" onPress={backUp} />
         <ListRow label="Restore from a backup" onPress={() => restoreBackup(db, load)} />
       </ListGroup>
