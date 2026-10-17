@@ -48,7 +48,8 @@ There are three layers. Screens use only the top two, through `useTheme()` and t
 | `text` | `#1a1c2e` | `#eef0ff` | Body text |
 | `textDim` | `#565b75` | `#a8b0d8` | Secondary text, labels |
 | `line` | ink 12% | white 10% | Borders, dividers |
-| `accent` / `accentPressed` / `onAccent` | cobalt / cobaltDeep / `#f4f6ff` | periwinkle `#c9d2ff` / `#b3bff5` / ink | Links, selected states, tab tint. Dark is periwinkle, so the hero number and the `highlight` button stay the only yellow (17 Oct 2026). The web's `globals.css` still uses highlighter. |
+| `accent` / `accentPressed` / `onAccent` | cobalt / cobaltDeep / `#f4f6ff` | periwinkle `#c9d2ff` / `#b3bff5` / ink | Links, selected states. Dark is periwinkle, so the hero number and the `highlight` button stay the only yellow (17 Oct 2026). The web's `globals.css` still uses highlighter. |
+| `tabActive` | cobalt | highlighter `#eeff5a` | The current tab's icon and label. Yellow in dark on purpose: the clearest "you are here" cue, even while a screen is still drawing (17 Oct 2026). The one yellow allowed outside the key number. |
 | `placeholder` | `#878ca3` | `#666e9e` | Input placeholder, dimmer than `textDim` so it never reads as a filled-in value |
 | `primary` / `primaryPressed` / `onPrimary` | cobalt / cobaltDeep / `#f4f6ff` | periwinkle `#c9d2ff` / `#b3bff5` / ink | Primary button fill. Its own token so in dark mode the one `highlight` button stays the only yellow (decided 16 Oct 2026). |
 | `panel` / `onPanel` / `onPanelDim` | cobalt / `#f4f6ff` / `#c9d2ff` | same | The hero card. It stays cobalt in dark mode, as on the web. |

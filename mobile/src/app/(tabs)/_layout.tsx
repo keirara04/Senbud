@@ -18,7 +18,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShadowVisible: false,
-        tabBarActiveTintColor: t.accent,
+        tabBarActiveTintColor: t.tabActive,
         tabBarInactiveTintColor: t.textDim,
         // Web gets no safe-area inset from React Navigation, and its 49 pt default clips the labels.
         // 60: BudTab's circle and label take 56, plus the top border.

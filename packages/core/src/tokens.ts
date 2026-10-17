@@ -52,7 +52,8 @@ const light = {
   // Below AA on purpose: every field has a label, and a hint must not read as a value already typed.
   placeholder: palette.placeholderInk as string,
   line: "rgba(26, 28, 46, 0.12)",
-  accent: palette.cobalt as string, // links, selected states, tab tint
+  accent: palette.cobalt as string, // links, selected states
+  tabActive: palette.cobalt as string, // the current tab's icon and label
   accentPressed: palette.cobaltDeep as string,
   onAccent: palette.onCobalt as string,
   primary: palette.cobalt as string, // primary button fill
@@ -85,6 +86,9 @@ const dark: Theme = {
   // number and the `highlight` button stay the only yellow. web/app/globals.css still uses highlighter
   // here and is out of step until the web follows.
   accent: palette.onCobaltDim,
+  // The current tab stays highlighter: it is the "you are here" cue, and it has to read at a glance
+  // even while the screen is still drawing (user decision, 17 Oct 2026). 15.0:1 on night2.
+  tabActive: palette.highlighter,
   accentPressed: palette.periwinklePressed,
   onAccent: palette.ink,
   // Its own fill, so the one `highlight` button stays the only yellow thing on a dark screen
