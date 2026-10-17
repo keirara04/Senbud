@@ -13,7 +13,7 @@ import Purchases from 'react-native-purchases';
 import { restoreBackup, shareFile } from '@/backup';
 import { drinkExample } from '@/currencies';
 import { ordinal } from '@/onboarding';
-import { type AppState, eraseAll, exportAll, listTransactions, loadApp, loadSetup, setAiEnabled, setReminders, type Setup, setTheme, type Theme, today } from '@/db';
+import { type AppState, eraseAll, exportAll, listTransactions, loadApp, loadSetup, setAiEnabled, setAnalytics, setReminders, type Setup, setTheme, type Theme, today } from '@/db';
 import { allowReminders, syncReminders } from '@/reminders';
 import { PRIVACY, purchasesReady, restorePro, syncPro, TERMS } from '@/purchases';
 import { AiSwitch, applyTheme, Button, Card, ListGroup, ListRow, Row, Screen, Segmented, T, TextButton } from '@/ui';
@@ -42,6 +42,11 @@ export default function Settings() {
   if (!app) return null;
   const profile = setup?.profile ?? { currency: 'USD', locale: 'en-US' };
   const fmt = (cents: number) => money(cents / 100, profile.currency, profile.locale);
+
+  async function toggleAnalytics(on: boolean) {
+    await setAnalytics(db, on);
+    setApp((a) => a && { ...a, analytics: on });
+  }
 
   async function toggleAi(on: boolean) {
     await setAiEnabled(db, on);
@@ -117,6 +122,10 @@ export default function Settings() {
       <ListGroup title="AI" footer={`Typing “${drinkExample(profile.currency)}” always works, AI or not. Everything is stored on this phone.`}>
         <AiSwitch value={app.aiEnabled} onChange={toggleAi} />
         <ListRow label="What gets sent" onPress={() => router.push('/sent')} />
+      </ListGroup>
+
+      <ListGroup title="Usage stats" footer="Which screens and features get used, sent with your Support ID. Never amounts, shops or anything you type.">
+        <AiSwitch label="Share usage stats" value={app.analytics} onChange={toggleAnalytics} />
       </ListGroup>
 
       <View style={{ gap: space.sm }}>

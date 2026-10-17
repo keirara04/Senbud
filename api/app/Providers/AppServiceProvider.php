@@ -36,6 +36,10 @@ class AppServiceProvider extends ServiceProvider
         }
 
         RateLimiter::for('waitlist', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
+        // A queue flush is one request of up to 50 events, so these are generous for people and tight for scripts.
+        RateLimiter::for('events', fn (Request $request) => [
+            Limit::perMinute(20)->by(self::who($request)), Limit::perDay(2000)->by('ip:'.$request->ip()),
+        ]);
 
         $who = self::who(...);
         // The web app has no Pro yet, so its browsers get a small free allowance a day. Browsers can't

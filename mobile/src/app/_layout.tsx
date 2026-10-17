@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { Alert, Platform } from 'react-native';
 
+import { Analytics } from '@/analytics';
 import { loadApp, migrate } from '@/db';
 import { ProSync } from '@/purchases';
 import { applyTheme, Screen, T, useNavigationTheme } from '@/ui';
@@ -82,6 +83,7 @@ export default function RootLayout() {
         <StatusBar style="auto" />
         <ProSync />
         <ThemeSync />
+        <Analytics />
         <Stack screenOptions={{ headerShadowVisible: false, headerBackButtonDisplayMode: 'minimal' }}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="welcome" options={{ headerShown: false }} />

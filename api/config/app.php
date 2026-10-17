@@ -64,6 +64,9 @@ return [
     // A secret the owner's own app builds send in X-Unlimited-Key for no AI limits. Empty = feature off.
     'unlimited_key' => env('UNLIMITED_KEY', ''),
 
+    // The owner's password for /admin (HTTP Basic, any username). Empty = the admin pages are off.
+    'admin_password' => env('ADMIN_PASSWORD', ''),
+
     // Comma-separated IPs/CIDRs of the reverse proxy in front of the API (see AppServiceProvider).
     'trusted_proxies' => env('TRUSTED_PROXIES'),
 

@@ -1,11 +1,11 @@
-// The Senbud API (api/, Laravel). Only receipt reading and Bud's questions talk to it; everything else
-// stays on the phone.
+// The Senbud API (api/, Laravel). Only receipt reading, Bud's questions and usage stats (analytics.ts)
+// talk to it; everything you add stays on the phone.
 import type { Category } from '@senbud/core';
 import { Platform } from 'react-native';
 
 // Development: the dev machine on localhost (Android through `adb reverse tcp:8000 tcp:8000`), or
 // EXPO_PUBLIC_API_URL for a phone on Wi-Fi. Release builds default to the production API.
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? (__DEV__ ? 'http://localhost:8000' : 'https://api.senbud.com');
+export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? (__DEV__ ? 'http://localhost:8000' : 'https://api.senbud.com');
 
 // Pro can't be bought on the web yet, so the web app gets a small free allowance a day instead. The API
 // enforces the same numbers for requests from the web app (AppServiceProvider::WEB_FREE_*).
@@ -15,7 +15,7 @@ export const WEB_FREE = { receipts: 3, questions: 10 };
 // The owner's own builds skip the AI limits with a secret the API checks (UNLIMITED_KEY). Anything
 // EXPO_PUBLIC_ is bundled into the app, so set it only for personal builds, never a store build.
 const UNLIMITED = process.env.EXPO_PUBLIC_UNLIMITED_KEY;
-const headers = (deviceId: string) => ({
+export const headers = (deviceId: string) => ({
   'Content-Type': 'application/json',
   Accept: 'application/json',
   'X-Device-Id': deviceId,

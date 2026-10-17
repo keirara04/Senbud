@@ -3,9 +3,9 @@ import { type Bill, type BudgetPeriod, type Category, type Iou, type IsoDate, pe
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 // A random v4 UUID from SQLite's own CSPRNG, so no native crypto module is needed.
-const NEW_APP_ROW = `INSERT INTO app (id, device_id) VALUES (1,
-  lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))), 2) || '-' ||
-  substr('89ab', 1 + abs(random()) % 4, 1) || substr(lower(hex(randomblob(2))), 2) || '-' || lower(hex(randomblob(6))));`;
+const UUID_SQL = `lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))), 2) || '-' ||
+  substr('89ab', 1 + abs(random()) % 4, 1) || substr(lower(hex(randomblob(2))), 2) || '-' || lower(hex(randomblob(6)))`;
+const NEW_APP_ROW = `INSERT INTO app (id, device_id) VALUES (1, ${UUID_SQL});`;
 
 // Append only; never edit a shipped migration. PRAGMA user_version records how many have run.
 const MIGRATIONS = [
@@ -56,6 +56,9 @@ const MIGRATIONS = [
   // 10: which local reminders are on, as a comma list of core's ReminderKind. Off until the person agrees.
   // Not in backups: notification permission belongs to the phone, so a new phone asks again.
   `ALTER TABLE app ADD COLUMN reminders TEXT NOT NULL DEFAULT '';`,
+  // 11: usage stats waiting to be sent (analytics.ts), and the Settings switch for them. On by default.
+  `CREATE TABLE events_queue (id TEXT PRIMARY KEY, name TEXT NOT NULL, props TEXT, at TEXT NOT NULL);
+   ALTER TABLE app ADD COLUMN analytics INTEGER NOT NULL DEFAULT 1;`,
 ];
 
 export async function migrate(db: SQLiteDatabase) {
@@ -115,6 +118,7 @@ export async function addTransactions(db: SQLiteDatabase, txns: Transaction[]): 
       ids.push(r.lastInsertRowId);
     }
   });
+  if (txns.length) track(db, 'txn_added', { source: txns[0].source ?? 'manual', count: txns.length });
   return ids;
 }
 
@@ -143,14 +147,14 @@ export async function listTransactions(db: SQLiteDatabase, since?: IsoDate): Pro
 // "Erase all data": every row gone, schema kept. A fresh device id too, so nothing links the old data to the new.
 export const eraseAll = (db: SQLiteDatabase) =>
   db.withTransactionAsync(() => db.execAsync(`DELETE FROM transactions; DELETE FROM budget; DELETE FROM bills; DELETE FROM profile; DELETE FROM app; ${NEW_APP_ROW}
-    DELETE FROM category_limits; DELETE FROM treats; DELETE FROM treat_jar_history; DELETE FROM ious; DELETE FROM subscriptions; DELETE FROM rules; DELETE FROM nudge_dismissals;
+    DELETE FROM category_limits; DELETE FROM treats; DELETE FROM treat_jar_history; DELETE FROM ious; DELETE FROM subscriptions; DELETE FROM rules; DELETE FROM nudge_dismissals; DELETE FROM events_queue;
     UPDATE treat_jar SET balance_cents = 0, goal_name = NULL, goal_cents = NULL; UPDATE app SET theme = 'dark';`));
 
 // "Back up everything": every user table as rows, plus the app settings. Not nudge_dismissals: they
 // only last a day. Not device_id (a new phone
 // gets its own) and not pro (the store owns that; Restore purchases brings it back).
 const BACKUP_TABLES = ['transactions', 'budget', 'bills', 'profile', 'category_limits', 'treats', 'treat_jar', 'treat_jar_history', 'ious', 'subscriptions', 'rules'];
-const BACKUP_SETTINGS = ['hourly_rate_cents', 'ai_enabled', 'theme', 'ai_consent_at'];
+const BACKUP_SETTINGS = ['hourly_rate_cents', 'ai_enabled', 'theme', 'ai_consent_at', 'analytics'];
 type Row = Record<string, string | number | null>;
 export type Backup = { app: 'senbud'; schema: number; tables: Record<string, Row[]>; settings: Row };
 
@@ -192,12 +196,12 @@ export async function importAll(db: SQLiteDatabase, data: unknown) {
 }
 
 export type Theme = 'system' | 'light' | 'dark';
-export type AppState = { deviceId: string; aiConsentAt: string | null; pro: boolean; hourlyRateCents: number | null; aiEnabled: boolean; theme: Theme; periodHandled: IsoDate | null; reminders: ReminderKind[] };
+export type AppState = { deviceId: string; aiConsentAt: string | null; pro: boolean; hourlyRateCents: number | null; aiEnabled: boolean; theme: Theme; periodHandled: IsoDate | null; reminders: ReminderKind[]; analytics: boolean };
 
 export async function loadApp(db: SQLiteDatabase): Promise<AppState> {
-  const r = await db.getFirstAsync<{ device_id: string; ai_consent_at: string | null; pro: number; hourly_rate_cents: number | null; ai_enabled: number; theme: Theme; period_handled: string | null; reminders: string }>('SELECT * FROM app');
+  const r = await db.getFirstAsync<{ device_id: string; ai_consent_at: string | null; pro: number; hourly_rate_cents: number | null; ai_enabled: number; theme: Theme; period_handled: string | null; reminders: string; analytics: number }>('SELECT * FROM app');
   if (!r) throw new Error('app row missing; migrations did not run');
-  return { deviceId: r.device_id, aiConsentAt: r.ai_consent_at, pro: r.pro === 1, hourlyRateCents: r.hourly_rate_cents, aiEnabled: r.ai_enabled === 1, theme: r.theme, periodHandled: r.period_handled, reminders: r.reminders ? (r.reminders.split(',') as ReminderKind[]) : [] };
+  return { deviceId: r.device_id, aiConsentAt: r.ai_consent_at, pro: r.pro === 1, hourlyRateCents: r.hourly_rate_cents, aiEnabled: r.ai_enabled === 1, theme: r.theme, periodHandled: r.period_handled, reminders: r.reminders ? (r.reminders.split(',') as ReminderKind[]) : [], analytics: r.analytics === 1 };
 }
 
 export const giveAiConsent = (db: SQLiteDatabase) => db.runAsync('UPDATE app SET ai_consent_at = ?', new Date().toISOString());
@@ -208,6 +212,17 @@ export const setAiEnabled = (db: SQLiteDatabase, on: boolean) =>
   db.runAsync(on ? 'UPDATE app SET ai_enabled = 1' : 'UPDATE app SET ai_enabled = 0, ai_consent_at = NULL');
 export const setTheme = (db: SQLiteDatabase, theme: Theme) => db.runAsync('UPDATE app SET theme = ?', theme);
 export const setReminders = (db: SQLiteDatabase, kinds: ReminderKind[]) => db.runAsync('UPDATE app SET reminders = ?', kinds.join(','));
+// Usage stats (analytics.ts sends them). Turning them off also drops anything not sent yet.
+export const setAnalytics = (db: SQLiteDatabase, on: boolean) =>
+  db.execAsync(on ? 'UPDATE app SET analytics = 1' : 'UPDATE app SET analytics = 0; DELETE FROM events_queue');
+// Queues one usage event, only while usage stats are on. Must be a name in api EventController::APP_EVENTS.
+// Props are labels and counts only: never amounts, shop names or anything typed.
+export type EventName = 'app_open' | 'screen' | 'setup_done' | 'txn_added' | 'limit_set' | 'treat_added';
+export function track(db: SQLiteDatabase, name: EventName, props?: Record<string, string | number | boolean>) {
+  return db
+    .runAsync(`INSERT INTO events_queue (id, name, props, at) SELECT ${UUID_SQL}, ?, ?, ? WHERE (SELECT analytics FROM app) = 1`, name, props ? JSON.stringify(props) : null, new Date().toISOString())
+    .catch(() => {});
+}
 export const setPeriodHandled = (db: SQLiteDatabase, start: IsoDate) => db.runAsync('UPDATE app SET period_handled = ?', start);
 
 // Budgets: category limits and bills.
@@ -215,8 +230,10 @@ export async function loadLimits(db: SQLiteDatabase): Promise<Partial<Record<Cat
   const rows = await db.getAllAsync<{ category: Category; cents: number }>('SELECT * FROM category_limits');
   return Object.fromEntries(rows.map((r) => [r.category, r.cents]));
 }
-export const setLimit = (db: SQLiteDatabase, category: Category, cents: number | null) =>
-  cents ? db.runAsync('INSERT OR REPLACE INTO category_limits (category, cents) VALUES (?, ?)', category, cents) : db.runAsync('DELETE FROM category_limits WHERE category = ?', category);
+export async function setLimit(db: SQLiteDatabase, category: Category, cents: number | null) {
+  await (cents ? db.runAsync('INSERT OR REPLACE INTO category_limits (category, cents) VALUES (?, ?)', category, cents) : db.runAsync('DELETE FROM category_limits WHERE category = ?', category));
+  track(db, 'limit_set', { category, on: !!cents });
+}
 
 export type BillRow = Bill & { id: number };
 export async function listBills(db: SQLiteDatabase): Promise<BillRow[]> {
@@ -233,8 +250,10 @@ export async function listTreats(db: SQLiteDatabase): Promise<TreatRow[]> {
   const rows = await db.getAllAsync<{ id: number; name: string; last_cents: number; last_date: string | null; min_days: number }>('SELECT * FROM treats ORDER BY name');
   return rows.map((r) => ({ id: r.id, name: r.name, lastCents: r.last_cents, lastDate: r.last_date ?? undefined, minDaysBetween: r.min_days }));
 }
-export const addTreat = (db: SQLiteDatabase, t: Treat) =>
-  db.runAsync('INSERT INTO treats (name, last_cents, last_date, min_days) VALUES (?, ?, ?, ?)', t.name, t.lastCents, t.lastDate ?? null, t.minDaysBetween);
+export async function addTreat(db: SQLiteDatabase, t: Treat) {
+  await db.runAsync('INSERT INTO treats (name, last_cents, last_date, min_days) VALUES (?, ?, ?, ?)', t.name, t.lastCents, t.lastDate ?? null, t.minDaysBetween);
+  track(db, 'treat_added', { learned: !!t.lastDate });
+}
 export const deleteTreat = (db: SQLiteDatabase, id: number) => db.runAsync('DELETE FROM treats WHERE id = ?', id);
 
 export type Jar = { balanceCents: number; goalName: string | null; goalCents: number | null };
