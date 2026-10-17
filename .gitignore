@@ -5,3 +5,4 @@ art/json/
 art/output/
 
 node_modules/
+.next/

@@ -1,4 +1,6 @@
-import { Also, Faq, Friends, Hero, Join, MeetBud, Pricing, Privacy, Screens, Ways } from "@/components/Landing";
+import { Also, Faq, Friends, Hero, Join, MeetBud, Privacy, Ways } from "@/components/Landing";
+import { Pricing } from "@/components/Pricing";
+import { Screens } from "@/components/Screens";
 import { MotionProvider } from "@/components/MotionProvider";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Sections";
