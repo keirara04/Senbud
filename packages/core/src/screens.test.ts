@@ -278,6 +278,34 @@ describe("Malay and bahasa pasar", () => {
     for (const line of ["grab ke kampus 12", "belanja kawan 20", "beli roti 3", "dah bayar sewa 600", "makan tengahari 8", "2 x nasi lemak 10", "makan bulan lepas 20", "had lunch 12", "apam balik 5"])
       expect((await read(line)).kind, line).toBe("add");
   });
+  it("covers the words from the vocabulary audit", async () => {
+    const { parseSpending } = await import("./index");
+    const cat = (line: string) => parseSpending(line, "MYR")[0]?.category;
+    const want: [string, string][] = [
+      ["supper 10", "Food"], ["murtabak 8", "Food"], ["mekdi 15", "Food"], ["roti telur 2.5", "Food"],
+      ["air kosong 0.5", "Treat"], ["wayang gsc 18", "Treat"], ["shopee 45", "Treat"], ["kopi susu 3", "Treat"], ["teh kurang gula 3", "Treat"],
+      ["grabcar 12", "Transport"], ["grab car 12", "Transport"], ["ron95 40", "Transport"], ["servis motor 80", "Transport"],
+      ["telur 12", "Groceries"], ["tong gas 28", "Groceries"], ["aeon 60", "Groceries"],
+      ["hotlink 30", "Subscription"], ["bil api 80", "Subscription"], ["ptptn 100", "Subscription"],
+      ["ikan steam 12", "Food"], ["air 1", "Other"], ["sewa 600", "Other"],
+    ];
+    for (const [line, category] of want) expect(cat(line), line).toBe(category);
+    expect(parseSpending("nasi lemak 5.", "MYR")[0]?.amount).toBe(5);
+    expect((await read("blh x aku nak beli kasut 80")).kind).toBe("afford");
+    expect(await read("kasut 80 worth it?")).toEqual({ kind: "afford", amount: 80, label: "Kasut" });
+    expect((await read("cukup ke duit nak beli baju 50")).kind).toBe("afford");
+    expect(await read("status bajet")).toEqual({ kind: "month" });
+    expect(await read("ada lagi tak duit")).toEqual({ kind: "month" });
+    expect(await read("belanja paling banyak")).toEqual({ kind: "biggest" });
+    expect(await read("total makan bulan ni")).toEqual({ kind: "spentOn", query: "makan" });
+    expect(await read("bila gaji masuk")).toEqual({ kind: "daysLeft" });
+    expect((await read("pizza 45 share dgn ali")).kind).toBe("split");
+    expect((await read("share kopi 4")).kind).toBe("add");
+    expect(await read("had makan 200 sebulan")).toEqual({ kind: "budget", amount: 200, period: "month", category: "Food" });
+    expect(await read("300 sampai gaji")).toEqual({ kind: "budget", amount: 300, period: "until", category: undefined });
+    expect((await read("had lunch with ali 12")).kind).toBe("add");
+    expect((await read("had food 12")).kind).toBe("add");
+  });
   it("names categories in English or Malay", async () => {
     const { categoryNamed } = await import("./index");
     expect(["food", "makan", "Makanan", "treats", "jajan", "barang dapur", "tambang", "langganan", "bubble tea"].map(categoryNamed)).toEqual(["Food", "Food", "Food", "Treat", "Treat", "Groceries", "Transport", "Subscription", undefined]);

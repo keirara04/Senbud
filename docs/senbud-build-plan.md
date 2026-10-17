@@ -112,6 +112,13 @@ All four are in. Bud's adds are now saved with `source: 'bud'` (older ones stay 
 - Free for a week or a month. Until payday is Pro and needs a payday, so Bud opens the Budget sheet when the budget isn't until payday already. A category limit with its own week or month is Pro; free limits reset with the budget, and the slip says so.
 - Checked in the browser: week, month with Undo, a treat limit, a place, and with Pro until payday and a weekly Transport limit on an until budget.
 
+### 4.6b Malay and bahasa pasar input (built 18 October 2026)
+
+- Quick add and Bud's rules read Malay, bahasa pasar and the Malay-English mix: "roti canai 1.50 dan teh ais 2.50", "rm5", "8 hinggit", "50 sen", "1.2k", Malaysian food, drinks, stores, transport, telcos and bills. Every Bud intent has Malay forms ("boleh ke aku beli kasut 80", "brp hari lg gaji", "bajet 1k sampai gaji", "limit makan 200", "split dgn ali n abu"), and Malay questions never become expenses. `categoryNamed` (core) maps "makan", "jajan", "barang dapur" to categories. Bud's AI replies in the language the user writes in.
+- A vocabulary audit of 285 lines went from 113 wrong to 17; the 17 are left out on purpose.
+- Left out on purpose: bare "air", "reload"/"top up", "data", "yes", "pasar", "7e", "texas", "motor", "steam" (each collides with another meaning); number words (seringgit, lima ringgit, kupang, suku); "sewa"/"rent" stay Other since rent is a bill; "x jadi beli" (negation); "teh 2 ke" (a trailing "ke" after an amount).
+- Still English: every screen, Bud's slips, notifications, the off-topic reply and Wrapped captions. A full Malay app is a separate, larger job.
+
 ### 4.7 Later or parked
 
 | Item | Notes | Size |
