@@ -13,7 +13,7 @@ export function AiUses() {
       </Card>
       <Card>
         <T variant="bodyStrong">When you ask Bud a question</T>
-        <T>Your question, your last few questions and answers in that chat, and a short summary: this period’s totals, your budget and rent, and your last 20 expenses. Never your full history. It goes the same way, to an AI model (currently Anthropic’s Claude Haiku, run by Google).</T>
+        <T>Your question, your last few questions and answers, up to 5 short lines you’ve told Bud to remember, and a short summary: this period’s totals, your budget and rent, and your last 20 expenses. When a question needs them, Bud can also ask the phone for your bills, category limits, treat jar progress and past months’ totals. Never your full history. It goes the same way, to an AI model (currently Anthropic’s Claude Haiku, run by Google).</T>
       </Card>
       <Card>
         <T variant="bodyStrong">When you open Wrapped</T>
@@ -25,7 +25,7 @@ export function AiUses() {
       </Card>
       <Card>
         <T variant="bodyStrong">Never leaves the phone</T>
-        <T>Every expense you type, friends’ names, treats and the treat jar. Typing what you spent works with AI or without it.</T>
+        <T>Your full expense history, friends’ names and who owes whom, and the names of your treats. Typing what you spent works with AI or without it.</T>
       </Card>
     </>
   );

@@ -13,6 +13,7 @@ Sizes: **S** is a few files and a day or less, **M** is a few days, **L** is a w
 - **Unlimited AI for the owner:** set `UNLIMITED_KEY` on the API server (`openssl rand -hex 32`) and remove `UNLIMITED_DEVICES`. Put the same value in `EXPO_PUBLIC_UNLIMITED_KEY` only in your own builds. Anything `EXPO_PUBLIC_` ships inside the app, so never in a store build.
 - **Mail:** set `MAIL_MAILER` (smtp, postmark, resend or ses) and its credentials in production. The default `log` only writes emails to a file.
 - **Google Play closed test:** a new personal account needs 12 testers for 14 days in a row before it can publish (`docs/senbud-mobile-audit.md`). Start it early.
+- **AI consent date:** set `AI_CONSENT_SINCE` in `mobile/src/db.ts` to the release date of the first build with the 18 Oct 2026 consent text (memory and tools), so anyone who agreed to the old text on an older build is asked again.
 - **Dev machine:** `brew install watchman`. Without it Metro misses edits on the external drive and serves old code.
 - **Commit today's work** in four commits: core, mobile, API, web.
 

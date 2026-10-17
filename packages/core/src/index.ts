@@ -4,6 +4,7 @@ export * from "./csv";
 export * from "./dates";
 export * from "./examples";
 export * from "./iou";
+export * from "./memory";
 export * from "./nudge";
 export * from "./recap";
 export * from "./reminders";
@@ -40,7 +41,8 @@ export function categorize(label: string): Category {
 
 // A whole number or one with up to 2 decimals, not part of a longer number and not negative. "1k" and
 // "1.5k" are thousands; "50 sen" is half a ringgit.
-const AMOUNT = /(?<![\d.-])\d+(?:\.\d{1,2})?(?!\d|\.\d)(?:k\b|\s?sen\b)?/gi;
+// "25th" and "25hb" (haribulan) are dates, never amounts: "I get paid on the 25th" is not a 25 expense.
+const AMOUNT = /(?<![\d.-])\d+(?:\.\d{1,2})?(?!\d|\.\d|(?:st|nd|rd|th|hb)\b)(?:k\b|\s?sen\b)?/gi;
 const amountOf = (raw: string) => {
   const n = parseFloat(raw);
   return /k$/i.test(raw) ? n * 1000 : /sen$/i.test(raw) ? n / 100 : n;
