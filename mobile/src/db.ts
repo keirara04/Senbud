@@ -1,5 +1,5 @@
 // Local storage: one SQLite file, plain SQL, numbered migrations. All money is integer cents.
-import { type Bill, type BudgetPeriod, type Category, type Iou, type IsoDate, periodRange, type Subscription, type Transaction, type Treat } from '@senbud/core';
+import { type Bill, type BudgetPeriod, type Category, type Iou, type IsoDate, periodRange, type ReminderKind, type Subscription, type Transaction, type Treat } from '@senbud/core';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 // A random v4 UUID from SQLite's own CSPRNG, so no native crypto module is needed.
@@ -53,6 +53,9 @@ const MIGRATIONS = [
   // first logged expense (roughly when the app was set up), or from the day this runs if there are none.
   `ALTER TABLE bills ADD COLUMN added_on TEXT;
    UPDATE bills SET added_on = COALESCE((SELECT MIN(date) FROM transactions), '${today()}');`,
+  // 10: which local reminders are on, as a comma list of core's ReminderKind. Off until the person agrees.
+  // Not in backups: notification permission belongs to the phone, so a new phone asks again.
+  `ALTER TABLE app ADD COLUMN reminders TEXT NOT NULL DEFAULT '';`,
 ];
 
 export async function migrate(db: SQLiteDatabase) {
@@ -189,12 +192,12 @@ export async function importAll(db: SQLiteDatabase, data: unknown) {
 }
 
 export type Theme = 'system' | 'light' | 'dark';
-export type AppState = { deviceId: string; aiConsentAt: string | null; pro: boolean; hourlyRateCents: number | null; aiEnabled: boolean; theme: Theme; periodHandled: IsoDate | null };
+export type AppState = { deviceId: string; aiConsentAt: string | null; pro: boolean; hourlyRateCents: number | null; aiEnabled: boolean; theme: Theme; periodHandled: IsoDate | null; reminders: ReminderKind[] };
 
 export async function loadApp(db: SQLiteDatabase): Promise<AppState> {
-  const r = await db.getFirstAsync<{ device_id: string; ai_consent_at: string | null; pro: number; hourly_rate_cents: number | null; ai_enabled: number; theme: Theme; period_handled: string | null }>('SELECT * FROM app');
+  const r = await db.getFirstAsync<{ device_id: string; ai_consent_at: string | null; pro: number; hourly_rate_cents: number | null; ai_enabled: number; theme: Theme; period_handled: string | null; reminders: string }>('SELECT * FROM app');
   if (!r) throw new Error('app row missing; migrations did not run');
-  return { deviceId: r.device_id, aiConsentAt: r.ai_consent_at, pro: r.pro === 1, hourlyRateCents: r.hourly_rate_cents, aiEnabled: r.ai_enabled === 1, theme: r.theme, periodHandled: r.period_handled };
+  return { deviceId: r.device_id, aiConsentAt: r.ai_consent_at, pro: r.pro === 1, hourlyRateCents: r.hourly_rate_cents, aiEnabled: r.ai_enabled === 1, theme: r.theme, periodHandled: r.period_handled, reminders: r.reminders ? (r.reminders.split(',') as ReminderKind[]) : [] };
 }
 
 export const giveAiConsent = (db: SQLiteDatabase) => db.runAsync('UPDATE app SET ai_consent_at = ?', new Date().toISOString());
@@ -204,6 +207,7 @@ export const setHourlyRate = (db: SQLiteDatabase, cents: number | null) => db.ru
 export const setAiEnabled = (db: SQLiteDatabase, on: boolean) =>
   db.runAsync(on ? 'UPDATE app SET ai_enabled = 1' : 'UPDATE app SET ai_enabled = 0, ai_consent_at = NULL');
 export const setTheme = (db: SQLiteDatabase, theme: Theme) => db.runAsync('UPDATE app SET theme = ?', theme);
+export const setReminders = (db: SQLiteDatabase, kinds: ReminderKind[]) => db.runAsync('UPDATE app SET reminders = ?', kinds.join(','));
 export const setPeriodHandled = (db: SQLiteDatabase, start: IsoDate) => db.runAsync('UPDATE app SET period_handled = ?', start);
 
 // Budgets: category limits and bills.

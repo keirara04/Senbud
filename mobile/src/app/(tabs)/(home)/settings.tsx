@@ -1,19 +1,20 @@
-// Settings (design system 4.8): Money, AI, Look, Your data, Senbud Pro, then Erase on its own.
+// Settings (design system 4.8): Money, Reminders (phones only), AI, Look, Your data, Senbud Pro, then Erase on its own.
 // No accounts: a backup file is how data moves to a new phone.
-import { money, toCsv } from '@senbud/core';
+import { money, type ReminderKind, toCsv } from '@senbud/core';
 import { space } from '@senbud/core/tokens';
 import { router, useFocusEffect } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { useSQLiteContext } from 'expo-sqlite';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useState } from 'react';
-import { Alert, Linking, View } from 'react-native';
+import { Alert, Linking, Platform, View } from 'react-native';
 import Purchases from 'react-native-purchases';
 
 import { restoreBackup, shareFile } from '@/backup';
 import { drinkExample } from '@/currencies';
 import { ordinal } from '@/onboarding';
-import { type AppState, eraseAll, exportAll, listTransactions, loadApp, loadSetup, setAiEnabled, type Setup, setTheme, type Theme, today } from '@/db';
+import { type AppState, eraseAll, exportAll, listTransactions, loadApp, loadSetup, setAiEnabled, setReminders, type Setup, setTheme, type Theme, today } from '@/db';
+import { allowReminders, syncReminders } from '@/reminders';
 import { PRIVACY, purchasesReady, restorePro, syncPro, TERMS } from '@/purchases';
 import { AiSwitch, applyTheme, Button, Card, ListGroup, ListRow, Row, Screen, Segmented, T, TextButton } from '@/ui';
 
@@ -28,6 +29,8 @@ export default function Settings() {
     const [a, s] = await Promise.all([loadApp(db), loadSetup(db)]);
     setApp(a);
     setSetup(s);
+    // Budget, Rent and Restore come back here, not to a useMoney screen, so reminders follow from here too.
+    syncReminders(db).catch(() => {});
     if (a.pro && purchasesReady()) Purchases.getCustomerInfo().then((i) => setManageUrl(i.managementURL), () => {});
   }, [db]);
   useFocusEffect(
@@ -43,6 +46,16 @@ export default function Settings() {
   async function toggleAi(on: boolean) {
     await setAiEnabled(db, on);
     setApp((a) => a && { ...a, aiEnabled: on });
+  }
+
+  // Off until turned on; the first switch asks for permission. Renewal reminders are Pro.
+  async function toggleReminder(kind: ReminderKind, on: boolean) {
+    if (on && kind === 'renewals' && !app?.pro) return router.push('/pro');
+    if (on && !(await allowReminders())) return Alert.alert('Notifications are off', 'Turn on notifications for Senbud in your phone’s Settings, then try again.');
+    const kinds = on ? [...app!.reminders, kind] : app!.reminders.filter((k) => k !== kind);
+    await setReminders(db, kinds);
+    setApp((a) => a && { ...a, reminders: kinds });
+    syncReminders(db).catch(() => {});
   }
 
   async function pickTheme(theme: Theme) {
@@ -74,6 +87,7 @@ export default function Settings() {
         style: 'destructive',
         onPress: async () => {
           await eraseAll(db);
+          syncReminders(db).catch(() => {});
           // Erase resets the cached Pro flag; the store still has the purchase.
           syncPro(db);
           applyTheme('dark');
@@ -91,6 +105,14 @@ export default function Settings() {
         <ListRow label="Currency" value={profile.currency} onPress={() => router.push('/currency')} />
         <ListRow label="Pay per hour" value={app.hourlyRateCents ? `${fmt(app.hourlyRateCents)} an hour` : 'Add'} onPress={() => router.push('/rate')} />
       </ListGroup>
+
+      {Platform.OS !== 'web' && (
+        <ListGroup title="Reminders" footer="Sent by this phone at 7 pm the evening before, and 9 am on the day a bill is due. Nothing leaves the phone.">
+          <AiSwitch label="Rent and bills" value={app.reminders.includes('bills')} onChange={(on) => toggleReminder('bills', on)} />
+          <AiSwitch first={false} label="Budget resets tomorrow" value={app.reminders.includes('reset')} onChange={(on) => toggleReminder('reset', on)} />
+          <AiSwitch first={false} label={app.pro ? 'Subscription renewals' : 'Subscription renewals (Pro)'} value={app.pro && app.reminders.includes('renewals')} onChange={(on) => toggleReminder('renewals', on)} />
+        </ListGroup>
+      )}
 
       <ListGroup title="AI" footer={`Typing “${drinkExample(profile.currency)}” always works, AI or not. Everything is stored on this phone.`}>
         <AiSwitch value={app.aiEnabled} onChange={toggleAi} />

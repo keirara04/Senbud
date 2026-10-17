@@ -178,7 +178,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 | **Friends** | Net balance `hero` in highlighter, direction in words | Per-friend rows; friend sheet with "Send on WhatsApp", "Other apps", "Copy" and "Mark paid"; 3-step split flow with `PersonTabs` and `ClaimRow` | Built; WhatsApp path untested (not installed on simulators) |
 | **Treats** | `TreatJar` filling toward a goal, total in highlighter, `highlight` "Add to jar" inside the panel | Treat list with "every N days" and status, short history, month-end leftover sheet | Built. The leftover sheet (`leftover.tsx`) opens when the app comes to the front after a period ended under budget (see 4.6) |
 | **Wrapped** | One stat per page, full-bleed `panel` | `StoryPager`, `BarChart` on a `ReceiptCard`, share image | Built (`wrapped.tsx`, `share.tsx`), opened from Budgets → Wrapped. Free: total vs budget, top category, kept. Pro: top place, treats, hours of work, best streak. Captions are written from the numbers until the assistant has AI. No year-end edition yet. |
-| **Settings** | none | Grouped `ListRow`s: Money, AI, Look, Your data, Senbud Pro, then `danger` Erase | Built, plus "Restore from a backup" and a pushed "What gets sent" screen |
+| **Settings** | none | Grouped `ListRow`s: Money, Reminders (phones only), AI, Look, Your data, Senbud Pro, then `danger` Erase | Built, plus "Restore from a backup" and a pushed "What gets sent" screen |
 | **Senbud Pro paywall** | selected plan as `panel`; the buy button is the one `highlight` | Title, three benefits, plan radio group, buy button, small print with Terms, Privacy, Restore (see 4.8b) | Built (`pro.tsx`) |
 | **Assistant** | – | `BudTab`, the middle of the tab bar, opens the assistant with chat | Built: rules answer on the phone (afford, month, split, quick add); free-text questions go to `POST /v1/agent/ask` (Pro, AI on, their own consent slip on first use) with only the "What gets sent" summary. A `modal`, not a form sheet: RNScreens' formSheet mis-lays a ScrollView with a pinned input row. |
 
@@ -460,6 +460,11 @@ Today's Setup asks five things on one page: period, budget, rent, due day and cu
 
 - **No hero.** Inset grouped `ListRow`s:
   - **Money:** Currency, Hourly rate, Budget and rent (the existing Setup screen).
+  - **Reminders** (iOS and Android only; web can't schedule notifications):
+    - `Switch`es "Rent and bills", "Budget resets tomorrow", "Subscription renewals" (Pro; free users see "(Pro)" and the switch opens the paywall).
+    - All off until turned on. The first switch turned on asks for notification permission; if it's refused, an alert points to the phone's Settings and the switch stays off.
+    - Local notifications scheduled by the phone: 7 pm the evening before, and 9 am on the day a bill is due. Copy: "Rent US$650 is due tomorrow", "Netflix renews tomorrow, US$15.49", "Your budget resets tomorrow".
+    - Footer: "Sent by this phone at 7 pm the evening before, and 9 am on the day a bill is due. Nothing leaves the phone."
   - **AI:**
     - `Switch` "Use AI for photos and questions".
     - A "What gets sent" row.
