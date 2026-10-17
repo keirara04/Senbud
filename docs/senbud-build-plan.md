@@ -105,9 +105,12 @@ All four are in. Bud's adds are now saved with `source: 'bud'` (older ones stay 
 
 - **What:** import a spending CSV. Reuse the backup file picker (`backup.ts`) and the `importAll` transaction shape; labels go through core's category rules. Bank presets (per-bank column maps) come after. **Size:** M. **Free.**
 
-### 4.6 Budget by chat
+### 4.6 Budget by chat (built 17 October 2026)
 
-- **What:** Bud understands "I only want to spend 100 this week" (spec 4.2): a new `readIntent` kind in core, and a Bud slip that shows the change with a confirm button before saving. **Size:** M. **Free.**
+- Core's `readIntent` has a `budget` kind: "I only want to spend 100 this week", "set my budget to 1,200 a month", "budget is 600 until payday", "change my budget to 300" (keeps the period). "200 on food this month" or "no more than 30 on treats" is a category limit. "20 on bubble tea" names a place, not a category, so it goes to Bud as a question and never becomes an expense. Tested.
+- Bud prints a "New budget?" slip with Now and New, and what that leaves for the rest of the period, then Keep it or Set it. Nothing saves before Set it; Undo puts it back. Home sends these lines to Bud too.
+- Free for a week or a month. Until payday is Pro and needs a payday, so Bud opens the Budget sheet when the budget isn't until payday already. A category limit with its own week or month is Pro; free limits reset with the budget, and the slip says so.
+- Checked in the browser: week, month with Undo, a treat limit, a place, and with Pro until payday and a weekly Transport limit on an until budget.
 
 ### 4.7 Later or parked
 

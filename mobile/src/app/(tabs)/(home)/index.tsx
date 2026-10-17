@@ -85,7 +85,7 @@ export default function Home() {
     // expense); a line that's neither gets a hint.
     const intent = readIntent(line, setup.profile.currency);
     if (intent.kind !== 'add') {
-      if (intent.kind === 'ask' && !isQuestion(line)) return setHint(`Add an amount, like “${mealExample(setup.profile.currency)}”.`);
+      if (intent.kind === 'ask' && !isQuestion(line) && !/\d/.test(line)) return setHint(`Add an amount, like “${mealExample(setup.profile.currency)}”.`);
       setText('');
       return router.push({ pathname: '/assistant', params: { q: line } });
     }

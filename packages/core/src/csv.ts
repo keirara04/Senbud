@@ -1,10 +1,8 @@
 // "Import spending (CSV)" (spec 4.1): Senbud's own export, or a bank's statement file. Columns are found by
 // their header names; only spending comes in (credits and income are skipped). Pure: the app picks the file.
-import { type Category, categorize } from "./index";
+import { type Category, CATEGORY_NAMES as CATEGORIES, categorize } from "./index";
 import type { IsoDate } from "./dates";
 import type { Transaction } from "./types";
-
-const CATEGORIES: Category[] = ["Food", "Transport", "Treat", "Groceries", "Subscription", "Other"];
 
 // RFC 4180-ish: commas (or semicolons, for European exports), quotes with "" inside, CRLF or LF.
 export function parseCsv(text: string): string[][] {

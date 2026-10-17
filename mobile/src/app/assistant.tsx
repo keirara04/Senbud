@@ -1,7 +1,7 @@
 // Bud, the assistant (design system 4.9). Rules in core (readIntent) answer on the phone; only a question
 // in your own words goes to the API, with the summary "What gets sent" promises. Bud prints every answer
 // as a receipt slip.
-import { addDays, afford, billCountdown, compareToLast, daysBetween, hoursOfWork, nudgeKey, periodRange, readIntent, spentIn, type Transaction } from '@senbud/core';
+import { addDays, afford, billCountdown, type BudgetPeriod, type Category, compareToLast, daysBetween, hoursOfWork, nudgeKey, periodRange, readIntent, spentIn, type Transaction } from '@senbud/core';
 import { palette, radius, space, touch } from '@senbud/core/tokens';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -13,9 +13,10 @@ import { Bud, type BudFace, ReceiptCard } from '@/art';
 import { askBud, type AskSummary, type BudAction, COOLDOWN, type Turn, WEB } from '@/api';
 import { askAiConsent } from '@/consent';
 import { drinkExample, quickAddExample, typed } from '@/currencies';
-import { type AppState, addTransactions, deleteTransactions, listTransactions, loadApp } from '@/db';
+import { type AppState, addTransactions, type Budget, deleteTransactions, listTransactions, loadApp, loadLimitPeriod, loadLimits, loadSetup, saveSetup, setLimit } from '@/db';
 import { useMoney } from '@/money';
-import { periodWord } from '@/onboarding';
+import { budgetOf, periodWord, perPeriod } from '@/onboarding';
+import { usePro } from '@/purchases';
 import { NoteCard, useBudNotes } from '@/notes';
 import { Button, CATEGORIES, Icon, Marker, noWebOutline, ReceiptLine, T, TextButton, useTheme } from '@/ui';
 
@@ -46,6 +47,7 @@ export default function Assistant() {
   const turns = useRef<Turn[]>([]);
   const viewH = useRef(0);
   const { notes, dismiss } = useBudNotes(m);
+  const pro = usePro();
 
   useEffect(() => {
     loadApp(db).then(setApp);
@@ -187,6 +189,96 @@ export default function Assistant() {
     });
   }
 
+  // "I only want to spend 100 this week" (spec 4.2): Bud shows the change and saves nothing until Set it.
+  async function budgetSlip(id: number, cents: number, period: 'week' | 'month' | 'until' | undefined, category: Category | undefined) {
+    const keep = (title: string, note: string) => replace(id, { face: 'happy', title, note });
+    if (!cents) return replace(id, { face: 'thinking', title: 'Your budget', note: 'Tell me the amount, like “I only want to spend 100 this week”.', actions: <TextButton title="Open Budget" onPress={() => router.push('/edit-budget')} /> });
+    const actions = (title: string, onSet: () => Promise<void>) => (
+      <View style={{ flexDirection: 'row', gap: space.sm }}>
+        <View style={{ flex: 1 }}>
+          <Button title="Keep it" variant="secondary" onPress={() => keep(title, 'Okay, nothing changed.')} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Button title="Set it" onPress={onSet} />
+        </View>
+      </View>
+    );
+
+    if (category) {
+      // Its own week or month is Pro; otherwise it resets with the budget.
+      const asked = period && period !== 'until' && period !== setup.budget.period.kind ? period : null;
+      const own = pro ? asked : null;
+      const [old, oldOwn] = [(await loadLimits(db))[category], await loadLimitPeriod(db, category)];
+      const per = (p: string | null) => (p ? `a ${p}` : perPeriod(setup.budget.period, setup.profile.locale));
+      const lines: Line[] = [['Now', old ? `${fmt(old)} ${per(oldOwn)}` : 'No limit'], ['New', `${fmt(cents)} ${per(own)}`]];
+      return replace(id, {
+        face: 'thinking',
+        title: `${category} limit`,
+        lines,
+        note: asked && !own ? `It resets with your budget. Its own ${asked} comes with Senbud Pro.` : undefined,
+        actions: actions(`${category} limit`, async () => {
+          await setLimit(db, category, cents, own);
+          reload();
+          replace(id, {
+            face: 'yay',
+            title: `${category} limit set`,
+            lines: [['New', `${fmt(cents)} ${per(own)}`]],
+            actions: (
+              <TextButton
+                title="Undo"
+                onPress={async () => {
+                  await setLimit(db, category, old ?? null, oldOwn);
+                  reload();
+                  replace(id, { face: 'happy', title: `${category} limit`, lines: lines.slice(0, 1), note: 'Back to how it was.' });
+                }}
+              />
+            ),
+          });
+        }),
+      });
+    }
+
+    const now = setup.budget;
+    if (period === 'until' && !pro)
+      return replace(id, { face: 'happy', title: 'Until payday', note: 'A budget that runs until payday comes with Senbud Pro. A week or a month stays free.', actions: <Button title="See plans" variant="secondary" onPress={() => router.push('/pro')} /> });
+    // Until payday needs the date, which the Budget sheet asks for.
+    if (period === 'until' && now.period.kind !== 'until')
+      return replace(id, { face: 'thinking', title: 'Until payday', note: `Pick your payday and I’ll set ${fmt(cents)} until then.`, actions: <Button title="Pick a payday" variant="secondary" onPress={() => router.push('/edit-budget')} /> });
+    const next: Budget = !period || period === now.period.kind ? { cents, period: now.period } : budgetOf(period as 'week' | 'month', cents);
+    const say = (b: { cents: number; period: BudgetPeriod }) => `${fmt(b.cents)} ${perPeriod(b.period, setup.profile.locale)}`;
+    if (next.cents === now.cents && next.period.kind === now.period.kind) return keep('Your budget', `${say(now)} is already your budget.`);
+    const lines: Line[] = [['Now', say(now)], ['New', say(next)]];
+    // Same period: what's left moves by the difference. A new period starts counting from today's.
+    const note = next.period.kind === now.period.kind ? `That leaves ${fmt(Math.max(0, safe.left + cents - now.cents))} for the rest of this ${unit}.` : `It counts from the start of this ${next.period.kind}.`;
+    replace(id, {
+      face: 'thinking',
+      title: 'New budget?',
+      lines,
+      note,
+      actions: actions('Your budget', async () => {
+        const fresh = await loadSetup(db);
+        if (!fresh) return;
+        await saveSetup(db, { ...fresh, budget: next });
+        reload();
+        replace(id, {
+          face: 'yay',
+          title: 'Budget set',
+          lines: [['New', say(next)]],
+          actions: (
+            <TextButton
+              title="Undo"
+              onPress={async () => {
+                await saveSetup(db, { ...fresh, budget: fresh.budget });
+                reload();
+                replace(id, { face: 'happy', title: 'Your budget', lines: lines.slice(0, 1), note: 'Back to how it was.' });
+              }}
+            />
+          ),
+        });
+      }),
+    });
+  }
+
   async function addSlip(id: number, rows: Transaction[]) {
     const ids = await addTransactions(db, rows);
     reload();
@@ -227,6 +319,7 @@ export default function Assistant() {
     if (intent.kind === 'daysLeft')
       return replace(id, { face: 'happy', title: 'Days left', note: `${safe.daysLeft} ${safe.daysLeft === 1 ? 'day' : 'days'} left this ${unit}. Safe to spend: ${fmt(safe.perDay)} a day.` });
     if (intent.kind === 'compare') return void compareSlip(id);
+    if (intent.kind === 'budget') return void budgetSlip(id, intent.amount ? Math.round(intent.amount * 100) : 0, intent.period, intent.category);
     if (intent.kind === 'add')
       return addSlip(id, intent.items.map((i) => ({ date: day, cents: Math.round(i.amount * 100), label: i.label, category: i.category, source: 'bud' })));
     if (intent.kind === 'split') {

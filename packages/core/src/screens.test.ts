@@ -200,6 +200,26 @@ describe("readIntent", () => {
     expect(readIntent("business lunch 25").kind).toBe("add");
     expect(readIntent("spent on lunch 12").kind).toBe("add");
   });
+  it("reads a budget said in words (spec 4.2)", async () => {
+    const { readIntent } = await import("./index");
+    expect(readIntent("I only want to spend 100 this week")).toEqual({ kind: "budget", amount: 100, period: "week", category: undefined });
+    expect(readIntent("set my budget to 1,200 a month")).toEqual({ kind: "budget", amount: 1200, period: "month", category: undefined });
+    expect(readIntent("budget is 600 until payday")).toEqual({ kind: "budget", amount: 600, period: "until", category: undefined });
+    expect(readIntent("change my budget to 300")).toEqual({ kind: "budget", amount: 300, period: undefined, category: undefined });
+    expect(readIntent("budget for the week is 80")).toEqual({ kind: "budget", amount: 80, period: "week", category: undefined });
+    expect(readIntent("I want to spend 200 on food this month")).toEqual({ kind: "budget", amount: 200, period: "month", category: "Food" });
+    expect(readIntent("spend no more than 30 on treats")).toEqual({ kind: "budget", amount: 30, period: undefined, category: "Treat" });
+    expect(readIntent("set my budget")).toEqual({ kind: "budget", amount: undefined, period: undefined, category: undefined });
+    // A place isn't a category: Bud takes it, and it never becomes an expense.
+    expect(readIntent("I only want to spend 20 on bubble tea")).toEqual({ kind: "ask" });
+    // Still what they were.
+    expect(readIntent("how's my budget?")).toEqual({ kind: "month" });
+    expect(readIntent("what's my budget for the week?").kind).not.toBe("budget");
+    expect(readIntent("how much is left in my budget for the month?")).toEqual({ kind: "month" });
+    expect(readIntent("can you set my budget to 200?")).toEqual({ kind: "budget", amount: 200, period: undefined, category: undefined });
+    expect(readIntent("can I afford to spend 50 on shoes?").kind).toBe("afford");
+    expect(readIntent("spending money 20").kind).toBe("add");
+  });
 });
 
 describe("withCharges", () => {
