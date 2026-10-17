@@ -19,6 +19,76 @@
   </section>
 
   <section class="card">
+    <h2>New devices, 30 days</h2>
+    <p class="caption" style="margin: 0">How far people first seen this month got. Each step counts only those who did the steps above.</p>
+    <table>
+      @php($prev = null)
+      @foreach ($funnel as $step => $n)
+        <tr><td>{{ $step }}</td><td class="n">{{ number_format($n) }}</td><td class="n muted">{{ $prev === null ? '' : ($prev ? round(100 * $n / $prev).'%' : '0%') }}</td></tr>
+        @php($prev = $n)
+      @endforeach
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Pro, 30 days</h2>
+    <p class="caption" style="margin: 0">Devices that opened the paywall, and how many bought. Revenue is in RevenueCat.</p>
+    <table>
+      <tr><td>Saw the paywall</td><td class="n">{{ number_format($pro['paywall']) }}</td><td class="n muted"></td></tr>
+      <tr><td>Bought Pro</td><td class="n">{{ number_format($pro['bought']) }}</td><td class="n muted">{{ $pro['paywall'] ? round(100 * $pro['bought'] / $pro['paywall']).'%' : '' }}</td></tr>
+    </table>
+  </section>
+
+  <section class="card wide">
+    <h2>Weekly retention</h2>
+    <p class="caption" style="margin: 0">Devices grouped by the week they first opened Senbud, and the share active in each week after.</p>
+    @if (empty($retention))
+      <p class="caption">No devices yet.</p>
+    @else
+      <div class="scroll">
+        <table>
+          <tr><th>First week</th><th class="n">Devices</th>@foreach (range(0, 4) as $w)<th class="n">Week {{ $w }}</th>@endforeach</tr>
+          @foreach ($retention as $week => $row)
+            <tr>
+              <td style="white-space: nowrap">{{ \Illuminate\Support\Carbon::parse($week)->format('j M') }}</td>
+              <td class="n">{{ number_format($row['size']) }}</td>
+              @foreach ($row['weeks'] as $pct)
+                <td class="n heat" style="{{ $pct === null ? '' : 'background: color-mix(in srgb, var(--bar) '.round(35 * $pct / 100).'%, transparent)' }}">{{ $pct === null ? '' : $pct.'%' }}</td>
+              @endforeach
+            </tr>
+          @endforeach
+        </table>
+      </div>
+    @endif
+  </section>
+
+  <section class="card">
+    <h2>Feature reach, 7 days</h2>
+    <p class="caption" style="margin: 0">Share of active devices that used each screen or action.</p>
+    @if ($reach->isEmpty())
+      <p class="caption">Nothing this week.</p>
+    @else
+      <table>
+        @foreach ($reach as $what => $r)
+          <tr><td><code>{{ $what }}</code></td><td class="n">{{ number_format($r['devices']) }}</td><td class="n muted">{{ $r['share'] }}%</td></tr>
+        @endforeach
+      </table>
+    @endif
+  </section>
+
+  <section class="card">
+    <h2>App versions, 7 days</h2>
+    <p class="caption" style="margin: 0">Active devices per version. Old-app workarounds can go once a version reaches zero.</p>
+    <table>
+      @forelse ($versions as $v => $n)
+        <tr><td><code>{{ $v }}</code></td><td class="n">{{ number_format($n) }}</td></tr>
+      @empty
+        <tr><td class="caption">No devices this week.</td></tr>
+      @endforelse
+    </table>
+  </section>
+
+  <section class="card">
     <h2>Devices by platform</h2>
     <p class="caption" style="margin: 0">A device that sent any event. Reinstalls count as new.</p>
     <table>
@@ -91,7 +161,19 @@
       <tr><td>Receipts read</td><td class="n">{{ number_format($ai['byKind']['ai_receipt'] ?? 0) }}</td></tr>
       <tr><td>Questions to Bud</td><td class="n">{{ number_format($ai['byKind']['ai_ask'] ?? 0) }}</td></tr>
       <tr><td>Tokens</td><td class="n">{{ number_format($ai['tokens']) }}</td></tr>
+      <tr><td>Average per receipt</td><td class="n">${{ number_format($ai['avgCost']['ai_receipt'] ?? 0, 4) }}</td></tr>
+      <tr><td>Average per question</td><td class="n">${{ number_format($ai['avgCost']['ai_ask'] ?? 0, 4) }}</td></tr>
+      <tr><td>Per active device, 7 days</td><td class="n">${{ number_format($ai['perDevice'], 4) }}</td></tr>
+      <tr><td>Failed today</td><td class="n {{ $ai['todayFailed'] ? 'bad' : '' }}">{{ $ai['todayCalls'] ? round(100 * $ai['todayFailed'] / $ai['todayCalls']).'%' : '0%' }} of {{ number_format($ai['todayCalls']) }}</td></tr>
     </table>
+    @if ($ai['failures']->isNotEmpty())
+      <table>
+        <tr><th>Last failures</th><th>Kind</th><th class="n">Status</th></tr>
+        @foreach ($ai['failures'] as $f)
+          <tr><td class="num">{{ \Illuminate\Support\Carbon::parse($f['at'])->format('j M, H:i') }}</td><td>{{ $f['name'] === 'ai_receipt' ? 'Receipt' : 'Question' }}</td><td class="n bad">{{ $f['status'] ?: 'No reply' }}</td></tr>
+        @endforeach
+      </table>
+    @endif
   </section>
 </div>
 @endsection
