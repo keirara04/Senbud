@@ -45,7 +45,7 @@
         @foreach ($events as $e)
           <tr>
             <td class="num" style="white-space: nowrap; padding-right: 16px">{{ \Illuminate\Support\Carbon::parse($e->occurred_at)->format('j M, H:i') }}</td>
-            <td><code>{{ $e->name }}</code></td>
+            <td style="white-space: nowrap; padding-right: 16px"><code>{{ $e->name }}</code></td>
             <td class="caption">{{ collect(json_decode((string) $e->props, true) ?: [])->map(fn ($v, $k) => "$k: ".(is_bool($v) ? ($v ? 'yes' : 'no') : $v))->join(', ') }}</td>
           </tr>
         @endforeach
