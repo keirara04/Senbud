@@ -1,16 +1,16 @@
 // Budgets (design system 4.3): what's left on the cobalt hero, spending by category with a bar
 // each, rent and bills, and subscriptions Senbud has spotted (Pro).
-import { billCountdown, billsDue, budgetStatus, type Category, detectSubscriptions, spentIn, type Subscription } from '@senbud/core';
+import { billCountdown, budgetStatus, type Category, detectSubscriptions, spentIn, type Subscription } from '@senbud/core';
 import { categoryColors, space } from '@senbud/core/tokens';
 import { router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 
 import { deleteBill, listTransactions, loadLimits, saveSubscription, type Txn } from '@/db';
 import { useMoney } from '@/money';
 import { usePro } from '@/purchases';
-import { Button, CATEGORIES, Card, Icon, ListGroup, ListRow, MONO, ProLock, Progress, Row, Screen, T, TextButton, useTheme } from '@/ui';
+import { Button, CATEGORIES, Card, Icon, ListGroup, ListRow, ProLock, Progress, Row, Screen, T, TextButton, useTheme } from '@/ui';
 
 export default function Budgets() {
   const db = useSQLiteContext();
@@ -45,7 +45,7 @@ export default function Budgets() {
 
   const known = new Set(subscriptions.map((s) => s.merchant.toLowerCase()));
   const spotted = detectSubscriptions(history).filter((s) => !known.has(s.merchant.toLowerCase()));
-  const setAside = billsDue(bills, day, safe.nextStart);
+  const setAside = safe.owed;
   // Wrapped: this month so far, then up to five earlier months that have spending.
   const thisMonth = day.slice(0, 7);
   const months = [thisMonth, ...new Set(history.map((x) => x.date.slice(0, 7)).filter((mo) => mo < thisMonth))].slice(0, 6);
@@ -113,10 +113,19 @@ export default function Budgets() {
                   <TextButton title="Edit" onPress={() => router.push('/edit-rent')} />
                 ) : (
                   <Pressable
-                    onPress={async () => {
-                      await deleteBill(db, b.id);
-                      reload();
-                    }}
+                    onPress={() =>
+                      Alert.alert(`Remove ${b.name}?`, 'It can’t be undone.', [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                          text: 'Remove',
+                          style: 'destructive',
+                          onPress: async () => {
+                            await deleteBill(db, b.id);
+                            reload();
+                          },
+                        },
+                      ])
+                    }
                     accessibilityRole="button"
                     accessibilityLabel={`Remove ${b.name}`}
                     hitSlop={14}

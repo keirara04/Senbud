@@ -79,6 +79,23 @@ describe("late-fee lich", () => {
     expect(after.encounter?.monster).toBe("impulseGoblin");
     expect(after.ward).toBe(false);
   });
+
+  it("refunds an unneeded Ward of Budget when rent money is safe", () => {
+    const after = act(before({ gold: 60, ward: true, castsLeft: 2 }), { type: "pay" });
+    expect(after.encounter?.monster).not.toBe("lateFeeLich");
+    expect(after.ward).toBe(false);
+    expect(after.castsLeft).toBe(3);
+    expect(after.log).toContainEqual({ kind: "wardUnused" });
+  });
+});
+
+describe("gold", () => {
+  it("never goes below $0 when a bill costs more than you have", () => {
+    const after = act(facing(newGame("scholar", 1), "textbookTroll", 15, { floor: 2, gold: 3 }), { type: "pay" });
+    expect(after.gold).toBe(0);
+    expect(after.spent).toBe(3);
+    expect(after.log).toContainEqual({ kind: "pay", monster: "textbookTroll", amount: 3 });
+  });
 });
 
 describe("classes", () => {

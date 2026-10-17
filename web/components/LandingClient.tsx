@@ -42,6 +42,15 @@ export function WaitlistForm({ place, center = false }: { place: "hero" | "end";
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify(body),
       });
+      if (res.status === 422 || res.status === 429) {
+        setStatus("error");
+        setMessage(
+          res.status === 422
+            ? "That email doesn’t look right. Check it and try again."
+            : "Too many tries from this network. Wait a minute and try again.",
+        );
+        return;
+      }
       if (!res.ok) throw new Error(String(res.status));
       setStatus("done");
       setMessage("Almost there. Check your inbox and tap the link to confirm your spot.");

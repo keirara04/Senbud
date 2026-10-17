@@ -36,6 +36,8 @@ export function narrate(e: Event): string | null {
       return `You cast ${SPELLS[e.spell].name}.`;
     case "warded":
       return "Your Ward of Budget held: the Late-Fee Lich never showed up.";
+    case "wardUnused":
+      return "Rent money was safe, so the Ward of Budget wasn't needed. Cast refunded.";
     case "cancelled":
       return "Subscription cancelled. The Slime won't be back.";
     case "morale":

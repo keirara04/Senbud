@@ -1,13 +1,13 @@
 // The onboarding steps (design system 4.1c): Budget, Rent, You're set. /onboarding runs them in order;
 // Settings opens Budget and Rent on their own as sheets (/edit-budget, /edit-rent).
-import { billsDue, money, safeToSpend } from '@senbud/core';
+import { money, safeToSpend } from '@senbud/core';
 import { palette, space } from '@senbud/core/tokens';
 import { useEffect, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import Animated, { LinearTransition, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 import { PrintingBud, useCountUp } from '@/art';
-import { currencyName, SMALL_UNIT } from '@/currencies';
+import { currencyName, localAmount, typed } from '@/currencies';
 import { type Budget, type Profile, today } from '@/db';
 import { AmountPad, Button, ChoiceCard, DayStrip, digitsOf, Field, Marker, QuickPicks, T, TextButton, useTheme } from '@/ui';
 
@@ -15,8 +15,11 @@ export type Kind = 'week' | 'month';
 const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
 const PICKS: Record<Kind, number[]> = { month: [800, 1000, 1400, 2000], week: [150, 250, 350, 500] };
 const RENT_PICKS = [350, 450, 600];
+// Quick-pick chips at the currency's scale (1,000 ringgit -> 1,500,000 won), labelled without ".00".
+const picks = (base: number[], currency: string, fmt: (v: number) => string) =>
+  base.map((v) => localAmount(v, currency)).map((v) => ({ value: Math.round(v * 100), label: fmt(v).replace(/[.,]00$/, '') }));
 
-export const toCents = (s: string) => Math.round(Number(s.trim().replace(',', '.')) * 100);
+export const toCents = (s: string) => ((n) => (Number.isFinite(n) ? Math.round(n * 100) : 0))(Number(s.trim().replace(',', '.'))); // 0, not NaN, for "1..5"
 export const ordinal = (d: number) => `${d}${d % 10 === 1 && d !== 11 ? 'st' : d % 10 === 2 && d !== 12 ? 'nd' : d % 10 === 3 && d !== 13 ? 'rd' : 'th'}`;
 export const budgetOf = (kind: Kind, cents: number): Budget => ({ cents, period: kind === 'week' ? { kind, startWeekday: 1 } : { kind, startDay: 1 } });
 // "1400" or "1400.5" for the pad, from cents.
@@ -80,9 +83,7 @@ export function BudgetStep({
           <TextButton title="Change" onPress={onChangeCurrency} />
         </View>
       ) : null}
-      {SMALL_UNIT.has(profile.currency) && (
-        <QuickPicks label={`Quick amounts a ${kind}`} options={PICKS[kind].map((v) => ({ value: v * 100, label: fmt(v).replace(/[.,]00$/, '') }))} value={cents} onChange={(c) => onAmount(padValue(c))} />
-      )}
+      <QuickPicks label={`Quick amounts a ${kind}`} options={picks(PICKS[kind], profile.currency, fmt)} value={cents} onChange={(c) => onAmount(padValue(c))} />
       <AmountPad value={amount} onChange={onAmount} digits={digitsOf(profile.currency, profile.locale)} />
       <Button title={nextTitle} disabled={cents <= 0} onPress={onNext} />
     </View>
@@ -130,10 +131,8 @@ export function RentStep({
           <T variant="label" tone="textDim">
             How much a month?
           </T>
-          {SMALL_UNIT.has(profile.currency) && (
-            <QuickPicks label="Quick rent amounts" options={RENT_PICKS.map((v) => ({ value: v * 100, label: fmt(v).replace(/[.,]00$/, '') }))} value={cents} onChange={(c) => onRent(padValue(c))} />
-          )}
-          <Field label={`Rent (${profile.currency})`} value={rent} onChangeText={(v) => onRent(v.replace(/[^\d.,]/g, ''))} keyboardType="decimal-pad" placeholder="450" error={error} />
+          <QuickPicks label="Quick rent amounts" options={picks(RENT_PICKS, profile.currency, fmt)} value={cents} onChange={(c) => onRent(padValue(c))} />
+          <Field label={`Rent (${profile.currency})`} value={rent} onChangeText={(v) => onRent(v.replace(/[^\d.,]/g, ''))} keyboardType="decimal-pad" placeholder={typed(450, profile.currency)} error={error} />
           <T variant="label" tone="textDim">
             Due on day
           </T>
@@ -167,9 +166,9 @@ export function ReadyStep({ budget, rent, profile, onDone }: { budget: Budget; r
   const t = useTheme();
   const [printed, setPrinted] = useState(false);
   const day = today();
-  const bills = rent ? [{ name: 'Rent', ...rent }] : [];
+  const bills = rent ? [{ name: 'Rent', ...rent, addedOn: day }] : [];
   const safe = safeToSpend({ limit: budget.cents, period: budget.period, transactions: [], bills, today: day });
-  const rentThisPeriod = rent ? billsDue(bills, day, safe.nextStart) : 0;
+  const rentThisPeriod = safe.owed;
   const shown = useCountUp(safe.perDay, printed);
   const fmt = (cents: number) => money(cents / 100, profile.currency, profile.locale);
   const dateLabel = new Date().toLocaleDateString(profile.locale, { weekday: 'long', day: 'numeric', month: 'short' });

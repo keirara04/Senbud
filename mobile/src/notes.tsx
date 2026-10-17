@@ -33,7 +33,7 @@ export function useBudNotes(m: Money | null | undefined) {
         txns,
         range: safe,
         spotted: detectSubscriptions(history).filter((s) => !known.has(s.merchant.toLowerCase())),
-        streak: underBudgetStreak(txns, setup.budget.cents, setup.budget.period, day),
+        streak: underBudgetStreak(txns, setup.budget.cents, setup.budget.period, day, bills),
       });
       setState({ notes, hidden });
     });

@@ -45,12 +45,12 @@ export function Confirmed() {
           <div className="my-3 border-t border-dashed border-receipt-ink/25" />
           {invalid ? (
             <>
-              <p className="font-sans text-xl font-semibold">This link has expired.</p>
+              <h1 className="font-sans text-xl font-semibold">This link has expired.</h1>
               <p className="mt-1 text-receipt-ink/75">Confirmation links last 7 days and work once. Join again to get a fresh one.</p>
             </>
           ) : code ? (
             <>
-              <p className="font-sans text-xl font-semibold">Your spot is confirmed.</p>
+              <h1 className="font-sans text-xl font-semibold">Your spot is confirmed.</h1>
               <p className="mt-1 text-receipt-ink/75">We’ll email you when early access opens.</p>
               <motion.p
                 initial={{ opacity: 0, scale: 1.8, rotate: -24 }}
@@ -63,7 +63,7 @@ export function Confirmed() {
             </>
           ) : (
             <>
-              <p className="font-sans text-xl font-semibold">Check your inbox.</p>
+              <h1 className="font-sans text-xl font-semibold">Check your inbox.</h1>
               <p className="mt-1 text-receipt-ink/75">Tap the link in our email to confirm your spot.</p>
             </>
           )}
@@ -72,7 +72,7 @@ export function Confirmed() {
 
       {code && !invalid && (
         <div className="mt-10 w-full max-w-md rounded-3xl bg-panel-2 p-6">
-          <h1 className="text-lg font-semibold">Move up the list</h1>
+          <h2 className="text-lg font-semibold">Move up the list</h2>
           <p className="mt-1 text-on-panel-dim">Friends who join and confirm through your link move you up the list.</p>
           <p className="mt-4 truncate rounded-xl bg-panel px-4 py-3 font-mono text-sm ring-1 ring-panel-line">{link}</p>
           <div className="mt-3 flex gap-2">

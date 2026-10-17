@@ -64,10 +64,12 @@ class WaitlistController extends Controller
             return redirect()->away("{$web}/confirmed?status=invalid");
         }
 
+        // The token stays valid until it expires: mail scanners open links before people do, and a second
+        // click should still land on the referral code.
         DB::transaction(function () use ($signup) {
-            // Conditional update: two clicks racing on the same link credit the referrer once.
+            // Conditional update: repeat or racing clicks credit the referrer once.
             $first = WaitlistSignup::whereKey($signup->id)->whereNull('confirmed_at')
-                ->update(['confirmed_at' => now(), 'confirm_token' => null]);
+                ->update(['confirmed_at' => now()]);
 
             if ($first && $signup->referred_by) {
                 WaitlistSignup::whereKey($signup->referred_by)->increment('referrals_count');

@@ -1,7 +1,6 @@
 import { Also, Faq, Friends, Hero, Join, MeetBud, Privacy, Ways } from "@/components/Landing";
 import { Pricing } from "@/components/Pricing";
 import { Screens } from "@/components/Screens";
-import { MotionProvider } from "@/components/MotionProvider";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Sections";
 
@@ -24,20 +23,18 @@ export default function Home() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Nav />
-      <MotionProvider>
-        <main className="lp">
-          <Hero />
-          <Ways />
-          <Screens />
-          <MeetBud />
-          <Friends />
-          <Privacy />
-          <Also />
-          <Pricing />
-          <Faq />
-          <Join />
-        </main>
-      </MotionProvider>
+      <main className="lp">
+        <Hero />
+        <Ways />
+        <Screens />
+        <MeetBud />
+        <Friends />
+        <Privacy />
+        <Also />
+        <Pricing />
+        <Faq />
+        <Join />
+      </main>
       <Footer />
     </>
   );

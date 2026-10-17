@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Tests\TestCase;
 
 class AskTest extends TestCase
@@ -165,13 +166,38 @@ class AskTest extends TestCase
         $this->send(self::body())->assertOk();
     }
 
-    public function test_owner_devices_skip_the_cooldown(): void
+    public function test_the_unlimited_key_skips_the_cooldown(): void
     {
-        config(['app.unlimited_devices' => self::DEVICE]);
+        config(['app.unlimited_key' => 'owner-secret']);
         self::fakeReply('', false);
         for ($i = 0; $i < 5; $i++) {
-            $this->send(self::body(['question' => 'tell me a joke']))->assertOk()->assertJsonPath('off_topic', true);
+            $this->send(self::body(['question' => 'tell me a joke']), ['X-Unlimited-Key' => 'owner-secret'])->assertOk()->assertJsonPath('off_topic', true);
         }
+    }
+
+    public function test_the_off_topic_counter_key_holds_no_raw_device_id(): void
+    {
+        self::fakeReply('', false);
+        $this->send(self::body(['question' => 'tell me a joke']))->assertOk();
+        $this->assertSame(1, RateLimiter::attempts('ask-off:'.sha1('d:'.self::DEVICE)));
+        $this->assertSame(0, RateLimiter::attempts('ask-off:d:'.self::DEVICE));
+    }
+
+    public function test_a_missing_rent_key_is_no_rent(): void
+    {
+        self::fakeReply('Fine.');
+        $body = self::body();
+        unset($body['summary']['rent']);
+        $this->send($body)->assertOk();
+        Http::assertSent(fn (Request $r) => str_contains($r['messages'][0]['content'], 'no rent'));
+    }
+
+    public function test_money_limits_scale_with_the_currency(): void
+    {
+        self::fakeReply('Fine.');
+        $big = fn ($currency) => self::body(['currency' => $currency, 'summary' => [...self::body()['summary'], 'budget' => 50000000, 'rent' => ['amount' => 20000000, 'due_day' => 1]]]);
+        $this->send($big('myr'))->assertStatus(422)->assertJsonValidationErrors(['summary.budget', 'summary.rent.amount']);
+        $this->send($big('idr'))->assertOk();
     }
 
     public function test_actions_are_validated_and_capped(): void

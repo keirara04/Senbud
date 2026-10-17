@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 
+import { typed, useCurrency } from '@/currencies';
 import { loadLimits, setLimit } from '@/db';
 import { Button, CATEGORIES, CategoryPicker, Field, Screen, T } from '@/ui';
 
@@ -11,6 +12,7 @@ const toCents = (s: string) => Math.round(Number(s.trim().replace(',', '.')) * 1
 
 export default function LimitSheet() {
   const db = useSQLiteContext();
+  const currency = useCurrency();
   const params = useLocalSearchParams<{ category?: Category; amount?: string }>();
   const [category, setCategory] = useState<Category>(params.category && CATEGORIES.includes(params.category) ? params.category : 'Food');
   const [amount, setAmount] = useState('');
@@ -41,7 +43,7 @@ export default function LimitSheet() {
     <Screen>
       <T variant="title">{category} limit</T>
       {!params.category && <CategoryPicker value={category} onChange={setCategory} />}
-      <Field label="Limit for this period" value={amount} onChangeText={(v) => (setAmount(v), setError(''))} keyboardType="decimal-pad" placeholder="400" error={error} autoFocus />
+      <Field label="Limit for this period" value={amount} onChangeText={(v) => (setAmount(v), setError(''))} keyboardType="decimal-pad" placeholder={typed(400, currency)} error={error} autoFocus />
       <Button title="Save" onPress={save} />
       {had && <Button title="Remove limit" variant="danger" onPress={remove} />}
     </Screen>

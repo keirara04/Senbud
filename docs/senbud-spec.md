@@ -92,8 +92,11 @@ NUDGE (max 1/day) → AI phrases it friendly
 
 ### 4.4 Safe to spend today (new, the main number)
 ```
-safe_today = (budget_left − upcoming_fixed_bills_in_period) ÷ days_left_in_period
+left       = budget − spent_in_period − fixed_bills_owed_in_period
+safe_today = (left + spent_today) ÷ days_left_in_period − spent_today
 ```
+- Days left count today. The number is set at the start of the day, then drops by what's spent today.
+- A bill is owed in a period if it falls due there on or after the day it was added. Rent due on the 5th still counts on the 6th; rent due before the user joined doesn't.
 - Shown as the main figure on the dashboard. It drives "Can I afford it?" and the treat nudges.
 
 ### 4.5 Can I afford it? (new)

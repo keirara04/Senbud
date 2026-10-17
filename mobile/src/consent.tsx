@@ -21,7 +21,7 @@ export function AiUses() {
       </Card>
       <Card>
         <T variant="bodyStrong">Never leaves the phone</T>
-        <T>Every expense you type, friends’ names, treats and the treat jar. Typing “kopi 4.50” works with AI or without it.</T>
+        <T>Every expense you type, friends’ names, treats and the treat jar. Typing what you spent works with AI or without it.</T>
       </Card>
     </>
   );

@@ -21,9 +21,7 @@ export default function FriendSheet() {
   const [copied, setCopied] = useState(false);
   const [undo, setUndo] = useState<number[] | null>(null);
 
-  const load = useCallback(async () => {
-    setIous((await listIous(db)).filter((i) => i.friend === name));
-  }, [db, name]);
+  const load = useCallback(() => listIous(db).then((all) => setIous(all.filter((i) => i.friend === name))), [db, name]);
 
   useEffect(() => {
     load();

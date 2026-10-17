@@ -38,6 +38,8 @@ export const palette = {
   onCobalt: "#f4f6ff",
   onCobaltDim: "#c9d2ff",
   periwinklePressed: "#b3bff5", // pressed dark-mode primary
+  placeholderInk: "#878ca3", // 3.3:1 on white
+  placeholderMoon: "#666e9e", // 3.4:1 on night2
 } as const;
 
 // 2. Themes. Every pair used for text passes WCAG AA (4.5:1); see the doc's contrast table.
@@ -47,6 +49,8 @@ const light = {
   surfaceSunken: palette.greyTint as string, // tracks, pressed rows
   text: palette.ink as string,
   textDim: palette.inkDim as string,
+  // Below AA on purpose: every field has a label, and a hint must not read as a value already typed.
+  placeholder: palette.placeholderInk as string,
   line: "rgba(26, 28, 46, 0.12)",
   accent: palette.cobalt as string, // links, selected states, tab tint
   accentPressed: palette.cobaltDeep as string,
@@ -75,9 +79,13 @@ const dark: Theme = {
   surfaceSunken: palette.night3,
   text: palette.moon,
   textDim: palette.moonDim,
+  placeholder: palette.placeholderMoon,
   line: "rgba(255, 255, 255, 0.1)",
-  accent: palette.highlighter, // cobalt on night is too dark to read; the web flips to highlighter too
-  accentPressed: palette.highlighterPressed,
+  // Cobalt on night is too dark to read, so periwinkle (11.1:1 on night2), not highlighter: the hero
+  // number and the `highlight` button stay the only yellow. web/app/globals.css still uses highlighter
+  // here and is out of step until the web follows.
+  accent: palette.onCobaltDim,
+  accentPressed: palette.periwinklePressed,
   onAccent: palette.ink,
   // Its own fill, so the one `highlight` button stays the only yellow thing on a dark screen
   // (user decision, 16 Oct 2026). Ink on periwinkle 11.3:1.

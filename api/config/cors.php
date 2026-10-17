@@ -24,7 +24,7 @@ return [
 
     'allowed_origins_patterns' => [],
 
-    'allowed_headers' => ['Content-Type', 'Accept', 'X-Device-Id'],
+    'allowed_headers' => ['Content-Type', 'Accept', 'X-Device-Id', 'X-Unlimited-Key'],
 
     // So the web app can tell "try again in a minute" from "that's today's free allowance".
     'exposed_headers' => ['Retry-After'],

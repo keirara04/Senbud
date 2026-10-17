@@ -1,6 +1,7 @@
 // Senbud's shared money logic, used by web and mobile. Pure functions: no AI, no network, no platform APIs.
 export * from "./budget";
 export * from "./dates";
+export * from "./examples";
 export * from "./iou";
 export * from "./nudge";
 export * from "./recap";
@@ -14,11 +15,12 @@ export type Item = { label: string; amount: number; category: Category };
 // Whole words only (plus simple plurals), so "business lunch" isn't read as a bus fare.
 const RULES: [RegExp, Category][] = (
   [
-    ["bubble ?tea|boba|coffee|kopi|latte|starbucks|cake|ice ?cream|dessert|burger|big ?mac|fries|snack", "Treat"],
+    // The local examples in mobile/src/currencies.ts must land in the right category here too.
+    ["bubble ?tea|boba|coffee|kopi|kopi susu|kape|ca phe|cha yen|milk ?tea|karak|chai|americano|flat white|latte|starbucks|cake|ice ?cream|dessert|burger|big ?mac|fries|snack", "Treat"],
     ["netflix|spotify|youtube|icloud|disney|prime|gym|chatgpt|subscription", "Subscription"],
-    ["grab|uber|lyft|taxi|bus|train|mrt|lrt|metro|petrol|gas|parking|fare", "Transport"],
+    ["grab|gojek|dart|didi|careem|uber|lyft|taxi|bus|train|tram|tube|mtr|mrt|lrt|metro|auto|rickshaw|petrol|gas|parking|fare", "Transport"],
     ["grocer(?:y|ies)?|market|tesco|walmart|aldi|lotus|mydin|trader joe|costco", "Groceries"],
-    ["lunch|dinner|breakfast|brunch|food|nasi|mee|pizza|sushi|ramen|mamak|meal|chipotle", "Food"],
+    ["lunch|dinner|breakfast|brunch|food|nasi|mee|pizza|sushi|ramen|mamak|meal|chipotle|kimbap|gimbap|kimchi|bibimbap|pho|banh mi|onigiri|noodle|biryani|thali|shawarma|poutine|pie|sandwich|hot ?dog|chicken rice|silog|pad kra pao|baozi|sausage roll", "Food"],
   ] as const
 ).map(([words, cat]) => [new RegExp(`\\b(?:${words})(?:e?s)?\\b`), cat]);
 
@@ -30,9 +32,18 @@ export function categorize(label: string): Category {
 // A whole number or one with up to 2 decimals, not part of a longer number and not negative.
 const AMOUNT = /(?<![\d.-])\d+(?:\.\d{1,2})?(?![\d.])/g;
 
+// The biggest believable single amount, per currency: 100,000 at ringgit scale, more where the unit is
+// small. Same table as the API's ReceiptController::CAP_SCALE; change both together.
+const CAP_SCALE: Record<string, number> = { IDR: 10000, VND: 10000, KRW: 1000, JPY: 100, PKR: 100, INR: 100, BDT: 100 };
+export const amountCap = (currency?: string) => 100_000 * (CAP_SCALE[currency?.toUpperCase() ?? ""] ?? 1);
+
+// Currencies with no minor unit, where a dot groups thousands ("150.000 dong").
+const NO_DECIMALS = new Set(["IDR", "VND", "KRW", "JPY"]);
+
 // "lunch 12, grab 8 and $4.50 kopi" -> 3 items. Chunks without a valid amount are ignored.
-export function parseSpending(text: string): Item[] {
-  return text
+export function parseSpending(text: string, currency?: string): Item[] {
+  const grouped = NO_DECIMALS.has(currency?.toUpperCase() ?? "") ? text.replace(/(\d)\.(?=\d{3}\b)/g, "$1") : text;
+  return grouped
     .replace(/(\d),(?=\d{3}\b)/g, "$1") // "1,200" -> "1200" before splitting on commas
     .split(/,|;|\n|\band\b|\+/i)
     .map((chunk) => chunk.trim())
@@ -40,7 +51,7 @@ export function parseSpending(text: string): Item[] {
       const m = [...chunk.matchAll(AMOUNT)].at(-1); // "2 coffees 9" -> 9
       if (!m || m.index === undefined) return [];
       const amount = Number(m[0]);
-      if (!(amount > 0 && amount < 100_000)) return [];
+      if (!(amount > 0 && amount < amountCap(currency))) return [];
       const label =
         `${chunk.slice(0, m.index)} ${chunk.slice(m.index + m[0].length)}`
           .replace(/\$|\b(rm|usd|bucks?|dollars?)\b/gi, " ")
@@ -121,16 +132,16 @@ const QUESTION = /\?\s*$|^(can|could|should|would|how|what|why|when|where|who|wh
 
 export const isQuestion = (line: string) => QUESTION.test(line.trim());
 
-export function readIntent(text: string): Intent {
+export function readIntent(text: string, currency?: string): Intent {
   const line = text.trim();
   if (/\bafford\b|\b(can|could|should) i (buy|get)\b/i.test(line)) {
-    const [item] = parseSpending(line.replace(/\b(can|could|should)\s+i\s+(afford|buy|get)\b|\bafford\b/i, " "));
+    const [item] = parseSpending(line.replace(/\b(can|could|should)\s+i\s+(afford|buy|get)\b|\bafford\b/i, " "), currency);
     return item ? { kind: "afford", amount: item.amount, label: article(item.label) } : { kind: "afford", label: "" };
   }
   if (/\bsplit\b/i.test(line)) {
     const [before, after = ""] = line.split(/\bwith\b/i);
     const people = after.split(/,|\band\b|&/i).map((p) => p.replace(/[^\p{L}\s'-]/gu, "").trim()).filter(Boolean);
-    const [item] = parseSpending(before.replace(/\bsplit\b/gi, " "));
+    const [item] = parseSpending(before.replace(/\bsplit\b/gi, " "), currency);
     return { kind: "split", amount: item?.amount, label: item ? article(item.label) : "", people: people.map(article) };
   }
   // Questions Bud answers from the phone's own numbers. Before "month", so "how much on food" isn't a
@@ -143,7 +154,7 @@ export function readIntent(text: string): Intent {
   if (/\b(last|previous) (week|month)\b|\bcompared?\b/i.test(line) && isQuestion(line)) return { kind: "compare" };
   if (/\bhow(['’]?s| is| am)\b.*\b(month|week|doing|budget)\b|\bwhere did\b.*\bgo\b|\bhow much (is )?left\b/i.test(line)) return { kind: "month" };
   if (isQuestion(line)) return { kind: "ask" };
-  const items = parseSpending(line);
+  const items = parseSpending(line, currency);
   return items.length ? { kind: "add", items } : { kind: "ask" };
 }
 

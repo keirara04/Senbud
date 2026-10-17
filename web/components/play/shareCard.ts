@@ -68,15 +68,16 @@ async function drawCard(s: State): Promise<Blob> {
 }
 
 /** Share the card through the OS sheet where files are supported, otherwise download it. */
-export async function shareCard(s: State): Promise<"shared" | "downloaded"> {
+export async function shareCard(s: State): Promise<"shared" | "downloaded" | "cancelled"> {
   const blob = await drawCard(s);
   const file = new File([blob], "budget-dungeon.png", { type: "image/png" });
   if (navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({ files: [file], text: shareText(s), url: `${location.origin}/play` });
       return "shared";
-    } catch {
-      // Cancelled or blocked: fall through to download.
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return "cancelled";
+      // Blocked: fall through to download.
     }
   }
   const a = document.createElement("a");

@@ -65,13 +65,13 @@ class AppServiceProvider extends ServiceProvider
         return is_string($device) && preg_match('/^[0-9a-f-]{36}$/i', $device) ? 'd:'.$device : 'ip:'.$request->ip();
     }
 
-    // The owner's own devices (UNLIMITED_DEVICES, from Settings → Support ID) skip every AI limit.
-    // A device id is a random UUID only that phone or browser knows, so listing it is safe enough.
+    // The owner's own builds send UNLIMITED_KEY in X-Unlimited-Key and skip every AI limit. A secret, not
+    // the device id: that is the Support ID people paste into support chats. Unset = nobody is unlimited.
     public static function unlimited(Request $request): bool
     {
-        $device = $request->header('X-Device-Id');
-        $list = array_filter(array_map('trim', explode(',', (string) config('app.unlimited_devices'))));
+        $key = (string) config('app.unlimited_key');
+        $sent = $request->header('X-Unlimited-Key');
 
-        return is_string($device) && $device !== '' && in_array(strtolower($device), array_map('strtolower', $list), true);
+        return $key !== '' && is_string($sent) && hash_equals($key, $sent);
     }
 }

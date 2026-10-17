@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useState } from 'react';
 
+import { typed, useCurrency } from '@/currencies';
 import { addBill } from '@/db';
 import { Button, Field, Screen, T } from '@/ui';
 
@@ -10,6 +11,7 @@ const toCents = (s: string) => Math.round(Number(s.trim().replace(',', '.')) * 1
 
 export default function BillSheet() {
   const db = useSQLiteContext();
+  const currency = useCurrency();
   // Bud can open this prefilled with a bill it spotted.
   const params = useLocalSearchParams<{ name?: string; amount?: string }>();
   const [name, setName] = useState(params.name ?? '');
@@ -34,7 +36,7 @@ export default function BillSheet() {
     <Screen>
       <T variant="title">Add a bill</T>
       <Field label="Name" value={name} onChangeText={setName} placeholder="Phone" error={errors.name} autoFocus />
-      <Field label="Amount each month" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" placeholder="38" error={errors.amount} />
+      <Field label="Amount each month" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" placeholder={typed(38, currency)} error={errors.amount} />
       <Field label="Due on day" value={day} onChangeText={setDay} keyboardType="number-pad" placeholder="5" error={errors.day} />
       <Button title="Add bill" onPress={save} />
     </Screen>

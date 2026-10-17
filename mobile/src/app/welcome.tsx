@@ -9,7 +9,7 @@ import { Platform, View } from 'react-native';
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 
 import { PRINT_MS, PrintingBud, useCountUp } from '@/art';
-import { SMALL_UNIT } from '@/currencies';
+import { CURRENCIES, localAmount } from '@/currencies';
 import { Button, Marker, Screen, T, TextButton, useTheme } from '@/ui';
 
 const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
@@ -21,9 +21,10 @@ export default function Welcome() {
   const reduce = useReducedMotion();
   const device = getLocales()[0];
   const [printed, setPrinted] = useState(false);
-  const shown = useCountUp(SAMPLE, printed);
-  // The example is student-sized, so it's shown in ringgit unless the phone's currency is on that scale.
-  const sample = device.currencyCode && SMALL_UNIT.has(device.currencyCode) ? device.currencyCode : 'MYR';
+  // The example is in the phone's currency when Senbud offers it, at that currency's scale; else ringgit.
+  const sample = device.currencyCode && CURRENCIES.some(([c]) => c === device.currencyCode) ? device.currencyCode : 'MYR';
+  const target = Math.round(localAmount(SAMPLE / 100, sample) * 100);
+  const shown = useCountUp(target, printed);
   const fmt = (cents: number) => money(cents / 100, sample, device.languageTag);
   // Text rises in reading order once the receipt is out, 100 ms apart.
   const rise = (n: number) => (reduce ? undefined : FadeInDown.delay(PRINT_MS + 100 * n).duration(350));
@@ -39,7 +40,7 @@ export default function Welcome() {
           </Marker>
         </View>
 
-        <View accessible accessibilityLabel={`For example, safe to spend ${fmt(SAMPLE)}`}>
+        <View accessible accessibilityLabel={`For example, safe to spend ${fmt(target)}`}>
           <PrintingBud budSize={120} width={270} onPrinted={() => setPrinted(true)}>
             <T variant="caption" style={{ color: palette.inkDim, fontFamily: MONO }}>
               FOR EXAMPLE · TODAY

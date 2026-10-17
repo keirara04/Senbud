@@ -16,6 +16,16 @@ class ReceiptController extends Controller
     // Must match Category in packages/core/src/index.ts.
     public const CATEGORIES = ['Food', 'Transport', 'Treat', 'Groceries', 'Subscription', 'Other'];
 
+    // Amount caps are set in dollar-sized units. Currencies with many more units to the dollar scale them
+    // up (about 1 USD = 16000 IDR, 25000 VND, 1400 KRW, 150 JPY, 85-280 INR, BDT, PKR), or real receipts get dropped.
+    private const CAP_SCALE = ['IDR' => 10000, 'VND' => 10000, 'KRW' => 1000, 'JPY' => 100, 'PKR' => 100, 'INR' => 100, 'BDT' => 100];
+
+    // A bigger amount than this in $currency is a misread or a typo, not a student's spending.
+    public static function cap(?string $currency, int $base): int
+    {
+        return $base * (self::CAP_SCALE[strtoupper((string) $currency)] ?? 1);
+    }
+
     public function __invoke(Request $request): JsonResponse
     {
         // JSON with base64, not multipart: a multipart upload makes PHP write a temp file to disk.
@@ -65,7 +75,7 @@ class ReceiptController extends Controller
             return response()->json(['error' => 'receipt_reading_failed'], 502);
         }
 
-        return response()->json($this->clean($parsed));
+        return response()->json($this->clean($parsed, $data['currency'] ?? null));
     }
 
     private function prompt(?string $currency): string
@@ -116,15 +126,20 @@ class ReceiptController extends Controller
 
     // Models drift from schemas, and strict mode isn't enforced by every provider: never trust the
     // shape, and drop anything the app couldn't save.
-    private function clean(array $r): array
+    private function clean(array $r, ?string $hint): array
     {
         $str = fn ($v, $max) => is_string($v) && trim($v) !== '' ? mb_substr(trim($v), 0, $max) : null;
+        $currency = $r['currency'] ?? null;
+        $currency = is_string($currency) && preg_match('/^[A-Za-z]{3}$/', $currency) ? strtoupper($currency) : null;
+        // The total becomes a pre-ticked "Service charge and tax" line in the app, so it gets the items' cap.
+        $cap = self::cap($currency ?? $hint, 100000);
+        $money = fn ($v) => is_numeric($v) && ($v = round((float) $v, 2)) > 0 && $v < $cap ? $v : null;
 
         $items = [];
         foreach (is_array($r['items'] ?? null) ? array_slice($r['items'], 0, 50) : [] as $item) {
-            $amount = is_array($item) && is_numeric($item['amount'] ?? null) ? round((float) $item['amount'], 2) : 0;
+            $amount = is_array($item) ? $money($item['amount'] ?? null) : null;
             $label = is_array($item) ? $str($item['label'] ?? null, 60) : null;
-            if ($label === null || $amount <= 0 || $amount >= 100000) {
+            if ($label === null || $amount === null) {
                 continue;
             }
             $category = in_array($item['category'] ?? null, self::CATEGORIES, true) ? $item['category'] : 'Other';
@@ -132,14 +147,13 @@ class ReceiptController extends Controller
         }
 
         $date = $str($r['date'] ?? null, 10);
-        $currency = $r['currency'] ?? null;
 
         return [
             'merchant' => $str($r['merchant'] ?? null, 80),
             'date' => $date && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) ? $date : null,
-            'currency' => is_string($currency) && preg_match('/^[A-Za-z]{3}$/', $currency) ? strtoupper($currency) : null,
+            'currency' => $currency,
             'items' => $items,
-            'total' => is_numeric($r['total'] ?? null) ? round((float) $r['total'], 2) : null,
+            'total' => $money($r['total'] ?? null),
         ];
     }
 }

@@ -89,14 +89,23 @@ class WaitlistTest extends TestCase
         $this->assertNotNull($row->fresh()->confirmed_at);
     }
 
-    public function test_unknown_or_used_token_redirects_to_invalid(): void
+    public function test_unknown_token_redirects_to_invalid(): void
     {
         $this->get('/v1/waitlist/confirm/nope')->assertRedirect('http://localhost:3000/confirmed?status=invalid');
+    }
 
+    public function test_a_second_click_still_lands_on_the_referral_code(): void
+    {
+        // A mail scanner opening the link first must not use it up.
         $this->signup('ana@example.com');
+        $row = WaitlistSignup::sole();
         $link = $this->confirmPath('ana@example.com');
-        $this->get($link)->assertRedirectContains('?code=');
-        $this->get($link)->assertRedirect('http://localhost:3000/confirmed?status=invalid');
+        $this->get($link)->assertRedirect("http://localhost:3000/confirmed?code={$row->referral_code}");
+        $confirmedAt = $row->fresh()->confirmed_at;
+
+        $this->travel(1)->hours();
+        $this->get($link)->assertRedirect("http://localhost:3000/confirmed?code={$row->referral_code}");
+        $this->assertEquals($confirmedAt, $row->fresh()->confirmed_at);
     }
 
     public function test_token_expires_after_seven_days(): void

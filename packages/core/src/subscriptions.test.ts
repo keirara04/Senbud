@@ -29,6 +29,10 @@ describe("detectSubscriptions", () => {
     const pricey = [...charges("Spotify", 1_000, ["2026-09-15"]), ...charges("Spotify", 1_200, ["2026-10-15"])];
     expect(detectSubscriptions(pricey)).toEqual([]);
   });
+  it("trims the merchant label", () => {
+    const txns = charges("Netflix ", 1_500, ["2026-08-10", "2026-10-10"]).concat(charges("netflix", 1_500, ["2026-09-10"]));
+    expect(detectSubscriptions(txns)[0].merchant).toBe("Netflix");
+  });
   it("ignores one-offs, irregular gaps and same-day repeats", () => {
     expect(detectSubscriptions(charges("Kopi", 400, ["2026-10-01"]))).toEqual([]);
     expect(detectSubscriptions(charges("Kopi", 400, ["2026-10-01", "2026-10-03", "2026-10-10"]))).toEqual([]);

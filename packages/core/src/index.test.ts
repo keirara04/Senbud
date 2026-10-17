@@ -78,3 +78,17 @@ describe("splitBill", () => {
     expect(splitBill([{ label: "Pizza", cents: 1001, owner: "Shared" }], "items", ["A", "B"], "A")).toEqual({ A: 501, B: 500 });
   });
 });
+
+describe("parseSpending per currency", () => {
+  it("keeps the ringgit-scale cap by default", () => {
+    expect(parseSpending("laptop 150000")).toEqual([]);
+  });
+  it("takes everyday dong and rupiah amounts", () => {
+    expect(parseSpending("pho 150000", "VND")).toEqual([{ label: "Pho", amount: 150000, category: "Food" }]);
+    expect(parseSpending("nasi goreng 150.000", "IDR")).toEqual([{ label: "Nasi goreng", amount: 150000, category: "Food" }]);
+  });
+  it("still reads a dot as decimals where there are cents", () => {
+    expect(parseSpending("kopi 4.500", "MYR")).toEqual([]);
+    expect(parseSpending("kopi 4.50", "MYR")).toEqual([{ label: "Kopi", amount: 4.5, category: "Treat" }]);
+  });
+});

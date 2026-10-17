@@ -189,14 +189,18 @@ export function useCountUp(target: number, start: boolean) {
   const reduce = useReducedMotion();
   const [value, setValue] = useState(reduce ? target : 0);
   useEffect(() => {
-    if (!start || reduce) return setValue(start || reduce ? target : 0);
+    if (!start || reduce) return;
     const t0 = Date.now();
     const id = setInterval(() => {
       const p = Math.min(1, (Date.now() - t0) / 800);
       setValue(Math.round(target * (1 - (1 - p) ** 3)));
       if (p === 1) clearInterval(id);
     }, 16);
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+      setValue(0); // the next count starts from 0
+    };
   }, [target, start, reduce]);
-  return value;
+  // Not started is 0 and Reduce Motion is the final value, derived rather than set in the effect.
+  return reduce ? target : start ? value : 0;
 }

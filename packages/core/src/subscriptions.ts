@@ -35,7 +35,7 @@ export function detectSubscriptions(txns: Transaction[]): Subscription[] {
         : interval === "month"
           ? nextDueDate(Math.max(...charges.map((c) => dayOfMonth(c.date))), addDays(last.date, 1))
           : addMonths(last.date, 12);
-    found.push({ merchant: last.label, cents: last.cents, interval, nextDate, confirmed: false });
+    found.push({ merchant: last.label.trim(), cents: last.cents, interval, nextDate, confirmed: false });
   }
   return found;
 }
@@ -44,12 +44,22 @@ export function detectSubscriptions(txns: Transaction[]): Subscription[] {
 const renewal = (s: Subscription, k: number) =>
   s.interval === "week" ? addDays(s.nextDate, 7 * k) : addMonths(s.nextDate, s.interval === "year" ? 12 * k : k);
 
+// First renewal on or after `from`. The stored nextDate never moves on, so this is the real next one.
+export function nextRenewal(s: Subscription, from: IsoDate): IsoDate {
+  let k = 0;
+  while (renewal(s, k) < from) k++;
+  return renewal(s, k);
+}
+
 // Confirmed renewals from today up to `before` (exclusive); they count as fixed bills in safe to spend.
-export function subscriptionsDue(subs: Subscription[], today: IsoDate, before: IsoDate): number {
+// A renewal already logged as a transaction (same merchant, same day) is spending, not a bill to come.
+export function subscriptionsDue(subs: Subscription[], today: IsoDate, before: IsoDate, logged: Transaction[] = []): number {
   let sum = 0;
   for (const s of subs) {
     if (!s.confirmed) continue;
-    for (let k = 0, d = s.nextDate; d < before; d = renewal(s, ++k)) if (d >= today) sum += s.cents;
+    const key = merchantKey(s.merchant);
+    for (let k = 0, d = s.nextDate; d < before; d = renewal(s, ++k))
+      if (d >= today && !logged.some((t) => t.date === d && merchantKey(t.label) === key)) sum += s.cents;
   }
   return sum;
 }

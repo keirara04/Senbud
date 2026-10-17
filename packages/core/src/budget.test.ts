@@ -47,7 +47,34 @@ describe("safeToSpend", () => {
   const base = { limit: 100_000, period: month, transactions: txns, bills: [rent], today: "2026-10-16" };
 
   it("sets rent aside and splits the rest over the days left, today included", () => {
-    expect(safeToSpend(base)).toMatchObject({ spent: 30_000, upcoming: 65_000, left: 5_000, daysLeft: 16, perDay: 312, covered: true });
+    expect(safeToSpend(base)).toMatchObject({ spent: 30_000, upcoming: 65_000, left: 5_000, daysLeft: 16, covered: true });
+    // 10,000 of it was spent today: 15,000 over 16 days is 937, already used up today.
+    expect(safeToSpend(base)).toMatchObject({ spentToday: 10_000, perDay: 0 });
+    expect(safeToSpend({ ...base, transactions: txns.filter((t) => t.date !== "2026-10-16") }).perDay).toBe(937);
+  });
+  it("takes what was spent today off today's number", () => {
+    const day = { limit: 100_000, period: month, bills: [], today: "2026-10-17" };
+    expect(safeToSpend({ ...day, transactions: [tx("2026-10-17", 1_850)] })).toMatchObject({ daysLeft: 15, left: 98_150, perDay: 4_816 });
+    expect(safeToSpend({ ...day, transactions: [tx("2026-10-17", 1_850)], today: "2026-10-18" }).perDay).toBe(7_010);
+  });
+  it("keeps rent owed after its due date passes, so the number doesn't jump", () => {
+    const r = { limit: 200_000, period: month, transactions: [], bills: [{ ...rent, dueDay: 5 }] };
+    expect(safeToSpend({ ...r, today: "2026-10-05" })).toMatchObject({ owed: 65_000, upcoming: 65_000, perDay: 5_000 });
+    expect(safeToSpend({ ...r, today: "2026-10-06" })).toMatchObject({ owed: 65_000, upcoming: 0, perDay: 5_192 });
+  });
+  it("doesn't count rent that fell due before the bill was added", () => {
+    // Joined 17 Oct, 1,000 a month, rent 600 due the 1st: the next rent is next period's.
+    const r = safeToSpend({ limit: 100_000, period: month, transactions: [], bills: [{ ...rent, cents: 60_000, dueDay: 1, addedOn: "2026-10-17" }], today: "2026-10-17" });
+    expect(r).toMatchObject({ owed: 0, left: 100_000, daysLeft: 15, perDay: 6_666 });
+    // Added before the 5th: owed all period.
+    const due5 = { limit: 200_000, period: month, transactions: [], bills: [{ ...rent, dueDay: 5, addedOn: "2026-10-02" }] };
+    expect(safeToSpend({ ...due5, today: "2026-10-20" }).owed).toBe(65_000);
+  });
+  it("doesn't count a renewal twice once it's logged on the day", () => {
+    const sub = { merchant: "Netflix", cents: 1_500, interval: "month" as const, nextDate: "2026-10-10", confirmed: true };
+    const r = { limit: 200_000, period: month, bills: [], subscriptions: [sub], today: "2026-10-10" };
+    expect(safeToSpend({ ...r, transactions: [] })).toMatchObject({ upcoming: 1_500, left: 198_500 });
+    expect(safeToSpend({ ...r, transactions: [{ ...tx("2026-10-10", 1_500, "Subscription"), label: "netflix " }] })).toMatchObject({ spent: 1_500, upcoming: 0, left: 198_500 });
   });
   it("stops counting rent once it's paid (and logged as spending)", () => {
     const paid = { ...base, bills: [{ ...rent, paidThrough: "2026-10-25" }], transactions: [...txns, tx("2026-10-16", 65_000, "Other")] };

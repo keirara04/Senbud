@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Senbud — the money buddy that does the boring part";
+export const alt = "Senbud: the money buddy that does the boring part";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const dynamic = "force-static";

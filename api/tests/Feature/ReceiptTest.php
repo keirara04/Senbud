@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Providers\AppServiceProvider;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -158,13 +159,57 @@ class ReceiptTest extends TestCase
         $this->send()->assertOk();
     }
 
-    public function test_listed_devices_have_no_limits(): void
+    public function test_the_unlimited_key_lifts_the_limits(): void
     {
-        config(['app.unlimited_devices' => 'ffffffff-0000-4000-8000-000000000000, '.strtoupper(self::DEVICE)]);
+        config(['app.unlimited_key' => 'owner-secret']);
         self::fakeModel(['merchant' => null, 'date' => null, 'currency' => null, 'items' => [], 'total' => null]);
         for ($i = 0; $i < 8; $i++) {
-            $this->send([], ['Origin' => config('app.app_origin')])->assertOk();
+            $this->send([], ['Origin' => config('app.app_origin'), 'X-Unlimited-Key' => 'owner-secret'])->assertOk();
         }
+    }
+
+    public function test_the_device_id_or_a_wrong_or_unset_key_is_not_unlimited(): void
+    {
+        $empty = \Illuminate\Http\Request::create('/', 'POST', server: ['HTTP_X_UNLIMITED_KEY' => '']);
+        $this->assertFalse(AppServiceProvider::unlimited($empty));
+
+        config(['app.unlimited_key' => 'owner-secret']);
+        self::fakeModel(['merchant' => null, 'date' => null, 'currency' => null, 'items' => [], 'total' => null]);
+        foreach ([self::DEVICE, 'wrong', ''] as $key) {
+            $this->send([], ['Origin' => config('app.app_origin'), 'X-Unlimited-Key' => $key])->assertOk();
+        }
+        $this->send([], ['Origin' => config('app.app_origin'), 'X-Unlimited-Key' => self::DEVICE])->assertStatus(429);
+    }
+
+    /** One model reply per call, in order (a second Http::fake wouldn't replace the first). */
+    private static function fakeModels(array ...$contents): void
+    {
+        $seq = Http::fakeSequence('openrouter.ai/*');
+        foreach ($contents as $content) {
+            $seq->push(['choices' => [['message' => ['content' => json_encode($content)]]]]);
+        }
+    }
+
+    public function test_total_gets_the_same_cap_as_items(): void
+    {
+        $receipt = fn ($total) => ['merchant' => null, 'date' => null, 'currency' => 'MYR', 'items' => [['label' => 'Tea', 'amount' => 3, 'category' => 'Treat']], 'total' => $total];
+        self::fakeModels($receipt(99999999), $receipt(-5), $receipt(3.5));
+        $this->send()->assertOk()->assertJsonPath('total', null);
+        $this->send()->assertOk()->assertJsonPath('total', null);
+        $this->send()->assertOk()->assertJsonPath('total', 3.5);
+    }
+
+    public function test_caps_scale_for_high_denomination_currencies(): void
+    {
+        // 250,000 rupiah is about 15 USD: kept. The same number in ringgit is a misread: dropped.
+        $receipt = fn ($currency, $total = 275000) => ['merchant' => null, 'date' => null, 'currency' => $currency, 'items' => [['label' => 'Nasi padang', 'amount' => 250000, 'category' => 'Food']], 'total' => $total];
+        self::fakeModels($receipt('IDR'), $receipt('MYR'), $receipt(null), $receipt('IDR', 1000000000));
+
+        $this->send()->assertOk()->assertJsonPath('items.0.amount', 250000)->assertJsonPath('total', 275000);
+        $this->send()->assertOk()->assertJsonPath('items', [])->assertJsonPath('total', null);
+        // No currency read off the receipt: the app's currency decides.
+        $this->send(['currency' => 'idr'])->assertOk()->assertJsonPath('items.0.amount', 250000);
+        $this->send()->assertOk()->assertJsonPath('total', null);
     }
 
     public function test_cors_allows_the_web_app_and_its_device_id_header(): void
@@ -173,10 +218,10 @@ class ReceiptTest extends TestCase
         $this->call('OPTIONS', '/v1/agent/receipt', [], [], [], [
             'HTTP_ORIGIN' => 'https://app.senbud.com',
             'HTTP_ACCESS_CONTROL_REQUEST_METHOD' => 'POST',
-            'HTTP_ACCESS_CONTROL_REQUEST_HEADERS' => 'content-type,x-device-id',
+            'HTTP_ACCESS_CONTROL_REQUEST_HEADERS' => 'content-type,x-device-id,x-unlimited-key',
         ])->assertNoContent()
             ->assertHeader('Access-Control-Allow-Origin', 'https://app.senbud.com')
-            ->assertHeader('Access-Control-Allow-Headers', 'content-type, accept, x-device-id');
+            ->assertHeader('Access-Control-Allow-Headers', 'content-type, accept, x-device-id, x-unlimited-key');
     }
 
     public function test_never_logs_the_image(): void

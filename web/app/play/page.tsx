@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { Game } from "@/components/play/Game";
 
-const title = "The Budget Dungeon — can you survive the week?";
+const title = "The Budget Dungeon: can you survive the week?";
 const description =
   "A 2-minute dice-rolling mini game from Senbud. Beat the Impulse Goblin, cancel the Subscription Slime and pay the Rent Dragon on Friday.";
 

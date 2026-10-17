@@ -15,8 +15,9 @@ use Illuminate\Support\Facades\RateLimiter;
 // here and OpenRouter routes only to zero-retention endpoints.
 //
 // Guardrail: the model says whether the question is about the person's money (or money-adjacent student
-// life). When it isn't, Bud's reply is a fixed line written here, never model text, so a jailbreak can't
-// make Bud say anything. Three off-topic questions in a day pause AI questions for that device until
+// life). When it isn't, Bud's reply is a fixed line written here, never model text. This narrows a
+// jailbreak, it doesn't stop one: the client sends the earlier turns, so it can forge Bud's answers, and
+// a model fooled into on_topic true still writes the reply (capped at 600 chars, actions validated). Three off-topic questions in a day pause AI questions for that device until
 // tomorrow; the app's rule-based answers keep working.
 class AskController extends Controller
 {
@@ -28,7 +29,9 @@ class AskController extends Controller
 
     public function __invoke(Request $request): JsonResponse
     {
-        $money = ['required', 'numeric', 'between:-10000000,10000000'];
+        $currency = $request->input('currency');
+        $cap = ReceiptController::cap(is_string($currency) ? $currency : null, 10000000);
+        $money = ['required', 'numeric', "between:-$cap,$cap"];
         // validated() keeps only the keys listed here, so anything else the app sends is never forwarded.
         $data = $request->validate([
             'question' => ['required', 'string', 'max:500'],
@@ -47,7 +50,7 @@ class AskController extends Controller
             'summary.by_category' => ['present', 'array:'.implode(',', ReceiptController::CATEGORIES)],
             'summary.by_category.*' => $money,
             'summary.rent' => ['nullable', 'array'],
-            'summary.rent.amount' => ['required_with:summary.rent', 'numeric', 'between:0,10000000'],
+            'summary.rent.amount' => ['required_with:summary.rent', 'numeric', "between:0,$cap"],
             'summary.rent.due_day' => ['required_with:summary.rent', 'integer', 'between:1,31'],
             'expenses' => ['present', 'array', 'max:20'],
             'expenses.*.date' => ['required', 'date_format:Y-m-d'],
@@ -56,7 +59,8 @@ class AskController extends Controller
             'expenses.*.category' => ['required', 'in:'.implode(',', ReceiptController::CATEGORIES)],
         ]);
 
-        $strikes = 'ask-off:'.AppServiceProvider::who($request);
+        // Hashed: the cache is the database, and it shouldn't hold raw IPs or device ids.
+        $strikes = 'ask-off:'.sha1(AppServiceProvider::who($request));
         $limited = ! AppServiceProvider::unlimited($request);
         if ($limited && RateLimiter::tooManyAttempts($strikes, self::OFF_TOPIC_PER_DAY)) {
             return response()->json(['error' => 'off_topic_cooldown'], 429, ['Retry-After' => RateLimiter::availableIn($strikes)]);
@@ -108,7 +112,7 @@ class AskController extends Controller
             return response()->json(['error' => 'assistant_failed'], 502);
         }
 
-        return response()->json(['answer' => mb_substr($answer, 0, 600), 'actions' => self::actions($reply['actions'] ?? [])]);
+        return response()->json(['answer' => mb_substr($answer, 0, 600), 'actions' => self::actions($reply['actions'] ?? [], $cap)]);
     }
 
     // The fixed reply. `answer` is there for app versions that don't know `off_topic` yet.
@@ -135,7 +139,7 @@ class AskController extends Controller
         $recent = collect($data['expenses'])
             ->map(fn ($e) => substr($e['date'], 5).' '.preg_replace('/[\r\n;]+/', ' ', $e['label']).' '.$n($e['amount']).' '.$e['category'])
             ->join('; ');
-        $rent = $s['rent'] ? "rent {$n($s['rent']['amount'])} due day {$s['rent']['due_day']}" : 'no rent';
+        $rent = ($s['rent'] ?? null) ? "rent {$n($s['rent']['amount'])} due day {$s['rent']['due_day']}" : 'no rent';
 
         return 'You are Bud, the friendly helper in Senbud, a student budgeting app. In scope: the user\'s own '
             .'money and money-adjacent student life (saving, cheap food, part-time pay, splitting with friends). '
@@ -187,10 +191,10 @@ class AskController extends Controller
 
     // Actions only open a prefilled screen in the app; the person saves it there. Anything that doesn't
     // fit is dropped rather than repaired.
-    private static function actions(mixed $raw): array
+    private static function actions(mixed $raw, int $cap): array
     {
         $out = [];
-        $amount = fn ($v) => is_numeric($v) && $v > 0 && $v <= 10000000 ? round((float) $v, 2) : null;
+        $amount = fn ($v) => is_numeric($v) && $v > 0 && $v <= $cap ? round((float) $v, 2) : null;
         foreach (is_array($raw) ? $raw : [] as $a) {
             $type = is_array($a) ? ($a['type'] ?? null) : null;
             if ($type === 'set_limit' && in_array($a['category'] ?? null, ReceiptController::CATEGORIES, true)) {

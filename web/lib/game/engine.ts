@@ -35,6 +35,7 @@ export type Event =
   | { kind: "fled"; monster: MonsterId }
   | { kind: "cast"; spell: SpellId }
   | { kind: "warded"; monster: MonsterId }
+  | { kind: "wardUnused" }
   | { kind: "cancelled"; monster: MonsterId }
   | { kind: "morale"; delta: number }
   | { kind: "end"; ending: EndingId };
@@ -95,6 +96,7 @@ function addMorale(s: State, delta: number) {
 }
 
 function spend(s: State, m: MonsterId, amount: number) {
+  amount = Math.min(amount, Math.max(0, s.gold)); // Gold never goes below $0.
   s.gold -= amount;
   s.spent += amount;
   s.log.push({ kind: "pay", monster: m, amount });
@@ -134,6 +136,11 @@ function startFloor(s: State, floor: number) {
     } else {
       plan.unshift("lateFeeLich");
     }
+  } else if (floor === LICH_FLOOR && s.ward) {
+    // Rent money was there, so the ward wasn't needed: give the cast back.
+    s.ward = false;
+    s.castsLeft += 1;
+    s.log.push({ kind: "wardUnused" });
   }
   s.queue = plan;
   advance(s);

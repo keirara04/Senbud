@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import { MotionProvider } from "@/components/MotionProvider";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import "./globals.css";
 
-const title = "Senbud — know what’s safe to spend today";
+const title = "Senbud: know what’s safe to spend today";
 const description =
   "A budgeting app for students. Snap a receipt or type “lunch 12, uber 8”, and Senbud sets rent aside and tells you what’s safe to spend today. No bank login, no account.";
 
@@ -41,7 +42,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             strategy="afterInteractive"
           />
         )}
-        {children}
+        <MotionProvider>{children}</MotionProvider>
       </body>
     </html>
   );

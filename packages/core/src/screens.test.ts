@@ -74,6 +74,13 @@ describe("nudges", () => {
     expect(nudges({ ...base, spotted: [{ ...netflix, confirmed: false }], streak: 4, treats: [tealive] }).map((n) => n.kind)).toEqual(["spotted", "streak"]);
     expect(nudges({ ...base, streak: 2, treats: [tealive] }).map((n) => n.kind)).toEqual(["treat"]);
   });
+  it("notes a renewal tomorrow even when the stored next date has passed", async () => {
+    const { nudges } = await import("./index");
+    const old = { ...netflix, nextDate: "2026-09-17" };
+    expect(nudges({ ...base, subscriptions: [old] }).map((n) => n.kind)).toEqual(["renewal"]);
+    expect(nudges({ ...base, today: "2026-11-16", subscriptions: [old] }).map((n) => n.kind)).toEqual(["renewal"]);
+    expect(nudges({ ...base, today: "2026-11-09", subscriptions: [old] }).map((n) => n.kind)).not.toContain("renewal");
+  });
   it("keys notes by what they're about", async () => {
     const { nudgeKey } = await import("./index");
     expect(nudgeKey({ kind: "category", category: "Food", spent: 1, limit: 2, status: "ok" })).toBe("category:Food");
@@ -100,6 +107,14 @@ describe("underBudgetStreak", () => {
     expect(underBudgetStreak([day("2026-10-17", 900)], 31000, period, "2026-10-17")).toBe(0);
     expect(underBudgetStreak([day("2026-10-14", 900)], 31000, period, "2026-10-17")).toBe(3);
     expect(underBudgetStreak([day("2026-09-30", 0)], 31000, period, "2026-10-03")).toBe(0);
+  });
+  it("takes bills owed this period off the daily share, like Wrapped", async () => {
+    const { underBudgetStreak, wrapped, monthRange } = await import("./index");
+    const txns = ["2026-10-01", "2026-10-02", "2026-10-03"].map((d) => day(d, 4000));
+    const rent = [{ name: "Rent", cents: 65000, dueDay: 5 }];
+    expect(underBudgetStreak(txns, 155000, period, "2026-10-04")).toBe(3);
+    expect(underBudgetStreak(txns, 155000, period, "2026-10-04", rent)).toBe(0);
+    expect(wrapped({ txns, bills: rent, limit: 155000, period, month: monthRange("2026-10"), today: "2026-10-03" }).streak).toBe(0);
   });
 });
 

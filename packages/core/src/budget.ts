@@ -43,8 +43,23 @@ export function billsDue(bills: Bill[], today: IsoDate, before: IsoDate): number
   return sum;
 }
 
-// safe_today = (budget_left − upcoming fixed bills in period) ÷ days left in period, today included.
-// perDay is floored and never negative; `covered` says whether the bills still fit in what's left.
+// Bill occurrences owed in a range: due dates from the range start (or the day the bill was added, or
+// the day after it was paid, if later) up to nextStart. One rule for Home, Wrapped and the leftover offer,
+// so rent due on the 5th still counts on the 6th, and rent due before someone joined never does.
+export function billsOwed(bills: Bill[], range: Range): number {
+  let sum = 0;
+  for (const bill of bills) {
+    const paid = bill.paidThrough ? addDays(bill.paidThrough, 1) : "";
+    const from = [range.start, bill.addedOn ?? "", paid].reduce((a, b) => (a > b ? a : b));
+    for (let d = nextDueDate(bill.dueDay, from); d < range.nextStart; d = nextDueDate(bill.dueDay, addDays(d, 1))) sum += bill.cents;
+  }
+  return sum;
+}
+
+// left = budget − spent − bills owed this period − renewals still to come. `upcoming` is what's still to
+// pay from today, for display. Today's number is fixed at the start of the day, then drops by what's
+// spent today: perDay = floor((left + spentToday) ÷ days left, today included) − spentToday.
+// perDay is never negative; `covered` says whether the bills still fit in what's left.
 export function safeToSpend(opts: {
   limit: number;
   period: BudgetPeriod;
@@ -56,11 +71,14 @@ export function safeToSpend(opts: {
   const { limit, period, transactions, bills, subscriptions = [], today } = opts;
   const range = periodRange(period, today);
   const spent = spentIn(transactions, range);
-  const upcoming =
-    billsDue(bills, today, range.nextStart) + subscriptionsDue(subscriptions, today, range.nextStart);
-  const left = limit - spent - upcoming;
+  const spentToday = spentIn(transactions, { start: today, nextStart: addDays(today, 1) });
+  const owed = billsOwed(bills, range);
+  const renewals = subscriptionsDue(subscriptions, today, range.nextStart, transactions);
+  const upcoming = billsDue(bills, today, range.nextStart) + renewals;
+  const left = limit - spent - owed - renewals;
   const daysLeft = Math.max(1, daysBetween(today, range.nextStart));
-  return { ...range, spent, upcoming, left, daysLeft, perDay: Math.max(0, Math.floor(left / daysLeft)), covered: left >= 0 };
+  const perDay = Math.max(0, Math.floor((left + spentToday) / daysLeft) - spentToday);
+  return { ...range, spent, spentToday, owed, upcoming, left, daysLeft, perDay, covered: left >= 0 };
 }
 
 export type Status = "ok" | "close" | "over";

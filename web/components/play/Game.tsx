@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, CircleCheck, Coins, Heart, ScrollText, TriangleAlert, Volume2, VolumeX } from "lucide-react";
-import { AnimatePresence, MotionConfig, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { CLASSES, type ClassId, DAYS, ENDINGS, MAX_MORALE, MONSTERS, type MonsterId, SPELLS, type SpellId } from "@/lib/game/data";
@@ -79,6 +79,8 @@ export function Game() {
   const best = lastTitle ?? storedBest;
   const [shareNote, setShareNote] = useState("");
   const timers = useRef<number[]>([]);
+  // Set synchronously so a second key press during the die tumble can't act on stale state.
+  const busy = useRef(false);
   const reduce = useReducedMotion();
 
   useEffect(() => {
@@ -132,12 +134,13 @@ export function Game() {
 
   const doAction = useCallback(
     (a: Action) => {
-      if (!game || rolling !== null || !canAct(game, a)) return;
+      if (!game || busy.current || !canAct(game, a)) return;
       const next = act(game, a);
       if (a.type !== "resist" || reduce) return apply(next);
       // Tumble the die, show the real face for a beat, then resolve.
       const roll = next.log.find((e) => e.kind === "roll");
       const final = roll?.kind === "roll" ? roll.d20 : 10;
+      busy.current = true;
       sfx("roll");
       const spin = window.setInterval(() => setRolling(1 + Math.floor(Math.random() * 20)), 70);
       timers.current.push(
@@ -147,12 +150,13 @@ export function Game() {
           setRolling(final);
         }, 600),
         window.setTimeout(() => {
+          busy.current = false;
           setRolling(null);
           apply(next);
         }, 1050),
       );
     },
-    [apply, game, reduce, rolling, sfx],
+    [apply, game, reduce, sfx],
   );
 
   // Keyboard: 1 Pay · 2 Resist · 3 Flee · 4 Spells (then 1–4 cast, Esc closes).
@@ -188,41 +192,44 @@ export function Game() {
   );
 
   return (
-    <MotionConfig reducedMotion="user">
-      <div className="mx-auto w-full max-w-[688px] px-4 pb-16 pt-8 sm:px-6">
-        {screen === "select" && (
-          <ClassSelect cls={cls} setCls={setCls} onStart={start} best={best} soundToggle={soundToggle} />
-        )}
-        {screen === "play" && game && (
-          <Board
-            soundToggle={soundToggle}
-            game={game}
-            lines={lines}
-            rolling={rolling}
-            pop={pop}
-            spellsOpen={spellsOpen}
-            setSpellsOpen={setSpellsOpen}
-            onAction={doAction}
-          />
-        )}
-        {screen === "end" && game && (
-          <EndScreen
-            game={game}
-            best={best}
-            shareNote={shareNote}
-            onShare={async () => {
+    <div className="mx-auto w-full max-w-[688px] px-4 pb-16 pt-8 sm:px-6">
+      {screen === "select" && (
+        <ClassSelect cls={cls} setCls={setCls} onStart={start} best={best} soundToggle={soundToggle} />
+      )}
+      {screen === "play" && game && (
+        <Board
+          soundToggle={soundToggle}
+          game={game}
+          lines={lines}
+          rolling={rolling}
+          pop={pop}
+          spellsOpen={spellsOpen}
+          setSpellsOpen={setSpellsOpen}
+          onAction={doAction}
+        />
+      )}
+      {screen === "end" && game && (
+        <EndScreen
+          game={game}
+          best={best}
+          shareNote={shareNote}
+          onShare={async () => {
+            try {
               const how = await shareCard(game);
+              if (how === "cancelled") return;
               setShareNote(how === "shared" ? "Shared!" : "Card downloaded.");
               track("dungeon_share", { ending: game.ending! });
-            }}
-            onAgain={() => {
-              setLastTitle(ENDINGS[game.ending!].title);
-              setScreen("select");
-            }}
-          />
-        )}
-      </div>
-    </MotionConfig>
+            } catch {
+              setShareNote("Couldn’t make the card. Try again.");
+            }
+          }}
+          onAgain={() => {
+            setLastTitle(ENDINGS[game.ending!].title);
+            setScreen("select");
+          }}
+        />
+      )}
+    </div>
   );
 }
 

@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 
+import { typed, useCurrency } from '@/currencies';
 import { addToJar, loadJar, setJarGoal, today } from '@/db';
 import { Button, Field, Screen, T } from '@/ui';
 
@@ -10,6 +11,7 @@ const toCents = (s: string) => Math.round(Number(s.trim().replace(',', '.')) * 1
 
 export default function JarSheet() {
   const db = useSQLiteContext();
+  const currency = useCurrency();
   const { mode } = useLocalSearchParams<{ mode?: 'add' | 'goal' }>();
   const goal = mode === 'goal';
   const [name, setName] = useState('');
@@ -47,7 +49,7 @@ export default function JarSheet() {
         value={amount}
         onChangeText={(v) => (setAmount(v), setError(''))}
         keyboardType="decimal-pad"
-        placeholder={goal ? '60' : '10'}
+        placeholder={typed(goal ? 60 : 10, currency)}
         error={error}
         autoFocus={!goal}
       />

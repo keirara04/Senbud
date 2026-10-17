@@ -44,7 +44,8 @@ export async function readReceipt(base64: string, currency: string | undefined, 
     if (!res.ok) throw new Error(MESSAGES[res.status] ?? 'Couldn’t read that receipt. Try again, or type it instead.');
     return (await res.json()) as Receipt;
   } catch (e) {
-    if (e instanceof Error && e.message && !(e.name === 'AbortError' || e.name === 'TypeError')) throw e;
+    // SyntaxError: a 200 that isn't JSON, like a captive portal's login page. Same as no connection.
+    if (e instanceof Error && e.message && !(e.name === 'AbortError' || e.name === 'TypeError' || e.name === 'SyntaxError')) throw e;
     throw new Error('No connection to Senbud. Check your internet and try again.');
   } finally {
     clearTimeout(timer);
@@ -71,8 +72,9 @@ export type AskSummary = {
 };
 
 const ASK_MESSAGES: Record<number, string> = {
+  422: 'That question is too long for Bud. Try a shorter one.',
   429: 'That’s a lot of questions. Try again in a minute.',
-  503: 'Questions aren’t available right now. Quick adds still work, like “kopi 4.50”.',
+  503: 'Questions aren’t available right now. Quick adds still work.',
 };
 // Design system 4.9's offline slip.
 const OFFLINE = 'Can’t reach Senbud right now. Anything you add is still saved on your phone.';

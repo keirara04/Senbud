@@ -11,9 +11,10 @@ import { Alert, Linking, View } from 'react-native';
 import Purchases from 'react-native-purchases';
 
 import { restoreBackup, shareFile } from '@/backup';
+import { drinkExample } from '@/currencies';
 import { ordinal } from '@/onboarding';
 import { type AppState, eraseAll, exportAll, listTransactions, loadApp, loadSetup, setAiEnabled, type Setup, setTheme, type Theme, today } from '@/db';
-import { PRIVACY, purchasesReady, restorePro, TERMS } from '@/purchases';
+import { PRIVACY, purchasesReady, restorePro, syncPro, TERMS } from '@/purchases';
 import { AiSwitch, applyTheme, Button, Card, ListGroup, ListRow, Row, Screen, Segmented, T, TextButton } from '@/ui';
 
 export default function Settings() {
@@ -73,6 +74,8 @@ export default function Settings() {
         style: 'destructive',
         onPress: async () => {
           await eraseAll(db);
+          // Erase resets the cached Pro flag; the store still has the purchase.
+          syncPro(db);
           applyTheme('dark');
           router.replace('/');
         },
@@ -89,7 +92,7 @@ export default function Settings() {
         <ListRow label="Pay per hour" value={app.hourlyRateCents ? `${fmt(app.hourlyRateCents)} an hour` : 'Add'} onPress={() => router.push('/rate')} />
       </ListGroup>
 
-      <ListGroup title="AI" footer="Typing “kopi 4.50” always works, AI or not. Everything is stored on this phone.">
+      <ListGroup title="AI" footer={`Typing “${drinkExample(profile.currency)}” always works, AI or not. Everything is stored on this phone.`}>
         <AiSwitch value={app.aiEnabled} onChange={toggleAi} />
         <ListRow label="What gets sent" onPress={() => router.push('/sent')} />
       </ListGroup>
@@ -152,8 +155,8 @@ export default function Settings() {
         <T tone="textDim">·</T>
         <TextButton title="Terms" tone="textDim" onPress={() => WebBrowser.openBrowserAsync(TERMS)} />
       </Row>
-      {/* The anonymous id the API rate-limits by. Quote it to support, or list it in the API's
-          UNLIMITED_DEVICES for your own devices. */}
+      {/* The anonymous id the API rate-limits by. For support only: unlimited access uses the API's
+          UNLIMITED_KEY, not this id. */}
       <Row style={{ justifyContent: 'center' }}>
         <T variant="caption" tone="textDim">
           Support ID {app.deviceId.slice(0, 8)}

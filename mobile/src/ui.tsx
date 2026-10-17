@@ -2,7 +2,7 @@
 // Spec: docs/senbud-app-design-system.md.
 import type { Category } from '@senbud/core';
 import { categoryColors, motion, palette, radius, space, type Theme, themes, touch, type } from '@senbud/core/tokens';
-import { type ReactNode, useState, useSyncExternalStore } from 'react';
+import { type ReactNode, useRef, useState, useSyncExternalStore } from 'react';
 import {
   Appearance,
   Platform,
@@ -29,6 +29,11 @@ import { DarkTheme, DefaultTheme } from 'expo-router';
 
 // Receipt type: the thermal-printer look on ReceiptCards.
 export const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
+
+// For an input whose own border shows focus: drops the browser's focus ring on web. outlineWidth: 0
+// isn't enough, since Chrome's keyboard-focus ring is `outline-style: auto`, which ignores width.
+// React Native's types don't list 'none' for outlineStyle; react-native-web passes it through.
+export const noWebOutline = (Platform.OS === 'web' ? { outlineStyle: 'none' } : {}) as TextStyle;
 
 // RN-web's Appearance follows the browser only (no setColorScheme), so on web the Settings choice is kept
 // here and wins over the browser unless it is System.
@@ -102,6 +107,26 @@ export function Row({ children, style }: { children: ReactNode; style?: StylePro
   return <View style={[s.row, style]}>{children}</View>;
 }
 
+// An onPress that returns a promise keeps the control disabled until it settles, so a second tap can't
+// save twice. The ref covers taps that land before the re-render.
+function useBusy(onPress: () => void | Promise<unknown>) {
+  const [busy, setBusy] = useState(false);
+  const running = useRef(false);
+  const press = () => {
+    if (running.current) return;
+    const r = onPress();
+    if (!(r instanceof Promise)) return;
+    running.current = true;
+    setBusy(true);
+    // finally, not catch: a rejection still surfaces as it did before.
+    r.finally(() => {
+      running.current = false;
+      setBusy(false);
+    });
+  };
+  return [busy, press] as const;
+}
+
 // onPanel: an outline button on the cobalt panel (Wrapped's Share).
 type ButtonVariant = 'primary' | 'highlight' | 'secondary' | 'danger' | 'onPanel';
 
@@ -112,11 +137,13 @@ export function Button({
   disabled,
 }: {
   title: string;
-  onPress: () => void;
+  onPress: () => void | Promise<unknown>;
   variant?: ButtonVariant;
   disabled?: boolean;
 }) {
   const t = useTheme();
+  const [busy, press] = useBusy(onPress);
+  const off = disabled || busy;
   const look: Record<ButtonVariant, { bg: string; pressed: string; fg: string; border?: string }> = {
     primary: { bg: t.primary, pressed: t.primaryPressed, fg: t.onPrimary },
     highlight: { bg: t.highlight, pressed: palette.highlighterPressed, fg: t.onHighlight },
@@ -127,14 +154,14 @@ export function Button({
   const v = look[variant];
   return (
     <Pressable
-      onPress={onPress}
-      disabled={disabled}
+      onPress={press}
+      disabled={off}
       accessibilityRole="button"
-      accessibilityState={{ disabled }}
+      accessibilityState={{ disabled: off, busy }}
       android_ripple={{ color: t.line }}
       style={({ pressed }) => [
         s.button,
-        { backgroundColor: pressed ? v.pressed : v.bg, borderColor: v.border ?? 'transparent', opacity: disabled ? 0.4 : 1 },
+        { backgroundColor: pressed ? v.pressed : v.bg, borderColor: v.border ?? 'transparent', opacity: off ? 0.4 : 1 },
       ]}
     >
       <T variant="bodyStrong" style={{ color: v.fg, textAlign: 'center' }}>
@@ -145,9 +172,17 @@ export function Button({
 }
 
 // Text link: same tap area as a button, no box.
-export function TextButton({ title, onPress, tone = 'accent', color }: { title: string; onPress: () => void; tone?: Tone; color?: string }) {
+export function TextButton({ title, onPress, tone = 'accent', color }: { title: string; onPress: () => void | Promise<unknown>; tone?: Tone; color?: string }) {
+  const [busy, press] = useBusy(onPress);
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" hitSlop={12} style={({ pressed }) => [s.textButton, pressed && { opacity: 0.6 }]}>
+    <Pressable
+      onPress={press}
+      disabled={busy}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: busy, busy }}
+      hitSlop={12}
+      style={({ pressed }) => [s.textButton, (pressed || busy) && { opacity: busy ? 0.4 : 0.6 }]}
+    >
       <T variant="bodyStrong" tone={tone} style={color ? { color } : undefined}>
         {title}
       </T>
@@ -164,7 +199,7 @@ export function Field({ label, error, ...input }: { label: string; error?: strin
       </T>
       <TextInput
         accessibilityLabel={label}
-        placeholderTextColor={t.textDim}
+        placeholderTextColor={t.placeholder}
         selectionColor={t.accent}
         {...input}
         // No lineHeight on inputs: a fixed one clips the text at large accessibility sizes.
@@ -216,7 +251,8 @@ export function CategoryChip({ category }: { category: Category }) {
 
 export const CATEGORIES: Category[] = ['Food', 'Transport', 'Treat', 'Groceries', 'Subscription', 'Other'];
 
-// Category chips as a radio group; the selected chip gets a 2 pt ring in text colour (spec 4.1).
+// Category chips as a radio group. The selected chip gets a check, a heavier label and a 2 pt ring in
+// text colour set off from the chip by a gap of background, so it shows on the pale tints in both schemes.
 export function CategoryPicker({ value, onChange }: { value: Category; onChange: (c: Category) => void }) {
   const t = useTheme();
   return (
@@ -229,19 +265,24 @@ export function CategoryPicker({ value, onChange }: { value: Category; onChange:
             onPress={() => onChange(c)}
             accessibilityRole="radio"
             accessibilityState={{ selected: on }}
-            style={{
-              minHeight: touch.min - 8,
-              justifyContent: 'center',
-              paddingHorizontal: space.md,
-              borderRadius: radius.pill,
-              backgroundColor: categoryColors[c].bg,
-              borderWidth: 2,
-              borderColor: on ? t.text : 'transparent',
-            }}
+            style={{ borderRadius: radius.pill, borderWidth: 2, padding: 2, borderColor: on ? t.text : 'transparent' }}
           >
-            <T variant="bodyStrong" style={{ color: categoryColors[c].fg }}>
-              {c}
-            </T>
+            <View
+              style={{
+                minHeight: touch.min - 16,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: space.xs,
+                paddingHorizontal: space.md,
+                borderRadius: radius.pill,
+                backgroundColor: categoryColors[c].bg,
+              }}
+            >
+              {on ? <Icon name={{ ios: 'checkmark', android: 'check' }} size={16} color={categoryColors[c].fg} /> : null}
+              <T variant="bodyStrong" style={{ color: categoryColors[c].fg, fontWeight: on ? '800' : '600' }}>
+                {c}
+              </T>
+            </View>
           </Pressable>
         );
       })}
@@ -363,7 +404,8 @@ export function AmountPad({ value, onChange, digits }: { value: string; onChange
     if (key === '.' && (value.includes('.') || digits === 0)) return;
     const next = value === '0' && key !== '.' ? key : value + key;
     const [, dec = ''] = next.split('.');
-    if (dec.length > digits || next.replace('.', '').length > 7) return;
+    // 99,999.99 with cents; 999,999,999 without, so a month in dong or rupiah fits.
+    if (dec.length > digits || next.replace('.', '').length > (digits ? 7 : 9)) return;
     onChange(next);
   }
   const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', digits ? '.' : '', '0', 'del'];
@@ -667,7 +709,8 @@ export function BudTab({ onPress }: { onPress: () => void }) {
       >
         <Bud size={38} />
       </View>
-      <T variant="label" tone="textDim" style={{ fontSize: 11, textTransform: 'none', letterSpacing: 0, marginTop: 2 }}>
+      {/* lineHeight 12, no gap: circle and label need 56 pt inside the bar; a 16 pt line clipped on web. */}
+      <T variant="label" tone="textDim" style={{ fontSize: 11, lineHeight: 12, textTransform: 'none', letterSpacing: 0 }}>
         Bud
       </T>
     </Pressable>
@@ -675,6 +718,22 @@ export function BudTab({ onPress }: { onPress: () => void }) {
 }
 
 // Highlighter stroke behind a word, the web's .marker. Use once per screen, on the phrase that matters.
+// One printed line on a ReceiptCard: label, dotted leader, amount, in mono ink (white paper in both themes).
+export function ReceiptLine({ label, value }: { label: string; value: string }) {
+  const ink = { color: palette.ink, fontFamily: MONO };
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.xs }}>
+      <T style={[ink, { flexShrink: 1 }]}>{label}</T>
+      <T numberOfLines={1} style={[ink, { flex: 1, color: palette.inkDim, opacity: 0.5 }]}>
+        {'. '.repeat(40)}
+      </T>
+      <T money style={ink}>
+        {value}
+      </T>
+    </View>
+  );
+}
+
 export function Marker({ children, align = 'flex-start' }: { children: ReactNode; align?: 'flex-start' | 'center' }) {
   const t = useTheme();
   return (

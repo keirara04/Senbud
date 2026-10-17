@@ -18,7 +18,8 @@ export type BudgetPeriod =
   | { kind: "until"; start: IsoDate; payday: IsoDate };
 
 // A monthly fixed bill such as rent. Occurrences on or before `paidThrough` no longer count as upcoming.
-export type Bill = { name: string; cents: number; dueDay: number; paidThrough?: IsoDate };
+// Occurrences before `addedOn` (the day it was entered) were never owed; without it, every one in a range is.
+export type Bill = { name: string; cents: number; dueDay: number; paidThrough?: IsoDate; addedOn?: IsoDate };
 
 export type Interval = "week" | "month" | "year";
 

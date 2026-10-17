@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 
+import { typed } from '@/currencies';
 import { loadApp, loadProfile, type Profile, setHourlyRate } from '@/db';
 import { Button, Card, Field, Screen, T } from '@/ui';
 
@@ -51,7 +52,7 @@ export default function RateSheet() {
         value={amount}
         onChangeText={(v) => (setAmount(v.replace(/[^\d.,]/g, '')), setError(''))}
         keyboardType="decimal-pad"
-        placeholder="10"
+        placeholder={typed(10, profile.currency)}
         error={error}
         autoFocus
       />

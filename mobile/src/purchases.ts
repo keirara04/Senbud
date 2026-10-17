@@ -42,15 +42,23 @@ export function hasPro(info: CustomerInfo) {
   return pro;
 }
 
+// The catch: after a dev reload the old database handle is closed; a late update must not throw.
+const cachePro = (db: SQLiteDatabase, info: CustomerInfo) => setPro(db, hasPro(info)).catch(() => {});
+
+/** Reads the entitlement into the cache once, e.g. after Erase recreated the app row with Pro off. */
+export async function syncPro(db: SQLiteDatabase) {
+  if (!purchasesReady()) return;
+  // Offline or a RevenueCat outage: keep the cached value rather than locking someone out.
+  await Purchases.getCustomerInfo().then((info) => cachePro(db, info), () => {});
+}
+
 /** Keeps the local Pro cache in step with RevenueCat. Mount once, inside SQLiteProvider. */
 export function ProSync() {
   const db = useSQLiteContext();
   useEffect(() => {
     if (!purchasesReady()) return;
-    // The catch: after a dev reload the old database handle is closed; a late update must not throw.
-    const sync = (info: CustomerInfo) => setPro(db, hasPro(info)).catch(() => {});
-    // Offline or a RevenueCat outage: keep the cached value rather than locking someone out.
-    Purchases.getCustomerInfo().then(sync, () => {});
+    const sync = (info: CustomerInfo) => cachePro(db, info);
+    syncPro(db);
     Purchases.addCustomerInfoUpdateListener(sync);
     return () => {
       Purchases.removeCustomerInfoUpdateListener(sync);

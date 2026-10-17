@@ -54,7 +54,8 @@ export function Screens() {
             sentence and one number.
           </p>
         </div>
-        <div className="phones-row">
+        {/* Scrolls sideways under 1060px, so keyboard users need to be able to focus it. */}
+        <div className="phones-row" tabIndex={0} role="region" aria-label="App screens">
           <figure>
             <div className="zoom small-phone">
               <Phone tab="home">

@@ -3,7 +3,7 @@ import { space } from '@senbud/core/tokens';
 import { useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
-import { FlatList, Pressable, View } from 'react-native';
+import { Alert, FlatList, Pressable, View } from 'react-native';
 
 import { deleteTransactions, listTransactions, loadSetup, type Profile, today, type Txn } from '@/db';
 import { Card, CategoryChip, Icon, Row, T, useTheme } from '@/ui';
@@ -35,9 +35,19 @@ export default function Activity() {
     }, [load]),
   );
 
-  async function remove(id: number) {
-    await deleteTransactions(db, [id]);
-    load();
+  // Asks first: there's no Undo here, since a deleted row can't come back with its id.
+  function remove(item: Txn) {
+    Alert.alert(`Delete ${item.label}?`, 'It can’t be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          await deleteTransactions(db, [item.id]);
+          load();
+        },
+      },
+    ]);
   }
 
   return (
@@ -69,7 +79,7 @@ export default function Activity() {
               {money(item.cents / 100, profile.currency, profile.locale)}
             </T>
             <Pressable
-              onPress={() => remove(item.id)}
+              onPress={() => remove(item)}
               accessibilityRole="button"
               accessibilityLabel={`Delete ${item.label}`}
               hitSlop={14}

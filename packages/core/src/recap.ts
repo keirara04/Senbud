@@ -1,5 +1,5 @@
 // Looking back: the month-end leftover offer (design system 4.6) and Wrapped (spec 4.9).
-import { billsDue, inRange, leftover, periodRange, type Range, spentIn } from "./budget";
+import { billsOwed, inRange, leftover, periodRange, type Range, spentIn } from "./budget";
 import { addDays, addMonths, daysBetween, type IsoDate } from "./dates";
 import type { Category } from "./index";
 import type { Bill, BudgetPeriod, Transaction } from "./types";
@@ -16,7 +16,7 @@ export function closedPeriod(period: BudgetPeriod, today: IsoDate, handled: IsoD
 // What's left of a finished period: the limit minus spending and the bills that fell due in it. Bills
 // aren't logged as expenses; subscription renewals are, so those aren't taken off twice.
 export const periodLeftover = (limit: number, txns: Transaction[], bills: Bill[], range: Range) =>
-  leftover(limit, spentIn(txns, range) + billsDue(bills, range.start, range.nextStart));
+  leftover(limit, spentIn(txns, range) + billsOwed(bills, range));
 
 // A calendar month, "2026-09" -> [Sep 1, Oct 1).
 export const monthRange = (month: string): Range => {
@@ -25,14 +25,14 @@ export const monthRange = (month: string): Range => {
 };
 
 // Every number on Wrapped, from local data only. The month's budget is the monthly limit, or a weekly
-// limit scaled to the month's length. Bills count as spent, since rent is part of the budget.
+// limit scaled to the month's length. Bills owed in the month count as spent, since rent is part of the budget.
 export function wrapped(opts: { txns: Transaction[]; bills: Bill[]; limit: number; period: BudgetPeriod; month: Range; today: IsoDate }) {
   const { bills, limit, period, month, today } = opts;
   const txns = opts.txns.filter((t) => inRange(t.date, month));
   const days = daysBetween(month.start, month.nextStart);
   const budget = period.kind === "week" ? Math.round((limit * days) / 7) : limit;
   const spent = txns.reduce((s, t) => s + t.cents, 0);
-  const billCents = billsDue(bills, month.start, month.nextStart);
+  const billCents = billsOwed(bills, month);
 
   const byCategory = new Map<Category, number>();
   const places = new Map<string, { label: string; visits: number; cents: number }>();
@@ -74,3 +74,21 @@ export function wrapped(opts: { txns: Transaction[]; bills: Bill[]; limit: numbe
 }
 
 export type Wrapped = ReturnType<typeof wrapped>;
+
+// "Add again" on Home (spec 4.1 favourites): things bought at least twice, most often first, then most
+// recent. Each carries the latest price and category, so one tap logs it the way it was last logged.
+export function favourites(txns: Transaction[], max = 4) {
+  const seen = new Map<string, { label: string; cents: number; category: Category; count: number; last: IsoDate }>();
+  for (const t of txns) {
+    const key = t.label.trim().toLowerCase();
+    const f = seen.get(key);
+    if (!f) seen.set(key, { label: t.label.trim(), cents: t.cents, category: t.category, count: 1, last: t.date });
+    else if (t.date > f.last) seen.set(key, { ...f, cents: t.cents, category: t.category, count: f.count + 1, last: t.date });
+    else f.count++;
+  }
+  return [...seen.values()]
+    .filter((f) => f.count >= 2)
+    .sort((a, b) => b.count - a.count || b.last.localeCompare(a.last))
+    .slice(0, max)
+    .map(({ label, cents, category }) => ({ label, cents, category }));
+}

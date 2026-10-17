@@ -43,7 +43,7 @@ export default function Afford() {
     : result.verdict === 'yes'
       ? { title: 'Yes, go for it.', big: fmt(Math.floor(result.perDayAfter)), caption: `a day till ${lastDay}. Rent’s still covered.` }
       : result.verdict === 'tight'
-        ? { title: 'Doable, but tight.', big: fmt(Math.floor(result.perDayAfter)), caption: `a day, down from ${fmt(safe.perDay)}. Wait till the next ${unit}?` }
+        ? { title: 'Doable, but tight.', big: fmt(Math.floor(result.perDayAfter)), caption: `a day, down from ${fmt(Math.floor(Math.max(0, safe.left) / safe.daysLeft))}. Wait till the next ${unit}?` }
         : {
             title: `Not this ${unit}.`,
             big: fits,
@@ -67,7 +67,7 @@ export default function Afford() {
           keyboardType="decimal-pad"
           autoFocus
           placeholder="0"
-          placeholderTextColor={t.textDim}
+          placeholderTextColor={t.placeholder}
           accessibilityLabel="Price"
           style={{ ...type.title, fontSize: 28, color: t.text, backgroundColor: t.surface, borderRadius: 8, borderWidth: 1, borderColor: t.line, paddingHorizontal: 12, minHeight: 56 }}
         />

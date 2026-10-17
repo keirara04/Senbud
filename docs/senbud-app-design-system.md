@@ -48,7 +48,8 @@ There are three layers. Screens use only the top two, through `useTheme()` and t
 | `text` | `#1a1c2e` | `#eef0ff` | Body text |
 | `textDim` | `#565b75` | `#a8b0d8` | Secondary text, labels |
 | `line` | ink 12% | white 10% | Borders, dividers |
-| `accent` | `#1f3fd8` cobalt | `#eeff5a` highlighter | Links, selected states, tab tint |
+| `accent` / `accentPressed` / `onAccent` | cobalt / cobaltDeep / `#f4f6ff` | periwinkle `#c9d2ff` / `#b3bff5` / ink | Links, selected states, tab tint. Dark is periwinkle, so the hero number and the `highlight` button stay the only yellow (17 Oct 2026). The web's `globals.css` still uses highlighter. |
+| `placeholder` | `#878ca3` | `#666e9e` | Input placeholder, dimmer than `textDim` so it never reads as a filled-in value |
 | `primary` / `primaryPressed` / `onPrimary` | cobalt / cobaltDeep / `#f4f6ff` | periwinkle `#c9d2ff` / `#b3bff5` / ink | Primary button fill. Its own token so in dark mode the one `highlight` button stays the only yellow (decided 16 Oct 2026). |
 | `panel` / `onPanel` / `onPanelDim` | cobalt / `#f4f6ff` / `#c9d2ff` | same | The hero card. It stays cobalt in dark mode, as on the web. |
 | `highlight` / `onHighlight` | `#eeff5a` / ink | same | Key number, marker, highlight button |
@@ -169,7 +170,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 |---|---|---|---|
 | **Welcome** (first launch) | Bud and one line: "Your money buddy" | Wordmark, Bud holding a sample receipt, headline, one line, three promise pills, `primary` "Get started", "I've used Senbud before" (sheet) | Built v2 (`welcome.tsx`, `welcome-back.tsx` sheet) |
 | **Onboarding** (first run) | One question per step: the budget amount, then rent | Two steps (budget, rent) and a "You're set" receipt Bud prints; currency from the phone. Settings opens the same steps as the Budget and Rent sheets. | Built v2 (`onboarding.tsx`, steps in `src/onboarding.tsx`, sheets `edit-budget` / `edit-rent`); the five-field Setup page is gone |
-| **Home** | `panel` with `hero` safe-to-spend in highlighter | Rent card, pace card, today's nudge, pinned `CaptureBar` (see 4.2) | Built; v2 concept |
+| **Home** | `panel` with `hero` safe-to-spend in highlighter | Rent card, pace card, today's nudge, today's receipt, "Again" chips, pinned `CaptureBar` (see 4.2) | Built; v2 concept |
 | **Activity** | none; it's a list | Cards with label, `CategoryChip`, date, amount, delete. Later: filter chips, including "added by assistant". | Built |
 | **Budgets** | `panel` with what's left in highlighter and `Progress tone="panel"` | `StampLedger` by category; rent and bills list with due days; detected subscriptions | Built |
 | **Can I afford it?** | `panel`: verdict in words, key number in highlighter | Price `Field`, optional "What is it?", treat price picks, hours of work under a hairline | Built |
@@ -291,8 +292,10 @@ Today's Setup asks five things on one page: period, budget, rent, due day and cu
   3. Rent card.
   4. Pace card, with "See activity".
   5. Today's nudge (`NudgeCard`), only when there is one.
-  6. "Can I afford it?" `TextButton`.
-  7. `CaptureBar`, pinned above the tab bar. `UndoBar` floats just above it.
+  6. Today's receipt: a `ReceiptCard` headed "TODAY" with today's last 3 items as `ReceiptLine`s, "and N more" to Activity, and a dashed "Total" in plain ink (no `Marker`: the hero is Home's one highlight). Added 17 Oct 2026 to fill the empty space under the pace card on tall phones.
+  7. "Can I afford it?" `TextButton`.
+  8. "Again" chips, pinned just above the capture bar: things logged at least twice in the last 30 days (`favourites` in core), most often first, at their last price. One tap saves through the same path as a quick add, with Undo. Neutral surface chips, not category tints (Treat's tint is yellow). Hidden while the `UndoBar` shows.
+  9. `CaptureBar`, pinned above the tab bar. `UndoBar` floats just above it.
 - **Nudges (spec 5):**
   - Rent (priority 1) and pace (priority 2) nudges go *inside* the rent and pace cards, so the same sentence isn't shown twice.
   - Example: "Rent RM 450 in 4 days — RM 338 short." plus a caption and a `secondary` "Plan for rent".
@@ -310,7 +313,8 @@ Today's Setup asks five things on one page: period, budget, rent, due day and cu
   - Category chips, with last time's category pre-selected (selected chip gets a 2 pt `text` ring).
   - "What was it?" field, today's date, and "Repeat: Grab RM 12".
   - `primary` "Add RM 6.50".
-- **First day:** the empty-state line sits right above the bar: "Type what you spent below, like 'nasi lemak 6.50'. Senbud does the rest." The field shows focus.
+- **First day:** the empty-state line sits inside today's receipt: "Type what you spent below, like 'nasi lemak 6.50'. Senbud does the rest." Later days with nothing logged yet say "Nothing yet today." The field shows focus.
+- **Examples follow the currency, as a stand-in for where the user spends:** the words and prices in example text and placeholders come from one line per currency in `packages/core/src/examples.ts` ("coffee 4.50, uber 15" in dollars, "kopi 4.50, grab 12" in ringgit, "americano 4500, taxi 12000" and "kimbap 4000" in won). Quick picks and number placeholders are written at ringgit scale and scaled by `localAmount`. A test checks every example parses back into the right category.
 
 ### 4.3 Budgets
 
@@ -591,7 +595,7 @@ These are additions to `ui.tsx` for the screens above. Each takes colours from `
 ### 4.11 Open questions (need the user's call before building)
 
 1. **Friends hero in highlighter both ways?** Should the Friends hero use highlighter in both directions (4.5), instead of good/bad colour?
-2. **Treats Marker and dark `primary`:** should the Treats Marker be dropped? And should dark `primary` get its own fill? In dark mode `accent` is highlighter, so every `primary` button is yellow: Friends ("Split a bill", "Mark paid") and the assistant's "Yes, split it" show two yellow things on one screen.
+2. **Treats Marker:** should the Treats Marker be dropped? (Dark `primary` and `accent` are settled: both periwinkle, 16 and 17 Oct 2026.)
 3. **Category limits free or Pro?** Spec 4.2 says they "exist already"; spec 8 makes "multiple budgets" Pro.
 4. **Nudges inside their cards?** Should rent and pace nudges live inside their own cards on Home (4.2)?
 5. **Share image link:** does the share image get a URL or handle? The domain isn't settled (spec 11).

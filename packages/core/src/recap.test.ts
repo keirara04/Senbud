@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { closedPeriod, monthRange, periodLeftover, wrapped } from "./index";
+import { closedPeriod, favourites, monthRange, periodLeftover, wrapped } from "./index";
 import type { Bill, Transaction } from "./types";
 
 const month = { kind: "month", startDay: 1 } as const;
@@ -38,6 +38,10 @@ describe("periodLeftover", () => {
     expect(periodLeftover(140000, txns, [rent], sept)).toBe(140000 - 56200 - 65000);
   });
   it("is never negative", () => expect(periodLeftover(10000, [tx("2026-09-03", 12000)], [], sept)).toBe(0));
+  it("skips rent that fell due before the bill was added", () => {
+    expect(periodLeftover(140000, [], [{ ...rent, addedOn: "2026-09-06" }], sept)).toBe(140000);
+    expect(periodLeftover(140000, [], [{ ...rent, addedOn: "2026-09-05" }], sept)).toBe(140000 - 65000);
+  });
 });
 
 describe("wrapped", () => {
@@ -70,6 +74,10 @@ describe("wrapped", () => {
     const w = wrapped({ ...base, bills: [{ name: "Rent", cents: 10000, dueDay: 5 }], limit: 7000, period: { kind: "week", startWeekday: 1 } });
     expect(w).toMatchObject({ budget: 30000, bills: 10000, saved: 30000 - 9650 - 10000 });
   });
+  it("counts no rent from before the bill was added, like Home", () => {
+    const w = wrapped({ ...base, txns: [], bills: [{ name: "Rent", cents: 60000, dueDay: 1, addedOn: "2026-10-17" }], limit: 100000, month: monthRange("2026-10"), today: "2026-10-17" });
+    expect(w).toMatchObject({ bills: 0, used: 0 });
+  });
   it("finds the best streak of days within the daily budget", () => {
     // 300.00 over 30 days = 10.00 a day. Over on the 1st, 2nd and 12th, so Sep 3–11 (9) and Sep 13–30 (18).
     expect(wrapped(base).streak).toBe(18);
@@ -78,5 +86,16 @@ describe("wrapped", () => {
     const oct = monthRange("2026-10");
     const w = wrapped({ ...base, txns: [], month: oct, today: "2026-10-05" });
     expect(w).toMatchObject({ streak: 5, days: 5, spent: 0, categories: [], topPlace: null, used: 0 });
+  });
+});
+
+describe("favourites", () => {
+  const t = (label: string, cents: number, date: string) => ({ label, cents, date, category: "Food" as const, source: "text" as const });
+  it("keeps repeats only, most often first, with the latest price", () => {
+    const txns = [t("Kopi", 450, "2026-10-01"), t("kopi ", 500, "2026-10-03"), t("Kopi", 450, "2026-10-02"), t("Grab", 1200, "2026-10-02"), t("Grab", 1100, "2026-10-04"), t("Cinema", 1800, "2026-10-05")];
+    expect(favourites(txns)).toEqual([
+      { label: "Kopi", cents: 500, category: "Food" },
+      { label: "Grab", cents: 1100, category: "Food" },
+    ]);
   });
 });

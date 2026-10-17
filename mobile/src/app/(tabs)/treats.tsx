@@ -5,7 +5,7 @@ import { space } from '@senbud/core/tokens';
 import { router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 
 import { TreatJar } from '@/art';
 import { addToJar, addTreat, deleteTreat, type Jar, jarHistory, listTransactions, listTreats, loadJar, setJarGoal, today, type TreatRow } from '@/db';
@@ -158,10 +158,19 @@ export default function Treats() {
                   {fmt(tr.lastCents)}
                 </T>
                 <Pressable
-                  onPress={async () => {
-                    await deleteTreat(db, tr.id);
-                    load();
-                  }}
+                  onPress={() =>
+                    Alert.alert(`Remove ${tr.name}?`, 'It can’t be undone.', [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Remove',
+                        style: 'destructive',
+                        onPress: async () => {
+                          await deleteTreat(db, tr.id);
+                          load();
+                        },
+                      },
+                    ])
+                  }
                   accessibilityRole="button"
                   accessibilityLabel={`Remove ${tr.name}`}
                   hitSlop={14}

@@ -44,20 +44,25 @@ export default function ProScreen() {
   const [state, setState] = useState<State>({ kind: 'loading' });
   const [locale, setLocale] = useState('en-US');
 
-  const load = useCallback(async () => {
-    setState({ kind: 'loading' });
-    if (!purchasesReady()) return setState({ kind: 'error', message: 'Senbud Pro isn’t available in this build yet.' });
-    try {
-      const packages = (await Purchases.getOfferings()).current?.availablePackages.filter((p) => PERIOD[p.packageType]) ?? [];
-      if (!packages.length) return setState({ kind: 'error', message: 'Senbud Pro isn’t on sale right now. Try again later.' });
-      // Yearly first and preselected.
-      const annual = (p: PurchasesPackage) => (p.packageType === PACKAGE_TYPE.ANNUAL ? 0 : 1);
-      packages.sort((a, b) => annual(a) - annual(b));
-      setState({ kind: 'ready', packages, selected: packages[0].identifier, busy: false });
-    } catch {
-      setState({ kind: 'error', message: 'Couldn’t load Senbud Pro. Check your connection and try again.' });
-    }
-  }, []);
+  // Every setState sits in a then/catch, so the mount effect can call this (state starts as loading).
+  const load = useCallback(
+    () =>
+      (purchasesReady() ? Purchases.getOfferings() : Promise.reject(new Error('unavailable'))).then(
+        (offerings): State => {
+          const packages = offerings.current?.availablePackages.filter((p) => PERIOD[p.packageType]) ?? [];
+          if (!packages.length) return { kind: 'error', message: 'Senbud Pro isn’t on sale right now. Try again later.' };
+          // Yearly first and preselected.
+          const annual = (p: PurchasesPackage) => (p.packageType === PACKAGE_TYPE.ANNUAL ? 0 : 1);
+          packages.sort((a, b) => annual(a) - annual(b));
+          return { kind: 'ready', packages, selected: packages[0].identifier, busy: false };
+        },
+        (e: Error): State => ({
+          kind: 'error',
+          message: e.message === 'unavailable' ? 'Senbud Pro isn’t available in this build yet.' : 'Couldn’t load Senbud Pro. Check your connection and try again.',
+        }),
+      ).then(setState),
+    [],
+  );
 
   useEffect(() => {
     loadSetup(db).then((s) => s && setLocale(s.profile.locale));
@@ -78,6 +83,7 @@ export default function ProScreen() {
   }
 
   async function restore() {
+    if (!purchasesReady()) return busy(false, 'Senbud Pro isn’t available in this build yet.');
     busy(true);
     try {
       await unlockedOrNote(hasPro(await Purchases.restorePurchases()), 'No Senbud Pro purchase found on this Apple or Google account.');
@@ -99,7 +105,13 @@ export default function ProScreen() {
         <View style={{ height: insets.top }} />
         <T variant="title">Senbud Pro</T>
         <T tone="textDim">{state.message}</T>
-        <Button title="Try again" onPress={load} />
+        <Button
+          title="Try again"
+          onPress={() => {
+            setState({ kind: 'loading' });
+            return load();
+          }}
+        />
         <TextButton title="Restore purchases" onPress={restore} />
         <TextButton title="Not now" tone="textDim" onPress={close} />
       </Screen>

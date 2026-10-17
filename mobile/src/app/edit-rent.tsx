@@ -39,7 +39,7 @@ export default function EditRent() {
         profile={setup.profile}
         nextTitle="Save"
         onNext={async () => {
-          await saveSetup(db, { ...setup, rent: hasRent ? { name: 'Rent', cents: toCents(rent), dueDay } : null });
+          await saveSetup(db, { ...setup, rent: hasRent ? { name: 'Rent', cents: toCents(rent), dueDay, addedOn: setup.rent?.addedOn } : null });
           router.back();
         }}
       />

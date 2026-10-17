@@ -4,8 +4,9 @@
 // an IOU older than 7 days, an under-budget streak, then a treat when all is well. Month-end leftover has
 // its own sheet and overall pace has Home's progress card, so neither is a note.
 import { addDays, daysBetween, type IsoDate } from "./dates";
-import { aheadOfPace, billCountdown, budgetStatus, periodRange, type Range, spentIn, type Status, treatNudge } from "./budget";
+import { aheadOfPace, billCountdown, billsOwed, budgetStatus, periodRange, type Range, spentIn, type Status, treatNudge } from "./budget";
 import { staleIous } from "./iou";
+import { nextRenewal } from "./subscriptions";
 import type { Category } from "./index";
 import type { Bill, BudgetPeriod, Iou, Subscription, Transaction, Treat } from "./types";
 
@@ -64,7 +65,7 @@ export function nudges(opts: NudgeInput): Nudge[] {
       if (limit > 0 && (status !== "ok" || aheadOfPace(spent, limit, range, today))) out.push({ kind: "category", category, spent, limit, status });
     }
   }
-  const renewal = subscriptions.find((s) => s.confirmed && s.nextDate === addDays(today, 1));
+  const renewal = subscriptions.find((s) => s.confirmed && nextRenewal(s, today) === addDays(today, 1));
   if (renewal) out.push({ kind: "renewal", subscription: renewal });
   if (spotted[0]) out.push({ kind: "spotted", subscription: spotted[0] });
   const iou = staleIous(ious, today).find((i) => i.direction === "theyOweMe");
@@ -83,13 +84,14 @@ export function pickNudge(opts: NudgeInput): Nudge | null {
 
 // Full days before today, back to the start of this period, each spent within an even daily share of
 // the budget. Today doesn't count yet: it isn't over. Nor do days before the first thing logged this
-// period: an empty week before someone started using Senbud isn't a streak.
-export function underBudgetStreak(txns: Transaction[], limit: number, period: BudgetPeriod, today: IsoDate): number {
+// period: an empty week before someone started using Senbud isn't a streak. Bills owed this period come
+// off the budget first, the same daily share Wrapped uses.
+export function underBudgetStreak(txns: Transaction[], limit: number, period: BudgetPeriod, today: IsoDate, bills: Bill[] = []): number {
   const range = periodRange(period, today);
   const logged = txns.filter((t) => t.date >= range.start).map((t) => t.date).sort()[0];
   if (!logged) return 0;
   const from = logged > range.start ? logged : range.start;
-  const share = limit / daysBetween(range.start, range.nextStart);
+  const share = Math.max(0, limit - billsOwed(bills, range)) / daysBetween(range.start, range.nextStart);
   let days = 0;
   for (let d = addDays(today, -1); d >= from; d = addDays(d, -1)) {
     const spent = txns.filter((t) => t.date === d).reduce((s, t) => s + t.cents, 0);

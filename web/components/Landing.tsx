@@ -62,7 +62,7 @@ export function Hero() {
                 </div>
                 <div className="card">
                   <span>
-                    Rent <span className="money">$650</span> in 12 days — you’re covered.
+                    Rent <span className="money">$650</span> in 12 days. You’re covered.
                   </span>
                 </div>
                 <div className="card">

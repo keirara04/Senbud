@@ -12,10 +12,11 @@ import Animated, { FadeIn, useAnimatedStyle, useReducedMotion, useSharedValue, w
 import { Bud, type BudFace, ReceiptCard } from '@/art';
 import { askBud, type AskSummary, type BudAction, COOLDOWN, type Turn, WEB } from '@/api';
 import { askAiConsent } from '@/consent';
+import { drinkExample, quickAddExample, typed } from '@/currencies';
 import { type AppState, addTransactions, deleteTransactions, listTransactions, loadApp } from '@/db';
 import { useMoney } from '@/money';
 import { NoteCard, useBudNotes } from '@/notes';
-import { Button, CATEGORIES, Icon, Marker, T, TextButton, useTheme } from '@/ui';
+import { Button, CATEGORIES, Icon, Marker, noWebOutline, ReceiptLine, T, TextButton, useTheme } from '@/ui';
 
 const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
 
@@ -65,7 +66,7 @@ export default function Assistant() {
   const add = (...more: Msg[]) => setMsgs((cur) => [...cur, ...more]);
   const replace = (id: number, slip: Slip) => setMsgs((cur) => cur.map((x) => (x.id === id ? { id, slip } : x)));
 
-  function affordSlip(cents: number, label: string): Slip {
+  function affordSlip(id: number, cents: number, label: string): Slip {
     const periodDays = daysBetween(safe.start, safe.nextStart);
     const r = afford(cents, { left: safe.left, daysLeft: safe.daysLeft, weeklyBudget: (setup.budget.cents / periodDays) * 7 });
     const lastDay = new Date(`${addDays(safe.nextStart, -1)}T12:00:00Z`).toLocaleDateString(setup.profile.locale, { day: 'numeric', month: 'short', timeZone: 'UTC' });
@@ -89,6 +90,8 @@ export default function Assistant() {
             onPress={async () => {
               await addTransactions(db, [{ date: day, cents, label: label || 'Purchase', category: 'Other', source: 'text' }]);
               reload();
+              // Once only: drop the button so more taps can't add it again.
+              setMsgs((cur) => cur.map((x) => (x.id === id && 'slip' in x ? { id, slip: { ...x.slip, actions: undefined } } : x)));
               add({ id: newId(), slip: { face: 'happy', title: 'Added', lines: [[label || 'Purchase', fmt(cents)]] } });
             }}
           />
@@ -117,7 +120,7 @@ export default function Assistant() {
     const top = CATEGORIES.map((c) => [c, spentIn(txns.filter((x) => x.category === c), safe)] as const).sort((a, b) => b[1] - a[1])[0];
     const chips: Starter[] = [];
     if (soon) chips.push({ title: 'Next bill?', hint: `${soon.b.name} is due soon`, text: 'When’s the next bill?', send: true });
-    if (safe.perDay * periodDays < setup.budget.cents / 2) chips.push({ title: 'Can I afford 20?', hint: 'Today’s a tight one', text: 'Can I afford 20?', send: true });
+    if (safe.perDay * periodDays < setup.budget.cents / 2) chips.push({ title: `Can I afford ${typed(20, setup.profile.currency)}?`, hint: 'Today’s a tight one', text: `Can I afford ${typed(20, setup.profile.currency)}?`, send: true });
     if (top && top[1] > 0) chips.push({ title: `How much on ${top[0].toLowerCase()}?`, hint: `This ${unit} so far`, text: `How much on ${top[0].toLowerCase()}?`, send: true });
     // Two state chips at most, so "How's my month?" always has a place.
     chips.splice(2);
@@ -125,7 +128,7 @@ export default function Assistant() {
       { title: 'Can I afford…', hint: 'Check a price before you pay', text: 'Can I afford ', send: false },
       { title: `How’s my ${unit}?`, hint: 'Where it went, what’s left', text: `How’s my ${unit}?`, send: true },
       { title: 'Split a bill', hint: 'Who owes you what', text: 'Split ', send: false },
-      { title: 'Add a few things', hint: '“kopi 4.50, grab 12”', text: '', send: false },
+      { title: 'Add a few things', hint: `“${quickAddExample(setup.profile.currency)}”`, text: '', send: false },
     );
     return chips.filter((c, i) => chips.findIndex((x) => x.title === c.title) === i).slice(0, 4);
   }
@@ -210,12 +213,12 @@ export default function Assistant() {
     const line = raw.trim();
     if (!line) return;
     setText('');
-    const intent = readIntent(line);
+    const intent = readIntent(line, m?.setup.profile.currency);
     const id = newId();
     add({ id: newId(), me: line }, { id, slip: { face: 'thinking', title: 'Bud', printing: true } });
 
     if (intent.kind === 'afford')
-      return replace(id, intent.amount ? affordSlip(Math.round(intent.amount * 100), intent.label) : { face: 'thinking', title: 'Can I afford it?', note: 'Tell me the price, like “can I afford 45”.' });
+      return replace(id, intent.amount ? affordSlip(id, Math.round(intent.amount * 100), intent.label) : { face: 'thinking', title: 'Can I afford it?', note: 'Tell me the price, like “can I afford 45”.' });
     if (intent.kind === 'month') return replace(id, monthSlip());
     if (intent.kind === 'spentOn') return replace(id, spentOnSlip(intent.query));
     if (intent.kind === 'biggest') return replace(id, biggestSlip());
@@ -299,7 +302,7 @@ export default function Assistant() {
       return replace(id, {
         face: 'oops',
         title: 'AI is off',
-        note: 'AI is off, so I can’t answer questions. Quick adds still work, like “kopi 4.50”.',
+        note: `AI is off, so I can’t answer questions. Quick adds still work, like “${drinkExample(m?.setup.profile.currency)}”.`,
         actions: <Button title="Turn on AI in Settings" variant="secondary" onPress={() => router.navigate('/settings')} />,
       });
     // On the web there's no Pro to buy yet: a few free questions a day instead (the API counts them).
@@ -410,14 +413,14 @@ export default function Assistant() {
           value={text}
           onChangeText={setText}
           onSubmitEditing={(e) => send(e.nativeEvent.text)}
-          placeholder={app.aiEnabled ? 'Ask or add…' : 'kopi 4.50, grab 12'}
-          placeholderTextColor={t.textDim}
+          placeholder={app.aiEnabled ? 'Ask or add…' : quickAddExample(m?.setup.profile.currency)}
+          placeholderTextColor={t.placeholder}
           returnKeyType="send"
           accessibilityLabel="Ask or add"
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           // Its own border shows focus instead of the browser's square outline.
-          style={{ flex: 1, minHeight: touch.min, fontSize: 17, color: t.text, backgroundColor: t.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: focused ? t.accent : t.line, paddingHorizontal: space.md, outlineWidth: 0 }}
+          style={[{ flex: 1, minHeight: touch.min, fontSize: 17, color: t.text, backgroundColor: t.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: focused ? t.accent : t.line, paddingHorizontal: space.md }, noWebOutline]}
         />
         <Pressable
           onPress={() => send(text)}
@@ -447,15 +450,7 @@ function SlipView({ slip }: { slip: Slip }) {
           </T>
           {slip.printing && <PrintingLines />}
           {slip.lines?.map(([label, value], i) => (
-            <View key={i} style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.xs }}>
-              <T style={[ink, { flexShrink: 1 }]}>{label}</T>
-              <T numberOfLines={1} style={[dim, { flex: 1, opacity: 0.5 }]}>
-                {'. '.repeat(40)}
-              </T>
-              <T money style={ink}>
-                {value}
-              </T>
-            </View>
+            <ReceiptLine key={i} label={label} value={value} />
           ))}
           {slip.total && (
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderStyle: 'dashed', borderColor: palette.inkDim, paddingTop: space.xs }}>

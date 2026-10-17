@@ -170,6 +170,8 @@
     .say-slip { width: 160px; font-size: 13px; }
     .zoom.hero-phone { zoom: 0.74; }
   }
+  /* 395px phone x 0.74 overflows the 280px column at 320px wide. */
+  @media (max-width: 359px) { .zoom.hero-phone { zoom: 0.7; } }
 
   /* ---------- section intros ---------- */
   .sec-intro { max-width: 720px; display: grid; gap: 16px; margin-bottom: 48px; }
@@ -204,6 +206,7 @@
     .phones-row { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 280px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 12px; }
     .phones-row figure { scroll-snap-align: start; }
   }
+  .phones-row:focus-visible { border-radius: 16px; }
 
   /* ---------- Bud and Friends ---------- */
   .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 64px; align-items: center; }

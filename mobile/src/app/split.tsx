@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 
 import { ReceiptCard } from '@/art';
+import { dinnerExample, typed } from '@/currencies';
 import { addIous, addTransactions, listIous, loadSetup, type Profile, today } from '@/db';
 import { usePro } from '@/purchases';
 import { Button, Card, Field, Icon, ProLock, Row, Screen, T, TextButton, useTheme } from '@/ui';
@@ -96,8 +97,8 @@ export default function Split() {
           </Card>
         ) : (
           <>
-            <Field label="How much was the bill?" value={amount} onChangeText={(v) => setAmount(v.replace(/[^\d.]/g, ""))} keyboardType="decimal-pad" placeholder="45" autoFocus />
-            <Field label="What was it?" value={note} onChangeText={setNote} placeholder="Dinner at Ali Maju" />
+            <Field label="How much was the bill?" value={amount} onChangeText={(v) => setAmount(v.replace(/[^\d.,]/g, ""))} keyboardType="decimal-pad" placeholder={typed(45, profile.currency)} autoFocus />
+            <Field label="What was it?" value={note} onChangeText={setNote} placeholder={dinnerExample(profile.currency)} />
           </>
         )}
 
@@ -118,7 +119,7 @@ export default function Split() {
             onChangeText={setNewName}
             onSubmitEditing={(e) => addPerson(e.nativeEvent.text)}
             placeholder="Add a name"
-            placeholderTextColor={t.textDim}
+            placeholderTextColor={t.placeholder}
             returnKeyType="done"
             autoCorrect={false}
             spellCheck={false}

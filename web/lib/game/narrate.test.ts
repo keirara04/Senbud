@@ -8,6 +8,7 @@ describe("narrate", () => {
     expect(narrate({ kind: "pay", monster: "grabGolem", amount: 8 })).toBe("You paid $8 to the Grab Golem.");
     expect(narrate({ kind: "roll", d20: 14, total: 16, dc: 12, success: true })).toContain("resisted!");
     expect(narrate({ kind: "warded", monster: "lateFeeLich" })).toContain("Ward of Budget");
+    expect(narrate({ kind: "wardUnused" })).toContain("refunded");
     expect(narrate({ kind: "cancelled", monster: "subscriptionSlime" })).toContain("cancelled");
     expect(narrate({ kind: "morale", delta: -1 })).toBe("Morale -1.");
     expect(narrate({ kind: "end", ending: "budgetPaladin" })).toContain("Budget Paladin");

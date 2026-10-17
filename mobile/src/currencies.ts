@@ -1,3 +1,8 @@
+import { useSQLiteContext } from 'expo-sqlite';
+import { useEffect, useState } from 'react';
+
+import { loadProfile } from '@/db';
+
 // Currencies Senbud offers in its picker (Settings → Currency, onboarding).
 // ponytail: a fixed list, Southeast Asia first. Add codes here when someone asks for one.
 export const CURRENCIES: [string, string][] = [
@@ -29,6 +34,16 @@ export const CURRENCIES: [string, string][] = [
 
 export const currencyName = (code: string) => CURRENCIES.find(([c]) => c === code)?.[1] ?? code;
 
-// Quick-pick amounts are student-sized in these; elsewhere the scale differs (IDR, KRW…), so no chips.
-// ponytail: a plain allow-list, a per-currency scale table if the chips matter there.
-export const SMALL_UNIT = new Set(['MYR', 'SGD', 'BND', 'USD', 'GBP', 'EUR', 'AUD', 'NZD', 'CAD', 'CHF', 'AED', 'SAR']);
+// Example amounts and words (quick picks, placeholders, "coffee 4.50") live in core, next to the
+// category rules they must agree with.
+export { dinnerExample, drinkExample, localAmount, mealExample, quickAddExample, treatExample, typed } from '@senbud/core';
+
+// The profile's currency for screens that only need it for examples. undefined until it loads.
+export function useCurrency() {
+  const db = useSQLiteContext();
+  const [code, setCode] = useState<string>();
+  useEffect(() => {
+    loadProfile(db).then((p) => setCode(p?.currency));
+  }, [db]);
+  return code;
+}
