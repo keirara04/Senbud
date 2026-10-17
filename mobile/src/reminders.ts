@@ -1,12 +1,12 @@
-// Local reminders: rent and bills, renewals (Pro) and "your budget resets tomorrow". Core works out the
+// Local reminders: rent and bills, renewals (Pro), "your budget resets tomorrow" and tonight's pace warning. Core works out the
 // schedule; this file hands it to the phone. No server and no push token, so nothing leaves the device.
-import { money, reminderSchedule, type ReminderKind } from '@senbud/core';
+import { money, periodRange, reminderSchedule, type ReminderKind, safeToSpend } from '@senbud/core';
 import * as Notifications from 'expo-notifications';
 import { AndroidImportance } from 'expo-notifications';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { Platform } from 'react-native';
 
-import { listBills, listSubscriptions, loadApp, loadSetup, today } from '@/db';
+import { listBills, listSubscriptions, listTransactions, loadApp, loadCarry, loadSetup, today } from '@/db';
 
 // Web has no scheduled notifications.
 const SUPPORTED = Platform.OS !== 'web';
@@ -34,9 +34,14 @@ export async function syncReminders(db: SQLiteDatabase) {
   const [setup, app] = await Promise.all([loadSetup(db), loadApp(db)]);
   const kinds = app.reminders.filter((k): k is ReminderKind => k !== 'renewals' || app.pro);
   if (!setup || !kinds.length || !(await Notifications.getPermissionsAsync()).granted) return;
-  const [bills, subscriptions] = await Promise.all([listBills(db), listSubscriptions(db)]);
+  const day = today();
+  const { start } = periodRange(setup.budget.period, day);
+  const [bills, subscriptions, txns, carry] = await Promise.all([listBills(db), listSubscriptions(db), listTransactions(db, start), loadCarry(db, start)]);
   const { currency, locale } = setup.profile;
-  const list = reminderSchedule({ kinds, bills, subscriptions, period: setup.budget.period, today: today(), fmt: (c) => money(c / 100, currency, locale) });
+  // The same numbers as Home (useMoney): this period's spending against the budget plus carry-over.
+  const limit = setup.budget.cents + carry;
+  const { spent } = safeToSpend({ limit, period: setup.budget.period, transactions: txns, bills, subscriptions, today: day });
+  const list = reminderSchedule({ kinds, bills, subscriptions, period: setup.budget.period, today: day, fmt: (c) => money(c / 100, currency, locale), pace: { spent, limit } });
   const now = Date.now();
   for (const r of list) {
     // Local wall-clock time: new Date('YYYY-MM-DD') would be UTC midnight, the evening before in UTC+8.

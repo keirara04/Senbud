@@ -23,12 +23,12 @@ Ask each one when its item comes up, not before.
 | Decision | Blocks |
 |---|---|
 | What "multiple budgets" means | Decided 17 Oct 2026: per-category periods |
-| Category limits free or Pro (design 4.11 question 3) | Nothing built changes; only the paywall copy |
-| Are by-item splits and full Wrapped still Pro (design 4.11 question 6) | 4.4 Year-end Wrapped scope |
+| Category limits free or Pro (design 4.11 question 3) | Decided 18 Oct 2026: free. A limit with its own week or month stays Pro |
+| Are by-item splits and full Wrapped still Pro (design 4.11 question 6) | Decided 18 Oct 2026: full Wrapped stays Pro. By-item splits not answered yet (Pro today) |
 | AI through your server or users' own keys (spec 11) | Decided 17 Oct 2026: your server |
-| Is the name "Senbud" free (spec 11) | Store listings, domain |
+| Is the name "Senbud" free (spec 11) | Decided 18 Oct 2026: store name "Senbud - Budget Tracker". A web search found no other app called Senbud; a trademark search is still to do |
 
-## 3. Phase 1: Reminders (built 17 October 2026, except the pace warning)
+## 3. Phase 1: Reminders (built 17 October 2026, pace warning 18 October)
 
 **Why first:** the paywall sells "subscription reminders", and rent due, renewals and the pace warning only show inside the app today. A reminder app that can't remind is the biggest gap.
 
@@ -43,7 +43,7 @@ Ask each one when its item comes up, not before.
 - **Built:** `packages/core/src/reminders.ts` (`reminderSchedule`, tested), `mobile/src/reminders.ts` (`allowReminders`, `syncReminders`: cancel all, then schedule up to 48 for the next two months, under iOS's limit of 64), migration 10 (`app.reminders`, not in backups since permission belongs to the phone), the Settings group, and the `expo-notifications` plugin with remote notifications off. `syncReminders` runs on every `useMoney` reload, after each switch and after Erase.
 - **Still to do:**
   - **Check on a phone.** It needs a new development build (`npx expo run:ios` / `run:android` or `eas build --profile development`), because `expo-notifications` is native. Turn a switch on, set rent due tomorrow, and see the 7 pm notice.
-  - **Pace warning.** It can't be scheduled ahead (tomorrow's spending isn't known). Smallest honest version: when a sync finds `aheadOfPace` true today and none was sent today, schedule one for this evening and store the date. Size S.
+  - **Pace warning (built 18 October 2026).** A "Spending ahead of pace" switch. `reminderSchedule` takes this period's spending and budget and, when spending runs ahead of pace, schedules one notice for 6 pm today ("SGD 70 of SGD 100 gone and it's only Wednesday", or "SGD 8 left. Cook tonight?"). Quiet when on pace (even close to the limit at the end of a period) or already over. No stored date: spending only changes in the app, every change reschedules, and a past 6 pm is skipped, so it's at most one a day and right as of the last add. Tested in core; not checked on a phone.
 
 ## 4. Phase 2 onwards
 

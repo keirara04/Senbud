@@ -38,6 +38,18 @@ describe("reminderSchedule", () => {
     ]);
   });
 
+  it("warns about pace tonight only: ahead or close, never on track or over", () => {
+    const pace = (spent: number) => run({ kinds: ["pace"], pace: { spent, limit: 100_00 } }).map((x) => [x.date, x.hour, x.title]);
+    // 17 Oct is day 17 of 31: on pace is about $54.84 by tonight.
+    expect(pace(70_00)).toEqual([["2026-10-17", 18, "$70 of $100 gone and it's only Saturday"]]);
+    expect(pace(92_00)).toEqual([["2026-10-17", 18, "$8 left. Cook tonight?"]]);
+    expect(pace(40_00)).toEqual([]);
+    expect(pace(120_00)).toEqual([]);
+    expect(run({ kinds: ["bills"], pace: { spent: 70_00, limit: 100_00 } })).toEqual([]);
+    // $92 on 30 Oct is close but on pace: no nightly "cook tonight" at the end of the month.
+    expect(run({ kinds: ["pace"], pace: { spent: 92_00, limit: 100_00 }, today: "2026-10-30" })).toEqual([]);
+  });
+
   it("says the budget resets the evening before each new period", () => {
     expect(run({ kinds: ["reset"] }).map((x) => x.date)).toEqual(["2026-10-31", "2026-11-30"]);
     // 17 Oct 2026 is a Saturday; weeks start Monday.

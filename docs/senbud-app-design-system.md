@@ -612,10 +612,10 @@ These are additions to `ui.tsx` for the screens above. Each takes colours from `
 
 1. **Friends hero in highlighter both ways?** Should the Friends hero use highlighter in both directions (4.5), instead of good/bad colour?
 2. **Treats Marker:** should the Treats Marker be dropped? (Dark `primary` and `accent` are settled: both periwinkle, 16 and 17 Oct 2026.)
-3. **Category limits free or Pro?** Spec 4.2 says they "exist already"; spec 8 makes "multiple budgets" Pro.
+3. **Category limits free or Pro?** Decided 18 Oct 2026: free. Only a limit with its own week or month is Pro.
 4. **Nudges inside their cards?** Should rent and pace nudges live inside their own cards on Home (4.2)?
 5. **Share image link:** does the share image get a URL or handle? The domain isn't settled (spec 11).
-6. **Are by-item splits and full Wrapped still Pro?** Spec 8 says yes, and the concepts lock them. The paywall the user chose lists only receipts, the unlimited assistant and subscription reminders.
+6. **Are by-item splits and full Wrapped still Pro?** Full Wrapped: yes, decided 18 Oct 2026. By-item splits: still open (Pro today). The paywall lists only receipts, the unlimited assistant and subscription reminders.
 
 ## 5. Voice
 
