@@ -15,7 +15,7 @@ use Illuminate\Support\Str;
 class EventController extends Controller
 {
     // Must match EventName in mobile/src/db.ts. AI use is recorded by the API itself (OpenRouter::record).
-    public const APP_EVENTS = ['app_open', 'screen', 'setup_done', 'txn_added', 'limit_set', 'treat_added'];
+    public const APP_EVENTS = ['app_open', 'screen', 'setup_done', 'txn_added', 'limit_set', 'treat_added', 'pro_bought'];
 
     public const SITE_EVENTS = ['page_view'];
 

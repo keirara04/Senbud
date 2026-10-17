@@ -54,12 +54,24 @@
   .bars i { display: block; width: 100%; background: var(--bar); border-radius: 4px 4px 0 0; }
   .bars span:hover i { opacity: 0.7; }
   .axis { display: flex; justify-content: space-between; }
+  .nav { display: flex; align-items: baseline; gap: 24px; flex-wrap: wrap; }
+  .nav a:not(:first-child) { font-weight: 600; text-decoration: none; }
+  .danger { background: transparent; color: var(--bad); border: 2px solid var(--bad); }
+  .link { min-height: 0; padding: 12px 0; background: none; color: var(--bad); font-weight: 600; text-decoration: underline; }
+  .heat { text-align: center; border-radius: 4px; }
+  td.heat { padding: 8px 4px; }
+  .muted { color: var(--dim); }
+  .card input { background: var(--sunken); }
+  td.rank, th.rank { text-align: right; padding-right: 12px; font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
 <main>
   <header>
-    <h1><a href="{{ route('admin') }}" style="color: inherit; text-decoration: none">Senbud admin</a></h1>
+    <nav class="nav">
+      <h1><a href="{{ route('admin') }}" style="color: inherit; text-decoration: none">Senbud admin</a></h1>
+      <a href="{{ route('admin.waitlist') }}">Waitlist</a>
+    </nav>
     <form action="{{ route('admin.device') }}" method="get" role="search">
       <input name="id" placeholder="Paste a Support ID" aria-label="Support ID" autocomplete="off" value="{{ $id ?? '' }}">
       <button type="submit">Look up</button>

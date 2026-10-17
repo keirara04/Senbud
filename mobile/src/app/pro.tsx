@@ -14,7 +14,7 @@ import Animated, { FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValu
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PRINT_MS, PrintingBud } from '@/art';
-import { loadSetup, setPro } from '@/db';
+import { loadSetup, setPro, track } from '@/db';
 import { hasPro, PRIVACY, purchasesReady, TERMS } from '@/purchases';
 import { Button, Icon, type IconName, Row, Screen, T, TextButton, useTheme } from '@/ui';
 
@@ -132,6 +132,7 @@ export default function ProScreen() {
     busy(true);
     try {
       const { customerInfo } = await Purchases.purchasePackage(pkg);
+      if (hasPro(customerInfo)) track(db, 'pro_bought', { plan: pkg.packageType });
       await unlockedOrNote(hasPro(customerInfo), 'The purchase went through but didn’t unlock Pro. Try Restore purchases.');
     } catch (e) {
       // Closing the store sheet is a choice, not an error.

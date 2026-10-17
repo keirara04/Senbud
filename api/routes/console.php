@@ -9,8 +9,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Artisan::command('waitlist:order', function () {
-    $rows = WaitlistSignup::whereNotNull('confirmed_at')
-        ->orderByDesc('referrals_count')->orderBy('confirmed_at')->orderBy('id')
+    $rows = WaitlistSignup::whereNotNull('confirmed_at')->inviteOrder()
         ->get(['email', 'referral_code', 'referrals_count', 'confirmed_at']);
 
     $this->table(
