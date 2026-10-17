@@ -199,6 +199,7 @@ describe("readIntent", () => {
     expect(readIntent("lunch with sarah last week 20").kind).toBe("add");
     expect(readIntent("business lunch 25").kind).toBe("add");
     expect(readIntent("spent on lunch 12").kind).toBe("add");
+    expect(readIntent("Can you log the 12 I just spent on lunch?").kind).toBe("ask");
   });
   it("reads a budget said in words (spec 4.2)", async () => {
     const { readIntent } = await import("./index");

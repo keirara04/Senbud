@@ -31,7 +31,7 @@
 {"id": "en-bills-1", "q": "Will I have enough for rent?", "expect": {"on_topic": true}}
 {"id": "en-bills-2", "q": "My phone plan is 30 every month on the 20th. Track it for me", "expect": {"on_topic": true, "actions": ["add_bill"], "wants_action": true}}
 {"id": "ms-bills-1", "q": "sewa aku cukup tak bulan ni", "expect": {"on_topic": true, "lang": "ms"}}
-{"id": "ms-bills-2", "q": "tolong ingatkan bil unifi 99 setiap bulan", "expect": {"on_topic": true, "actions": ["add_bill"], "wants_action": true}}
+{"id": "ms-bills-2", "q": "tolong ingatkan bil unifi 99 setiap bulan", "expect": {"on_topic": true, "actions": ["add_bill", "turn_on_reminder"], "wants_action": true}}
 {"id": "en-limit-1", "q": "I need to stop overspending on treats. Can you set something up?", "expect": {"on_topic": true, "actions": ["set_limit", "open_budgets", "open_jar"], "wants_action": true}}
 {"id": "en-limit-2", "q": "Put a 300 limit on food", "expect": {"on_topic": true, "actions": ["set_limit"], "wants_action": true}}
 {"id": "ms-limit-1", "q": "letak had makan 250 sebulan", "expect": {"on_topic": true, "actions": ["set_limit"], "wants_action": true}}
@@ -75,6 +75,15 @@
 {"id": "edge-empty-1", "q": "How am I doing?", "expenses": [], "summary": {"spent": 0, "left": 1000, "safe_today": 83.33, "by_category": {}}, "expect": {"on_topic": true}}
 {"id": "edge-until-1", "q": "When does my budget reset?", "summary": {"period": "until", "days_left": 5}, "expect": {"on_topic": true}}
 {"id": "edge-week-1", "q": "Can I still eat out this week?", "summary": {"period": "week", "days_left": 3, "budget": 150, "spent": 120, "left": 30, "safe_today": 10, "by_category": {"Food": 90, "Treat": 30}}, "expect": {"on_topic": true}}
-{"id": "edge-over-1", "q": "I'm over budget again, I'm so bad with money", "expect": {"on_topic": true, "must_not": "/\\b(you are|you're|kau|awak) (irresponsible|careless|bad with money|your fault)\\b|\\byour fault\\b/i"}}
+{"id": "edge-over-1", "q": "I'm over budget again, I'm so bad with money", "expect": {"on_topic": true, "must_not": "/\\byour fault\\b|\\birresponsible\\b|\\bcareless\\b/i"}}
 {"id": "edge-norent-1", "q": "Do I need to save for rent?", "summary": {"rent": null}, "expect": {"on_topic": true}}
 {"id": "edge-sgd-1", "q": "Where does it all go?", "expect": {"on_topic": true}, "currency": "SGD"}
+{"id": "act-expense-1", "q": "Can you log the 12 I just spent on lunch?", "expect": {"on_topic": true, "actions": ["add_expense"], "wants_action": true}}
+{"id": "act-expense-ms", "q": "tolong masukkan aku dah belanja 8 untuk roti canai tadi", "expect": {"on_topic": true, "actions": ["add_expense"], "wants_action": true, "lang": "ms"}}
+{"id": "act-budget-1", "q": "I think 800 a month suits me better, can you change it?", "expect": {"on_topic": true, "actions": ["set_budget", "open_budgets"], "wants_action": true}}
+{"id": "act-split-1", "q": "We had dinner for 90, four of us. Help me split it?", "expect": {"on_topic": true, "actions": ["start_split"], "wants_action": true}}
+{"id": "act-jar-1", "q": "I got 50 extra from tutoring. Can you put it aside for treats?", "expect": {"on_topic": true, "actions": ["jar_add", "open_jar", "set_limit"], "wants_action": true}}
+{"id": "act-reminder-1", "q": "I keep forgetting my bills. Can you remind me?", "expect": {"on_topic": true, "actions": ["turn_on_reminder", "add_bill", "open_budgets"], "wants_action": true}}
+{"id": "act-friends-1", "q": "Aiman owes me 30 from last week, how do I keep track?", "expect": {"on_topic": true, "actions": ["open_friends"], "wants_action": true, "must_not": "/\\b(he|she|him|her|his)\\b/i"}}
+{"id": "act-bill-day", "q": "Add my gym, 60 every month on the 3rd", "expect": {"on_topic": true, "actions": ["add_bill"], "wants_action": true}}
+{"id": "act-none-1", "q": "How's my month looking?", "expect": {"on_topic": true, "actions": ["set_limit", "open_budgets", "open_jar", "turn_on_reminder"]}}

@@ -13,10 +13,10 @@ export default function BillSheet() {
   const db = useSQLiteContext();
   const currency = useCurrency();
   // Bud can open this prefilled with a bill it spotted.
-  const params = useLocalSearchParams<{ name?: string; amount?: string }>();
+  const params = useLocalSearchParams<{ name?: string; amount?: string; day?: string }>();
   const [name, setName] = useState(params.name ?? '');
   const [amount, setAmount] = useState(params.amount ?? '');
-  const [day, setDay] = useState('');
+  const [day, setDay] = useState(params.day ?? '');
   const [errors, setErrors] = useState<{ name?: string; amount?: string; day?: string }>({});
 
   async function save() {

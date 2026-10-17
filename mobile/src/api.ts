@@ -108,9 +108,15 @@ export type Turn = { q: string; a: string };
 // What Bud may offer under an answer. Each one only opens a prefilled screen; the person saves it there.
 export type BudAction =
   | { type: 'set_limit'; category: Category; amount: number | null }
-  | { type: 'add_bill'; label: string; amount: number }
+  | { type: 'add_bill'; label: string; amount: number; day?: number | null }
+  | { type: 'add_expense'; label: string; amount: number; category: Category }
+  | { type: 'set_budget'; amount: number; period: 'week' | 'month' }
+  | { type: 'start_split'; amount: number; label: string | null }
+  | { type: 'jar_add'; amount: number }
+  | { type: 'turn_on_reminder'; kind: 'bills' | 'renewals' | 'reset' | 'pace' }
   | { type: 'open_jar' }
-  | { type: 'open_budgets' };
+  | { type: 'open_budgets' }
+  | { type: 'open_friends' };
 
 export type BudReply = { answer: string; actions: BudAction[]; offTopic: boolean };
 
