@@ -15,6 +15,7 @@ import { askAiConsent } from '@/consent';
 import { drinkExample, quickAddExample, typed } from '@/currencies';
 import { type AppState, addTransactions, deleteTransactions, listTransactions, loadApp } from '@/db';
 import { useMoney } from '@/money';
+import { periodWord } from '@/onboarding';
 import { NoteCard, useBudNotes } from '@/notes';
 import { Button, CATEGORIES, Icon, Marker, noWebOutline, ReceiptLine, T, TextButton, useTheme } from '@/ui';
 
@@ -59,8 +60,8 @@ export default function Assistant() {
   });
 
   if (!m || !app) return null;
-  const { setup, safe, fmt, day, txns } = m;
-  const unit = setup.budget.period.kind;
+  const { setup, safe, fmt, day, txns, limit } = m;
+  const unit = periodWord(setup.budget.period);
 
   const newId = () => nextId.current++;
   const add = (...more: Msg[]) => setMsgs((cur) => [...cur, ...more]);
@@ -88,7 +89,7 @@ export default function Assistant() {
           <TextButton
             title="I bought it"
             onPress={async () => {
-              await addTransactions(db, [{ date: day, cents, label: label || 'Purchase', category: 'Other', source: 'text' }]);
+              await addTransactions(db, [{ date: day, cents, label: label || 'Purchase', category: 'Other', source: 'bud' }]);
               reload();
               // Once only: drop the button so more taps can't add it again.
               setMsgs((cur) => cur.map((x) => (x.id === id && 'slip' in x ? { id, slip: { ...x.slip, actions: undefined } } : x)));
@@ -106,7 +107,7 @@ export default function Assistant() {
       .map(([c, cents]): Line => [c, fmt(cents)]);
     return {
       face: safe.left > 0 ? 'happy' : 'oops',
-      title: unit === 'month' ? 'Your month' : 'Your week',
+      title: `Your ${unit}`,
       lines: lines.length ? lines : [['Nothing yet', fmt(0)]],
       total: ['Left', fmt(Math.max(0, safe.left))],
       note: `${safe.daysLeft} ${safe.daysLeft === 1 ? 'day' : 'days'} to go. Safe today: ${fmt(safe.perDay)}.`,
@@ -227,7 +228,7 @@ export default function Assistant() {
       return replace(id, { face: 'happy', title: 'Days left', note: `${safe.daysLeft} ${safe.daysLeft === 1 ? 'day' : 'days'} left this ${unit}. Safe to spend: ${fmt(safe.perDay)} a day.` });
     if (intent.kind === 'compare') return void compareSlip(id);
     if (intent.kind === 'add')
-      return addSlip(id, intent.items.map((i) => ({ date: day, cents: Math.round(i.amount * 100), label: i.label, category: i.category, source: 'text' })));
+      return addSlip(id, intent.items.map((i) => ({ date: day, cents: Math.round(i.amount * 100), label: i.label, category: i.category, source: 'bud' })));
     if (intent.kind === 'split') {
       const cents = intent.amount ? Math.round(intent.amount * 100) : 0;
       const { people, label } = intent;
@@ -241,7 +242,7 @@ export default function Assistant() {
           <View style={{ flexDirection: 'row', gap: space.sm }}>
             {cents ? (
               <View style={{ flex: 1 }}>
-                <Button title="Just mine" variant="secondary" onPress={() => addSlip(id, [{ date: day, cents, label: label || 'Bill', category: 'Food', source: 'text' }])} />
+                <Button title="Just mine" variant="secondary" onPress={() => addSlip(id, [{ date: day, cents, label: label || 'Bill', category: 'Food', source: 'bud' }])} />
               </View>
             ) : null}
             <View style={{ flex: 1 }}>
@@ -264,9 +265,9 @@ export default function Assistant() {
     return {
       currency: setup.profile.currency,
       summary: {
-        period: unit,
+        period: setup.budget.period.kind,
         days_left: safe.daysLeft,
-        budget: major(setup.budget.cents),
+        budget: major(limit),
         spent: major(safe.spent),
         left: major(safe.left),
         safe_today: major(safe.perDay),

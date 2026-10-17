@@ -1,12 +1,12 @@
 // The money picture every screen shares: setup, this period's spending, bills, subscriptions and the
 // safe-to-spend result. One computation, so Home, Afford, Budgets and Treats can never disagree.
-import { aheadOfPace, budgetStatus, closedPeriod, hoursOfWork, money, monthRange, periodLeftover, periodRange, safeToSpend, type Subscription, wrapped } from '@senbud/core';
+import { aheadOfPace, budgetStatus, closedPeriod, hoursOfWork, money, monthRange, periodLeftover, periodRange, safeToSpend, type Subscription, wrapped, yearRange } from '@senbud/core';
 import { router, useFocusEffect } from 'expo-router';
 import { type SQLiteDatabase, useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 
-import { type BillRow, listBills, listSubscriptions, listTransactions, loadApp, loadSetup, setPeriodHandled, type Setup, today, type Txn } from '@/db';
+import { type BillRow, listBills, listSubscriptions, listTransactions, loadApp, loadCarry, loadSetup, setPeriodHandled, type Setup, today, type Txn } from '@/db';
 import { usePro } from '@/purchases';
 import { syncReminders } from '@/reminders';
 
@@ -15,6 +15,11 @@ export type Money = {
   txns: Txn[];
   bills: BillRow[];
   subscriptions: Subscription[];
+  /** This period's budget: the set amount plus any carry-over (Pro). Use it, not setup.budget.cents, for this period. */
+  limit: number;
+  carry: number;
+  /** What next period's budget still has to lend, so a borrow never leaves it below zero. */
+  borrowable: number;
   safe: ReturnType<typeof safeToSpend>;
   status: ReturnType<typeof budgetStatus>;
   onTrack: boolean;
@@ -33,17 +38,23 @@ export function useMoney() {
     const setup = await loadSetup(db);
     if (!setup) return setState(null);
     const day = today();
-    const [txns, bills, subscriptions] = await Promise.all([
-      listTransactions(db, periodRange(setup.budget.period, day).start),
+    const { start, nextStart } = periodRange(setup.budget.period, day);
+    const [txns, bills, subscriptions, carry, nextCarry] = await Promise.all([
+      listTransactions(db, start),
       listBills(db),
       listSubscriptions(db),
+      loadCarry(db, start),
+      loadCarry(db, nextStart),
     ]);
-    const limit = setup.budget.cents;
+    const limit = setup.budget.cents + carry;
     const safe = safeToSpend({ limit, period: setup.budget.period, transactions: txns, bills, subscriptions, today: day });
     const status = budgetStatus(safe.spent, limit);
     const { currency, locale } = setup.profile;
     setState({
       setup,
+      limit,
+      carry,
+      borrowable: Math.max(0, setup.budget.cents + nextCarry),
       txns,
       bills,
       subscriptions,
@@ -79,7 +90,7 @@ async function checkLeftover(db: SQLiteDatabase) {
   if (!ended) return;
   await setPeriodHandled(db, current);
   const [txns, bills] = await Promise.all([listTransactions(db, ended.start), listBills(db)]);
-  const cents = periodLeftover(setup.budget.cents, txns, bills, ended);
+  const cents = periodLeftover(setup.budget.cents + (await loadCarry(db, ended.start)), txns, bills, ended);
   if (cents > 0) router.push({ pathname: '/leftover', params: { start: ended.start, cents: String(cents) } });
 }
 
@@ -99,13 +110,14 @@ export function useLeftoverCheck() {
   }, [db]);
 }
 
-/** Wrapped for a calendar month ("2026-09"): the numbers, shared by the story and the share image. */
+/** Wrapped for a calendar month ("2026-09") or, Pro, a year ("2026"): the numbers, shared by the story and the share image. */
 export function useWrapped(month: string) {
+  const year = month.length === 4;
   const db = useSQLiteContext();
   const { money: m } = useMoney();
   const pro = usePro();
   const [data, setData] = useState<{ txns: Txn[]; rate: number | null } | null>(null);
-  const range = monthRange(month);
+  const range = year ? yearRange(month) : monthRange(month);
   useEffect(() => {
     Promise.all([listTransactions(db, range.start), loadApp(db)]).then(([txns, a]) => setData({ txns, rate: a.hourlyRateCents }));
   }, [db, range.start]);
@@ -116,5 +128,17 @@ export function useWrapped(month: string) {
   // "4,296 hrs", "2.5 hrs": half hours only while they matter.
   const h = data.rate && w.spent ? hoursOfWork(w.spent, data.rate) : null;
   const hours = h === null ? null : new Intl.NumberFormat(setup.profile.locale, { maximumFractionDigits: h >= 10 ? 0 : 1 }).format(h);
-  return { w, name: date({ month: 'long', year: 'numeric' }), month: date({ month: 'long' }), fmt, pro, hours, running: day < range.nextStart };
+  return {
+    w,
+    year,
+    name: year ? month : date({ month: 'long', year: 'numeric' }),
+    month: year ? month : date({ month: 'long' }),
+    unit: year ? 'year' : 'month',
+    currency: setup.profile.currency,
+    monthName: (mo: string) => new Date(`${mo}-15T12:00:00Z`).toLocaleDateString(setup.profile.locale, { month: 'long', timeZone: 'UTC' }),
+    fmt,
+    pro,
+    hours,
+    running: day < range.nextStart,
+  };
 }

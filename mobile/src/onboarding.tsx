@@ -1,8 +1,8 @@
 // The onboarding steps (design system 4.1c): Budget, Rent, You're set. /onboarding runs them in order;
 // Settings opens Budget and Rent on their own as sheets (/edit-budget, /edit-rent).
-import { money, safeToSpend } from '@senbud/core';
+import { type BudgetPeriod, money, periodRange, safeToSpend } from '@senbud/core';
 import { palette, space } from '@senbud/core/tokens';
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import Animated, { LinearTransition, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
@@ -11,9 +11,9 @@ import { currencyName, localAmount, typed } from '@/currencies';
 import { type Budget, type Profile, today } from '@/db';
 import { AmountPad, Button, ChoiceCard, DayStrip, digitsOf, Field, Marker, QuickPicks, T, TextButton, useTheme } from '@/ui';
 
-export type Kind = 'week' | 'month';
+export type Kind = 'week' | 'month' | 'until';
 const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
-const PICKS: Record<Kind, number[]> = { month: [800, 1000, 1400, 2000], week: [150, 250, 350, 500] };
+const PICKS: Record<Kind, number[]> = { month: [800, 1000, 1400, 2000], week: [150, 250, 350, 500], until: [300, 600, 1000, 1400] };
 const RENT_PICKS = [350, 450, 600];
 // Quick-pick chips at the currency's scale (1,000 ringgit -> 1,500,000 won), labelled without ".00".
 const picks = (base: number[], currency: string, fmt: (v: number) => string) =>
@@ -21,7 +21,15 @@ const picks = (base: number[], currency: string, fmt: (v: number) => string) =>
 
 export const toCents = (s: string) => ((n) => (Number.isFinite(n) ? Math.round(n * 100) : 0))(Number(s.trim().replace(',', '.'))); // 0, not NaN, for "1..5"
 export const ordinal = (d: number) => `${d}${d % 10 === 1 && d !== 11 ? 'st' : d % 10 === 2 && d !== 12 ? 'nd' : d % 10 === 3 && d !== 13 ? 'rd' : 'th'}`;
-export const budgetOf = (kind: Kind, cents: number): Budget => ({ cents, period: kind === 'week' ? { kind, startWeekday: 1 } : { kind, startDay: 1 } });
+export const budgetOf = (kind: 'week' | 'month', cents: number): Budget => ({ cents, period: kind === 'week' ? { kind, startWeekday: 1 } : { kind, startDay: 1 } });
+// "week", "month", "pay period": for "this ___" and "next ___".
+export const periodWord = (period: BudgetPeriod) => (period.kind === 'until' ? 'pay period' : period.kind);
+// "a week", "a month", "until 31 Oct" (the current period's payday; it moves on by itself once one passes).
+export function perPeriod(period: BudgetPeriod, locale: string) {
+  if (period.kind !== 'until') return `a ${period.kind}`;
+  const payday = periodRange(period, today()).nextStart;
+  return `until ${new Date(`${payday}T12:00:00Z`).toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' })}`;
+}
 // "1400" or "1400.5" for the pad, from cents.
 export const padValue = (cents: number) => (cents ? String(cents / 100) : '');
 
@@ -44,30 +52,44 @@ export function BudgetStep({
   onChangeCurrency,
   onNext,
   nextTitle = 'Next',
+  children,
+  disabled,
 }: {
   kind: Kind;
-  onKind: (k: Kind) => void;
+  /** Without it the period is plain text (the Budget sheet picks it above). */
+  onKind?: (k: 'week' | 'month') => void;
   amount: string;
   onAmount: (v: string) => void;
   profile: Profile;
   onChangeCurrency?: () => void;
   onNext: () => void;
   nextTitle?: string;
+  /** Extra fields under the amount (the Budget sheet's payday). */
+  children?: ReactNode;
+  disabled?: boolean;
 }) {
   const fmt = (major: number) => money(major, profile.currency, profile.locale);
   const cents = toCents(amount || '0');
   const tick = useTick(amount);
-  const other: Kind = kind === 'month' ? 'week' : 'month';
+  const other = kind === 'month' ? 'week' : 'month';
   return (
     <View style={{ gap: space.md }}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline' }} accessibilityRole="header">
-        <T variant="title">How much do you have each </T>
-        <Pressable onPress={() => onKind(other)} accessibilityRole="button" accessibilityLabel={`Period: ${kind}. Double-tap to switch to ${other}.`} hitSlop={8}>
-          <T variant="title" tone="accent" style={{ textDecorationLine: 'underline', textDecorationStyle: 'dotted' }}>
-            {kind}
-          </T>
-        </Pressable>
-        <T variant="title">?</T>
+        {kind === 'until' ? (
+          <T variant="title">How much do you have until payday?</T>
+        ) : onKind ? (
+          <>
+            <T variant="title">How much do you have each </T>
+            <Pressable onPress={() => onKind(other)} accessibilityRole="button" accessibilityLabel={`Period: ${kind}. Double-tap to switch to ${other}.`} hitSlop={8}>
+              <T variant="title" tone="accent" style={{ textDecorationLine: 'underline', textDecorationStyle: 'dotted' }}>
+                {kind}
+              </T>
+            </Pressable>
+            <T variant="title">?</T>
+          </>
+        ) : (
+          <T variant="title">How much do you have each {kind}?</T>
+        )}
       </View>
       <T tone="textDim">Everything you have, rent included. Senbud sets rent aside first.</T>
       <Animated.View style={tick}>
@@ -83,9 +105,10 @@ export function BudgetStep({
           <TextButton title="Change" onPress={onChangeCurrency} />
         </View>
       ) : null}
-      <QuickPicks label={`Quick amounts a ${kind}`} options={picks(PICKS[kind], profile.currency, fmt)} value={cents} onChange={(c) => onAmount(padValue(c))} />
+      {children}
+      <QuickPicks label={kind === 'until' ? 'Quick amounts until payday' : `Quick amounts a ${kind}`} options={picks(PICKS[kind], profile.currency, fmt)} value={cents} onChange={(c) => onAmount(padValue(c))} />
       <AmountPad value={amount} onChange={onAmount} digits={digitsOf(profile.currency, profile.locale)} />
-      <Button title={nextTitle} disabled={cents <= 0} onPress={onNext} />
+      <Button title={nextTitle} disabled={cents <= 0 || disabled} onPress={onNext} />
     </View>
   );
 }

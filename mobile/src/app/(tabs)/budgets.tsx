@@ -1,16 +1,17 @@
 // Budgets (design system 4.3): what's left on the cobalt hero, spending by category with a bar
 // each, rent and bills, and subscriptions Senbud has spotted (Pro).
-import { billCountdown, budgetStatus, type Category, detectSubscriptions, spentIn, type Subscription } from '@senbud/core';
+import { billCountdown, type BudgetPeriod, budgetStatus, type Category, categoryRange, detectSubscriptions, spentIn, type Subscription } from '@senbud/core';
 import { categoryColors, space } from '@senbud/core/tokens';
 import { router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
-import { deleteBill, listTransactions, loadLimits, saveSubscription, type Txn } from '@/db';
+import { type BillRow, deleteRow, listTransactions, loadLimitPeriods, loadLimits, restoreRow, saveSubscription, type Txn } from '@/db';
 import { useMoney } from '@/money';
+import { periodWord, perPeriod } from '@/onboarding';
 import { usePro } from '@/purchases';
-import { Button, CATEGORIES, Card, Icon, ListGroup, ListRow, ProLock, Progress, Row, Screen, T, TextButton, useTheme } from '@/ui';
+import { Button, CATEGORIES, Card, Icon, ListGroup, ListRow, ProLock, Progress, Row, Screen, T, TextButton, UndoBar, useTheme, useUndo } from '@/ui';
 
 export default function Budgets() {
   const db = useSQLiteContext();
@@ -19,27 +20,33 @@ export default function Budgets() {
   const pro = usePro();
   const [limits, setLimits] = useState<Partial<Record<Category, number>>>({});
   const [history, setHistory] = useState<Txn[]>([]);
+  const [periods, setPeriods] = useState<Partial<Record<Category, BudgetPeriod>>>({});
+  const removed = useUndo<{ bill: BillRow; row: Awaited<ReturnType<typeof deleteRow>> }>();
 
   const load = useCallback(() => {
     loadLimits(db).then(setLimits);
+    loadLimitPeriods(db).then(setPeriods);
     listTransactions(db).then(setHistory);
   }, [db]);
   useFocusEffect(load);
 
   if (!m) return null;
-  const { setup, txns, bills, subscriptions, safe, status, fmt, day } = m;
-  const limit = setup.budget.cents;
+  const { setup, txns, bills, subscriptions, safe, status, fmt, day, limit, carry } = m;
   const left = limit - safe.spent;
   const { locale } = setup.profile;
   const periodName =
     setup.budget.period.kind === 'month'
       ? `${new Date(`${safe.start}T12:00:00Z`).toLocaleDateString(locale, { month: 'long', timeZone: 'UTC' })} · monthly`
-      : 'This week · weekly';
+      : setup.budget.period.kind === 'until'
+        ? `${perPeriod(setup.budget.period, locale)} · payday`
+        : 'This week · weekly';
   const statusWords = status === 'over' ? 'Over, no stress' : status === 'close' ? 'Close' : 'On track';
 
+  // A limit with its own period (Pro) counts from history, since its week can start before the budget's month.
   const rows = CATEGORIES.map((category) => {
-    const spent = spentIn(txns.filter((x) => x.category === category), safe);
-    return { category, spent, limit: limits[category] };
+    const own = limits[category] ? periods[category] : undefined;
+    const spent = spentIn((own ? history : txns).filter((x) => x.category === category), categoryRange(own, safe, day));
+    return { category, spent, limit: limits[category], own: own?.kind };
   }).filter((r) => r.limit || r.spent);
   const hasLimits = rows.some((r) => r.limit);
 
@@ -49,7 +56,20 @@ export default function Budgets() {
   // Wrapped: this month so far, then up to five earlier months that have spending.
   const thisMonth = day.slice(0, 7);
   const months = [thisMonth, ...new Set(history.map((x) => x.date.slice(0, 7)).filter((mo) => mo < thisMonth))].slice(0, 6);
+  // Year-end Wrapped (Pro): this year so far, or last year's during January.
+  const wrapYear = day.slice(5, 7) === '01' ? String(Number(day.slice(0, 4)) - 1) : day.slice(0, 4);
   const monthName = (mo: string) => new Date(`${mo}-15T12:00:00Z`).toLocaleDateString(locale, { month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+  // Removes straight away with Undo, like expenses on Activity.
+  async function removeBill(bill: BillRow) {
+    removed.offer({ bill, row: await deleteRow(db, 'bills', bill.id) });
+    reload();
+  }
+  async function undoRemove() {
+    const r = removed.take();
+    if (r?.row) await restoreRow(db, 'bills', r.row);
+    reload();
+  }
 
   async function answer(s: Subscription, yes: boolean) {
     await saveSubscription(db, { ...s, confirmed: yes });
@@ -57,7 +77,7 @@ export default function Budgets() {
   }
 
   return (
-    <Screen>
+    <Screen overlay={removed.item && <UndoBar message={`Removed ${removed.item.bill.name}, ${fmt(removed.item.bill.cents)}`} onUndo={undoRemove} />}>
       <Card tone="panel">
         <T variant="label" tone="onPanelDim">
           {periodName}
@@ -68,6 +88,7 @@ export default function Budgets() {
         <Progress value={safe.spent / limit} status={status} tone="panel" />
         <T variant="caption" tone="onPanelDim">
           {fmt(safe.spent)} of {fmt(limit)} spent. {statusWords}, {safe.daysLeft} {safe.daysLeft === 1 ? 'day' : 'days'} to go.
+          {carry > 0 ? ` Includes ${fmt(carry)} carried over.` : carry < 0 ? ` ${fmt(-carry)} went to last ${periodWord(setup.budget.period)}.` : ''}
         </T>
       </Card>
 
@@ -113,19 +134,7 @@ export default function Budgets() {
                   <TextButton title="Edit" onPress={() => router.push('/edit-rent')} />
                 ) : (
                   <Pressable
-                    onPress={() =>
-                      Alert.alert(`Remove ${b.name}?`, 'It can’t be undone.', [
-                        { text: 'Cancel', style: 'cancel' },
-                        {
-                          text: 'Remove',
-                          style: 'destructive',
-                          onPress: async () => {
-                            await deleteBill(db, b.id);
-                            reload();
-                          },
-                        },
-                      ])
-                    }
+                    onPress={() => removeBill(b)}
                     accessibilityRole="button"
                     accessibilityLabel={`Remove ${b.name}`}
                     hitSlop={14}
@@ -179,22 +188,29 @@ export default function Budgets() {
             <Row>
               <T>Period and amount</T>
               <T tone="textDim">
-                {fmt(limit)} a {setup.budget.period.kind}
+                {fmt(limit)} {perPeriod(setup.budget.period, locale)}
               </T>
             </Row>
           </Pressable>
-          <Row style={{ minHeight: 52, borderTopWidth: 1, borderColor: t.line }}>
-            <T>Until payday</T>
-            <ProLock onPress={() => router.push('/pro')} />
-          </Row>
+          {!pro && setup.budget.period.kind !== 'until' && (
+            <Row style={{ minHeight: 52, borderTopWidth: 1, borderColor: t.line }}>
+              <T>Until payday</T>
+              <ProLock onPress={() => router.push('/pro')} />
+            </Row>
+          )}
         </Card>
       </View>
 
       <ListGroup title="Wrapped">
-        {months.map((mo, i) => (
+        <ListRow
+          first
+          label={wrapYear === day.slice(0, 4) ? `${wrapYear} so far` : wrapYear}
+          value={pro ? undefined : 'Pro'}
+          onPress={() => router.push({ pathname: '/wrapped', params: { year: wrapYear } })}
+        />
+        {months.map((mo) => (
           <ListRow
             key={mo}
-            first={i === 0}
             label={mo === thisMonth ? `${monthName(mo)} so far` : monthName(mo)}
             onPress={() => router.push({ pathname: '/wrapped', params: { month: mo } })}
           />
@@ -206,12 +222,12 @@ export default function Budgets() {
 
 // One category: name and what's left (or over) on top, a status bar, then "spent of limit" in words.
 // Tapping it edits the limit. Colour is never the only signal: the words say left, close or over.
-function CategoryRow({ category, spent, limit, first, fmt, onPress }: { category: Category; spent: number; limit?: number; first: boolean; fmt: (c: number) => string; onPress: () => void }) {
+function CategoryRow({ category, spent, limit, own, first, fmt, onPress }: { category: Category; spent: number; limit?: number; own?: string; first: boolean; fmt: (c: number) => string; onPress: () => void }) {
   const t = useTheme();
   const status = limit ? budgetStatus(spent, limit) : null;
   const left = limit ? limit - spent : 0;
   const right = !limit ? fmt(spent) : left < 0 ? `${fmt(-left)} over` : `${fmt(left)} left`;
-  const sub = !limit ? 'No limit · tap to set one' : `${fmt(spent)} of ${fmt(limit)}${status === 'close' ? ' · go easy' : ''}`;
+  const sub = !limit ? 'No limit · tap to set one' : `${fmt(spent)} of ${fmt(limit)}${own ? ` this ${own}` : ''}${status === 'close' ? ' · go easy' : ''}`;
   return (
     <Pressable
       onPress={onPress}

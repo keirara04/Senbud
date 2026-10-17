@@ -9,6 +9,7 @@ import { View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 
 import { ReceiptCard } from '@/art';
+import { today } from '@/db';
 import { useWrapped } from '@/money';
 import { AiSwitch, Button, Card, Marker, MONO, Screen, T } from '@/ui';
 
@@ -35,8 +36,8 @@ function Mono({ children, style, numberOfLines }: { children: React.ReactNode; s
 }
 
 export default function Share() {
-  const { month } = useLocalSearchParams<{ month: string }>();
-  const r = useWrapped(month);
+  const { month, year } = useLocalSearchParams<{ month?: string; year?: string }>();
+  const r = useWrapped(year ?? month ?? today().slice(0, 7));
   const shot = useRef<React.ComponentRef<typeof View>>(null);
   const [amounts, setAmounts] = useState(false);
   const [error, setError] = useState('');

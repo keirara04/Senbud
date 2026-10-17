@@ -12,7 +12,7 @@ import Purchases from 'react-native-purchases';
 
 import { restoreBackup, shareFile } from '@/backup';
 import { drinkExample } from '@/currencies';
-import { ordinal } from '@/onboarding';
+import { ordinal, perPeriod } from '@/onboarding';
 import { type AppState, eraseAll, exportAll, listTransactions, loadApp, loadSetup, setAiEnabled, setAnalytics, setReminders, type Setup, setTheme, type Theme, today } from '@/db';
 import { allowReminders, syncReminders } from '@/reminders';
 import { PRIVACY, purchasesReady, restorePro, syncPro, TERMS } from '@/purchases';
@@ -105,7 +105,7 @@ export default function Settings() {
   return (
     <Screen>
       <ListGroup title="Money" footer="Pay per hour is optional. With it, Can I afford it? shows a price as hours of work, like “4.5 hours”.">
-        <ListRow first label="Budget" value={setup ? `${fmt(setup.budget.cents)} a ${setup.budget.period.kind}` : undefined} onPress={() => router.push('/edit-budget')} />
+        <ListRow first label="Budget" value={setup ? `${fmt(setup.budget.cents)} ${perPeriod(setup.budget.period, profile.locale)}` : undefined} onPress={() => router.push('/edit-budget')} />
         <ListRow label="Rent" value={setup?.rent ? `${fmt(setup.rent.cents)} on the ${ordinal(setup.rent.dueDay)}` : 'No rent'} onPress={() => router.push('/edit-rent')} />
         <ListRow label="Currency" value={profile.currency} onPress={() => router.push('/currency')} />
         <ListRow label="Pay per hour" value={app.hourlyRateCents ? `${fmt(app.hourlyRateCents)} an hour` : 'Add'} onPress={() => router.push('/rate')} />
