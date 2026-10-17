@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { MotionProvider } from "@/components/MotionProvider";
+import { PageView } from "@/components/PageView";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import "./globals.css";
 
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         <SmoothScroll />
+        <PageView />
         {/* Cookie-free analytics (Plausible), only when configured. CTA clicks are counted from their
             plausible-event-* class names; no personal data or cookies. */}
         {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (

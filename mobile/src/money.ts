@@ -8,6 +8,7 @@ import { AppState } from 'react-native';
 
 import { type BillRow, listBills, listSubscriptions, listTransactions, loadApp, loadSetup, setPeriodHandled, type Setup, today, type Txn } from '@/db';
 import { usePro } from '@/purchases';
+import { syncReminders } from '@/reminders';
 
 export type Money = {
   setup: Setup;
@@ -27,6 +28,8 @@ export function useMoney() {
   const [state, setState] = useState<Money | null | undefined>(undefined);
 
   const reload = useCallback(async () => {
+    // Every write is followed by a reload, so reminders follow the data from here.
+    syncReminders(db).catch(() => {});
     const setup = await loadSetup(db);
     if (!setup) return setState(null);
     const day = today();

@@ -5,6 +5,7 @@ export * from "./examples";
 export * from "./iou";
 export * from "./nudge";
 export * from "./recap";
+export * from "./reminders";
 export * from "./subscriptions";
 export type * from "./types";
 

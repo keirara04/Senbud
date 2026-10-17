@@ -10,7 +10,7 @@ import { ScrollView, View } from 'react-native';
 import Animated, { FadeInLeft, FadeInRight, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { loadProfile, type Profile, saveSetup } from '@/db';
+import { loadProfile, type Profile, saveSetup, track } from '@/db';
 import { budgetOf, BudgetStep, type Kind, ReadyStep, RentStep, toCents } from '@/onboarding';
 import { StepHeader, useTheme } from '@/ui';
 
@@ -47,6 +47,7 @@ export default function Onboarding() {
 
   async function finish(withRent: boolean) {
     await saveSetup(db, { budget, rent: withRent ? rentBill && { name: 'Rent', ...rentBill } : null, profile });
+    track(db, 'setup_done', { period: budget.period.kind, rent: !!(withRent && rentBill) });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     if (!withRent) setHasRent(false);
     go('ready', true);

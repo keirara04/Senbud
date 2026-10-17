@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Http\Controllers\EventController;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -19,7 +20,7 @@ class OpenRouter
     public static function chat(array $body, int $timeout, ?string $model = null, array $provider = []): ?Response
     {
         try {
-            return Http::withToken(config('services.openrouter.key'))
+            $response = Http::withToken(config('services.openrouter.key'))
                 ->timeout($timeout)
                 ->acceptJson()
                 ->post(config('services.openrouter.url'), [
@@ -30,7 +31,25 @@ class OpenRouter
                     'provider' => ['zdr' => true, 'data_collection' => 'deny', 'require_parameters' => true, ...$provider],
                 ]);
         } catch (ConnectionException) {
-            return null;
+            $response = null;
+        }
+        self::record($response);
+
+        return $response;
+    }
+
+    // One usage row per call for the admin page's AI cost card. Counts only, never the prompt or reply.
+    private static function record(?Response $response): void
+    {
+        try {
+            EventController::server(request(), 'ai_'.basename(request()->path()), [
+                'status' => $response?->status() ?? 0,
+                'tokens_in' => (int) $response?->json('usage.prompt_tokens'),
+                'tokens_out' => (int) $response?->json('usage.completion_tokens'),
+                'cost' => (float) $response?->json('usage.cost'),
+            ]);
+        } catch (\Throwable) {
+            // Analytics never costs someone their answer.
         }
     }
 }

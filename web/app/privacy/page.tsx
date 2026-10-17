@@ -79,7 +79,16 @@ export default function PrivacyPage() {
         <p>
           The Senbud website uses <strong>no cookies</strong>. To see how many people visit, it may use Plausible
           Analytics, which counts page views and button clicks (like “Join the waitlist”) without cookies and without
-          building a profile of you. It doesn’t collect your name or email.
+          building a profile of you. It doesn’t collect your name or email. Senbud’s own server also counts each page
+          view: the page’s address and the site you came from, with no ID attached.
+        </p>
+        <p>
+          <strong>In the app</strong>, Senbud sends usage stats so we can see which features people use: the app opening,
+          which screen you’re on, and actions like “added an expense” or “set a limit”. They carry the app’s random
+          Support ID (the one in Settings), your platform and app version.{" "}
+          <strong>They never include amounts, shop names or anything you type.</strong> We also count AI requests and
+          their size to track what AI costs, never what was asked. Stats are kept for 90 days. Turn them off any time in
+          Settings, under Usage stats.
         </p>
         <p>
           Your browser keeps two small things on your device: the referral code from a friend’s link (until you close the

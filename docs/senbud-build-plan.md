@@ -28,7 +28,7 @@ Ask each one when its item comes up, not before.
 | AI through your server or users' own keys (spec 11) | 4.4 AI captions, cost of 4.6 |
 | Is the name "Senbud" free (spec 11) | Store listings, domain |
 
-## 3. Phase 1: Reminders (do first)
+## 3. Phase 1: Reminders (built 17 October 2026, except the pace warning)
 
 **Why first:** the paywall sells "subscription reminders", and rent due, renewals and the pace warning only show inside the app today. A reminder app that can't remind is the biggest gap.
 
@@ -40,6 +40,10 @@ Ask each one when its item comes up, not before.
 - **Depends on:** `expo-notifications`. Read `docs.expo.dev/versions/v58.0.0/sdk/notifications` before starting (mobile/AGENTS.md: Expo APIs change every SDK). It needs a development build, which the app already uses (`expo-dev-client`). Web has no scheduled notifications; skip it there.
 - **Likely files:** new `mobile/src/reminders.ts`, `mobile/src/money.ts` (call after writes), `settings.tsx`, `db.ts` (switch states in `app`), `app.json` (plugin).
 - **Check:** core functions that produce the schedule (dates and texts) get unit tests in `packages/core`; the native part is checked on a device.
+- **Built:** `packages/core/src/reminders.ts` (`reminderSchedule`, tested), `mobile/src/reminders.ts` (`allowReminders`, `syncReminders`: cancel all, then schedule up to 48 for the next two months, under iOS's limit of 64), migration 10 (`app.reminders`, not in backups since permission belongs to the phone), the Settings group, and the `expo-notifications` plugin with remote notifications off. `syncReminders` runs on every `useMoney` reload, after each switch and after Erase.
+- **Still to do:**
+  - **Check on a phone.** It needs a new development build (`npx expo run:ios` / `run:android` or `eas build --profile development`), because `expo-notifications` is native. Turn a switch on, set rent due tomorrow, and see the 7 pm notice.
+  - **Pace warning.** It can't be scheduled ahead (tomorrow's spending isn't known). Smallest honest version: when a sync finds `aheadOfPace` true today and none was sent today, schedule one for this evening and store the date. Size S.
 
 ## 4. Phase 2 onwards
 
