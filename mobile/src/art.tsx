@@ -49,19 +49,21 @@ const FACES: Record<BudFace, () => React.JSX.Element> = {
 export function Bud({ face = 'happy', size = 38 }: { face?: BudFace; size?: number }) {
   const Face = FACES[face];
   return (
-    <Svg width={size} height={size} viewBox="0 0 64 64" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Path
-        d="M14 6h36a5 5 0 0 1 5 5v41l-5.75 5-5.75-5-5.75 5-5.75-5-5.75 5-5.75-5-5.75 5-5.75-5V11a5 5 0 0 1 5-5z"
-        fill="#fff"
-        stroke={INK}
-        strokeWidth={2.5}
-        strokeLinejoin="round"
-      />
-      <Path d="M18 15h20M18 20h13" stroke={INK} strokeOpacity={0.22} strokeWidth={2.5} strokeLinecap="round" />
-      <Ellipse cx={19.5} cy={39} rx={3.6} ry={2.2} fill={palette.coral} fillOpacity={0.45} />
-      <Ellipse cx={44.5} cy={39} rx={3.6} ry={2.2} fill={palette.coral} fillOpacity={0.45} />
-      <Face />
-    </Svg>
+    <View aria-hidden>
+      <Svg width={size} height={size} viewBox="0 0 64 64">
+        <Path
+          d="M14 6h36a5 5 0 0 1 5 5v41l-5.75 5-5.75-5-5.75 5-5.75-5-5.75 5-5.75-5-5.75 5-5.75-5V11a5 5 0 0 1 5-5z"
+          fill="#fff"
+          stroke={INK}
+          strokeWidth={2.5}
+          strokeLinejoin="round"
+        />
+        <Path d="M18 15h20M18 20h13" stroke={INK} strokeOpacity={0.22} strokeWidth={2.5} strokeLinecap="round" />
+        <Ellipse cx={19.5} cy={39} rx={3.6} ry={2.2} fill={palette.coral} fillOpacity={0.45} />
+        <Ellipse cx={44.5} cy={39} rx={3.6} ry={2.2} fill={palette.coral} fillOpacity={0.45} />
+        <Face />
+      </Svg>
+    </View>
   );
 }
 
@@ -77,29 +79,31 @@ export function TreatJar({ share, width = 112 }: { share: number; width?: number
   const top = 146 - 88 * Math.min(1.1, Math.max(0, share));
   const wave = `M0 ${top}q12.5-5 25 0t25 0t25 0t25 0t25 0V150H0z`;
   return (
-    <Svg width={width} height={(width * 150) / 120} viewBox="0 0 120 150" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Defs>
-        <ClipPath id="jar">
-          <Path d={JAR} />
-        </ClipPath>
-      </Defs>
-      <Path d={JAR} fill="#fff" fillOpacity={0.1} />
-      {share > 0 && (
-        <G clipPath="url(#jar)">
-          <Path d={wave} fill={palette.highlighter} />
-          {COINS.filter(([, cy]) => cy - 6 > top).map(([cx, cy]) => (
-            <Circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={6} fill="none" stroke="#c9d84a" strokeWidth={2} />
-          ))}
-        </G>
-      )}
-      <Path d="M20 58h80" stroke={palette.onCobaltDim} strokeWidth={1.5} strokeDasharray="4 4" />
-      {[124, 102, 80].map((y) => (
-        <Path key={y} d={`M94 ${y}h8`} stroke={palette.onCobalt} strokeOpacity={0.55} strokeWidth={2} strokeLinecap="round" />
-      ))}
-      <Path d={JAR} fill="none" stroke={palette.onCobalt} strokeWidth={3} strokeLinejoin="round" />
-      <Rect x={30} y={8} width={60} height={16} rx={5} fill={palette.onCobalt} />
-      <Path d="M38 16h44" stroke={palette.cobalt} strokeOpacity={0.35} strokeWidth={2} strokeLinecap="round" />
-    </Svg>
+    <View aria-hidden>
+      <Svg width={width} height={(width * 150) / 120} viewBox="0 0 120 150">
+        <Defs>
+          <ClipPath id="jar">
+            <Path d={JAR} />
+          </ClipPath>
+        </Defs>
+        <Path d={JAR} fill="#fff" fillOpacity={0.1} />
+        {share > 0 && (
+          <G clipPath="url(#jar)">
+            <Path d={wave} fill={palette.highlighter} />
+            {COINS.filter(([, cy]) => cy - 6 > top).map(([cx, cy]) => (
+              <Circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={6} fill="none" stroke="#c9d84a" strokeWidth={2} />
+            ))}
+          </G>
+        )}
+        <Path d="M20 58h80" stroke={palette.onCobaltDim} strokeWidth={1.5} strokeDasharray="4 4" />
+        {[124, 102, 80].map((y) => (
+          <Path key={y} d={`M94 ${y}h8`} stroke={palette.onCobalt} strokeOpacity={0.55} strokeWidth={2} strokeLinecap="round" />
+        ))}
+        <Path d={JAR} fill="none" stroke={palette.onCobalt} strokeWidth={3} strokeLinejoin="round" />
+        <Rect x={30} y={8} width={60} height={16} rx={5} fill={palette.onCobalt} />
+        <Path d="M38 16h44" stroke={palette.cobalt} strokeOpacity={0.35} strokeWidth={2} strokeLinecap="round" />
+      </Svg>
+    </View>
   );
 }
 

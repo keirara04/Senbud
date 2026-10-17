@@ -19,6 +19,7 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const { money: m, reload } = useMoney();
   const [text, setText] = useState('');
+  const [focused, setFocused] = useState(false);
   const [hint, setHint] = useState('');
   const [undo, setUndo] = useState<{ ids: number[]; summary: string } | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -117,7 +118,7 @@ export default function Home() {
           <Card>
             <T>
               Rent {fmt(rent.cents)} {rent.days === 0 ? 'is due today' : `in ${rent.days} ${rent.days === 1 ? 'day' : 'days'}`}
-              {safe.covered ? ' — you’re covered.' : ` — ${fmt(-safe.left)} short.`}
+              {safe.covered ? '. You’re covered.' : `. ${fmt(-safe.left)} short.`}
             </T>
             {!safe.covered && (
               <>
@@ -169,7 +170,7 @@ export default function Home() {
             backgroundColor: t.surface,
             borderRadius: radius.md,
             borderWidth: 1,
-            borderColor: t.line,
+            borderColor: focused ? t.accent : t.line,
             paddingHorizontal: space.xs,
           }}
         >
@@ -189,7 +190,10 @@ export default function Home() {
             selectionColor={t.accent}
             accessibilityLabel="Type what you spent, or ask Bud"
             autoFocus={!txns.length}
-            style={{ flex: 1, minHeight: 48, fontSize: 17, color: t.text }}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            // The bar's border shows focus instead of the browser's square outline.
+            style={{ flex: 1, minHeight: 48, fontSize: 17, color: t.text, outlineWidth: 0 }}
           />
           <Pressable onPress={() => router.push('/add')} accessibilityRole="button" accessibilityLabel="Add by hand" style={{ padding: space.sm }} hitSlop={4}>
             <Icon name={{ ios: 'pencil', android: 'edit' }} color={t.accent} />

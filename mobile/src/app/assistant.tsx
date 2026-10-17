@@ -34,6 +34,7 @@ export default function Assistant() {
   const { q } = useLocalSearchParams<{ q?: string }>();
   const [app, setApp] = useState<AppState | null>(null);
   const [text, setText] = useState('');
+  const [focused, setFocused] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const nextId = useRef(0);
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
@@ -413,7 +414,10 @@ export default function Assistant() {
           placeholderTextColor={t.textDim}
           returnKeyType="send"
           accessibilityLabel="Ask or add"
-          style={{ flex: 1, minHeight: touch.min, fontSize: 17, color: t.text, backgroundColor: t.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: t.line, paddingHorizontal: space.md }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          // Its own border shows focus instead of the browser's square outline.
+          style={{ flex: 1, minHeight: touch.min, fontSize: 17, color: t.text, backgroundColor: t.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: focused ? t.accent : t.line, paddingHorizontal: space.md, outlineWidth: 0 }}
         />
         <Pressable
           onPress={() => send(text)}
