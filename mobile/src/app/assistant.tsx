@@ -1,7 +1,7 @@
 // Bud, the assistant (design system 4.9). Rules in core (readIntent) answer on the phone; only a question
 // in your own words goes to the API, with the summary "What gets sent" promises. Bud prints every answer
 // as a receipt slip.
-import { addDays, afford, billCountdown, type BudgetPeriod, type Category, compareToLast, daysBetween, hoursOfWork, nudgeKey, periodRange, readIntent, spentIn, type Transaction } from '@senbud/core';
+import { addDays, afford, billCountdown, type BudgetPeriod, type Category, categoryNamed, compareToLast, daysBetween, hoursOfWork, nudgeKey, periodRange, readIntent, spentIn, type Transaction } from '@senbud/core';
 import { palette, radius, space, touch } from '@senbud/core/tokens';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -138,10 +138,10 @@ export default function Assistant() {
 
   const short = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString(setup.profile.locale, { day: 'numeric', month: 'short', timeZone: 'UTC' });
 
-  // "how much on food": a category by name, else anything whose label has the words in it.
+  // "how much on food" or "kat makan": a category by name, else anything whose label has the words in it.
   function spentOnSlip(query: string): Slip {
     const q = query.toLowerCase();
-    const category = CATEGORIES.find((c) => [c.toLowerCase(), `${c.toLowerCase()}s`].includes(q) || c.toLowerCase() === q.replace(/s$/, ''));
+    const category = categoryNamed(q);
     const found = txns.filter((x) => (category ? x.category === category : x.label.toLowerCase().includes(q)));
     const total = found.reduce((sum, x) => sum + x.cents, 0);
     const title = `Spent on ${category ?? query}`;

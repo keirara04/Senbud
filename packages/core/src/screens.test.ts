@@ -222,6 +222,68 @@ describe("readIntent", () => {
   });
 });
 
+describe("Malay and bahasa pasar", () => {
+  const read = async (line: string) => (await import("./index")).readIntent(line, "MYR");
+  it("adds Malay items with the right amounts and categories", async () => {
+    const { parseSpending } = await import("./index");
+    expect(parseSpending("nasi lemak 5, teh tarik 3", "MYR").map((i) => i.category)).toEqual(["Food", "Treat"]);
+    expect(parseSpending("roti canai 1.50 dan teh ais 2.50", "MYR")).toEqual([
+      { label: "Roti canai", amount: 1.5, category: "Food" },
+      { label: "Teh ais", amount: 2.5, category: "Treat" },
+    ]);
+    expect(parseSpending("milo ais 3 n kuih 2", "MYR").map((i) => i.amount)).toEqual([3, 2]);
+    expect(parseSpending("minyak 50", "MYR")[0].category).toBe("Transport");
+    expect(parseSpending("minyak masak 12", "MYR")[0].category).toBe("Groceries");
+    expect(parseSpending("tambang bas 2", "MYR")[0].category).toBe("Transport");
+    expect(parseSpending("barang dapur 80", "MYR")[0].category).toBe("Groceries");
+    expect(parseSpending("parking 50 sen", "MYR")[0]).toEqual({ label: "Parking", amount: 0.5, category: "Transport" });
+    expect(parseSpending("rm5 kopi", "MYR")[0]).toEqual({ label: "Kopi", amount: 5, category: "Treat" });
+    expect(parseSpending("laksa 8 hinggit", "MYR")[0]).toEqual({ label: "Laksa", amount: 8, category: "Food" });
+    expect(parseSpending("sewa bilik 1.2k", "MYR")[0].amount).toBe(1200);
+    // Edges of the amount reader.
+    expect(parseSpending("2kg ayam 15", "MYR")[0].amount).toBe(15);
+    expect(parseSpending("100plus 2", "MYR")[0]).toEqual({ label: "100plus", amount: 2, category: "Other" });
+    expect(parseSpending("lunch with dan 20", "MYR")).toHaveLength(1);
+  });
+  it("never saves a Malay question as an expense", async () => {
+    expect(await read("boleh ke aku beli kasut 80")).toEqual({ kind: "afford", amount: 80, label: "Kasut" });
+    expect(await read("mampu ke beli kasut 80?")).toEqual({ kind: "afford", amount: 80, label: "Kasut" });
+    expect(await read("beli kasut tu 80 boleh tak")).toEqual({ kind: "afford", amount: 80, label: "Kasut" });
+    expect(await read("ok x aku tapau sushi 45")).toEqual({ kind: "afford", amount: 45, label: "Sushi" });
+    expect(await read("berapa baki bulan ni?")).toEqual({ kind: "month" });
+    expect(await read("baki aku brp")).toEqual({ kind: "month" });
+    expect(await read("tinggal brp lagi")).toEqual({ kind: "month" });
+    expect(await read("camne bajet aku minggu ni")).toEqual({ kind: "month" });
+    expect(await read("duit aku habis kat mana")).toEqual({ kind: "month" });
+    expect(await read("brp aku dah habis kat makan bulan ni")).toEqual({ kind: "spentOn", query: "makan" });
+    expect(await read("berapa belanja untuk grab")).toEqual({ kind: "spentOn", query: "grab" });
+    expect(await read("apa paling mahal aku beli")).toEqual({ kind: "biggest" });
+    expect(await read("bila kena bayar sewa")).toEqual({ kind: "bills" });
+    expect(await read("bil apa minggu ni")).toEqual({ kind: "bills" });
+    expect(await read("brp hari lg nak gaji")).toEqual({ kind: "daysLeft" });
+    expect(await read("banding dengan bulan lepas")).toEqual({ kind: "compare" });
+    expect(await read("kenapa duit cepat habis")).toEqual({ kind: "ask" });
+  });
+  it("splits and budgets in Malay", async () => {
+    expect(await read("makan 60 split dgn ali dan abu")).toEqual({ kind: "split", amount: 60, label: "Makan", people: ["Ali", "Abu"] });
+    expect(await read("aku nak belanja 100 je minggu ni")).toEqual({ kind: "budget", amount: 100, period: "week", category: undefined });
+    expect(await read("bajet aku 1000 sebulan")).toEqual({ kind: "budget", amount: 1000, period: "month", category: undefined });
+    expect(await read("bajet 1k sampai gaji")).toEqual({ kind: "budget", amount: 1000, period: "until", category: undefined });
+    expect(await read("limit makan 200 sebulan")).toEqual({ kind: "budget", amount: 200, period: "month", category: "Food" });
+    expect(await read("nak spend 50 je untuk jajan minggu ni")).toEqual({ kind: "budget", amount: 50, period: "week", category: "Treat" });
+    expect(await read("nak belanja 30 je kat bubble tea")).toEqual({ kind: "ask" });
+    expect(await read("bajet aku brp?")).not.toEqual(expect.objectContaining({ kind: "budget" }));
+  });
+  it("keeps Malay quick adds that only look like questions", async () => {
+    for (const line of ["grab ke kampus 12", "belanja kawan 20", "beli roti 3", "dah bayar sewa 600", "makan tengahari 8", "2 x nasi lemak 10", "makan bulan lepas 20", "had lunch 12", "apam balik 5"])
+      expect((await read(line)).kind, line).toBe("add");
+  });
+  it("names categories in English or Malay", async () => {
+    const { categoryNamed } = await import("./index");
+    expect(["food", "makan", "Makanan", "treats", "jajan", "barang dapur", "tambang", "langganan", "bubble tea"].map(categoryNamed)).toEqual(["Food", "Food", "Food", "Treat", "Treat", "Groceries", "Transport", "Subscription", undefined]);
+  });
+});
+
 describe("withCharges", () => {
   it("adds the gap between the printed total and the items as one line", async () => {
     const { withCharges } = await import("./index");
