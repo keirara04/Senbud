@@ -55,6 +55,23 @@
     </section>
 
     <section class="card">
+      <h2>Pro grants</h2>
+      <p class="caption" style="margin: 0">Pro given from a device's page, still running.</p>
+      @if ($grants->isEmpty())
+        <p class="caption">None yet. Look up a Support ID to grant Pro.</p>
+      @else
+        <table>
+          @foreach ($grants as $g)
+            <tr>
+              <td><a href="{{ route('admin.device', ['id' => $g->device_id]) }}"><code>{{ substr($g->device_id, 0, 8) }}</code></a>@if ($g->note)<span class="caption"> {{ $g->note }}</span>@endif</td>
+              <td class="n" style="white-space: nowrap">{{ $g->until ? 'to '.\Illuminate\Support\Carbon::parse($g->until)->format('j M Y') : 'No end' }}</td>
+            </tr>
+          @endforeach
+        </table>
+      @endif
+    </section>
+
+    <section class="card">
       <h2>Pro, 30 days</h2>
       <p class="caption" style="margin: 0">Devices that opened the paywall, and how many bought. Revenue is in RevenueCat.</p>
       <table>

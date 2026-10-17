@@ -56,8 +56,9 @@ export default function ReceiptScreen() {
       // Offline, fall back to the cache so Pro keeps working.
       if (purchasesReady()) {
         try {
-          a.pro = hasPro(await Purchases.getCustomerInfo());
-          await setPro(db, a.pro);
+          const bought = hasPro(await Purchases.getCustomerInfo());
+          await setPro(db, bought);
+          a.pro = bought || a.proGranted;
         } catch {}
       }
       setApp(a);

@@ -42,6 +42,8 @@ class AdminController extends Controller
         $ai7 = $ai->where('day', '>=', now()->subDays(6)->toDateString());
 
         return view('admin.index', [
+            'grants' => DB::table('pro_grants')->where(fn ($q) => $q->whereNull('until')->orWhere('until', '>', now()))
+                ->orderByDesc('created_at')->limit(20)->get(),
             'funnel' => self::funnel($app),
             'retention' => self::retention($app),
             'reach' => self::reach($app, $active7),
@@ -102,7 +104,30 @@ class AdminController extends Controller
             'id' => $id,
             'events' => $events,
             'first' => DB::table('events')->where('device_id', $id)->min('occurred_at'),
+            'grant' => DB::table('pro_grants')->where('device_id', $id)->first(),
         ]);
+    }
+
+    // Pro for one device, from its page: a month, a year, or no end. Granting again replaces the old grant.
+    public function grantPro(Request $request, string $id): RedirectResponse
+    {
+        abort_unless(Str::isUuid($id), 404);
+        $data = $request->validate(['months' => ['required', 'in:1,12,0'], 'note' => ['nullable', 'string', 'max:120']]);
+        DB::table('pro_grants')->updateOrInsert(['device_id' => strtolower($id)], [
+            'until' => $data['months'] === '0' ? null : now()->addMonths((int) $data['months']),
+            'note' => $data['note'] ?? null,
+            'created_at' => now(),
+        ]);
+
+        return redirect()->route('admin.device', ['id' => strtolower($id)]);
+    }
+
+    public function revokePro(string $id): RedirectResponse
+    {
+        abort_unless(Str::isUuid($id), 404);
+        DB::table('pro_grants')->where('device_id', strtolower($id))->delete();
+
+        return redirect()->route('admin.device', ['id' => strtolower($id)]);
     }
 
     public function deleteDevice(string $id): RedirectResponse

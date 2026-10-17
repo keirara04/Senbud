@@ -17,7 +17,7 @@ return [
 
     'paths' => ['v1/*'],
 
-    'allowed_methods' => ['POST'],
+    'allowed_methods' => ['GET', 'POST'],
 
     // Exact origin, port included, no trailing slash.
     'allowed_origins' => [env('WEB_ORIGIN', 'http://localhost:3000'), env('APP_ORIGIN', 'http://localhost:8081')],

@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(AdminGate::class)->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('admin');
     Route::get('/devices/{id?}', [AdminController::class, 'device'])->name('admin.device');
+    Route::post('/devices/{id}/pro', [AdminController::class, 'grantPro'])->name('admin.device.pro');
+    Route::post('/devices/{id}/pro/revoke', [AdminController::class, 'revokePro'])->name('admin.device.pro.revoke');
     Route::post('/devices/{id}/delete', [AdminController::class, 'deleteDevice'])->name('admin.device.delete');
     Route::get('/waitlist', [AdminController::class, 'waitlist'])->name('admin.waitlist');
     Route::get('/waitlist.csv', [AdminController::class, 'waitlistCsv'])->name('admin.waitlist.csv');

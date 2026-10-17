@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Providers\AppServiceProvider;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -11,6 +12,9 @@ use Tests\TestCase;
 
 class ReceiptTest extends TestCase
 {
+    // The web allowance checks Pro grants (pro_grants).
+    use RefreshDatabase;
+
     private const DEVICE = '0b9c2a5e-7d1f-4c3a-9e8b-1f2d3c4b5a69';
 
     protected function setUp(): void
@@ -149,7 +153,7 @@ class ReceiptTest extends TestCase
         config(['app.app_origin' => 'https://app.senbud.com', 'cors.allowed_origins' => ['https://senbud.com', 'https://app.senbud.com']]);
         self::fakeModel(['merchant' => null, 'date' => null, 'currency' => null, 'items' => [], 'total' => null]);
         $web = ['Origin' => 'https://app.senbud.com'];
-        for ($i = 0; $i < \App\Providers\AppServiceProvider::WEB_FREE_RECEIPTS; $i++) {
+        for ($i = 0; $i < AppServiceProvider::WEB_FREE_RECEIPTS; $i++) {
             $this->send([], $web)->assertOk()->assertHeader('Access-Control-Allow-Origin', 'https://app.senbud.com');
         }
         $limited = $this->send([], $web)->assertStatus(429);

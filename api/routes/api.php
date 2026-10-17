@@ -3,6 +3,7 @@
 use App\Http\Controllers\AskController;
 use App\Http\Controllers\CaptionController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\ProController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\WaitlistController;
 use Illuminate\Support\Facades\Route;
@@ -14,3 +15,4 @@ Route::post('/agent/receipt', ReceiptController::class)->middleware('throttle:re
 Route::post('/agent/ask', AskController::class)->middleware('throttle:ask');
 Route::post('/agent/caption', CaptionController::class)->middleware('throttle:caption');
 Route::post('/events', EventController::class)->middleware('throttle:events');
+Route::get('/pro', ProController::class)->middleware('throttle:events');

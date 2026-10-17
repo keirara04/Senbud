@@ -39,6 +39,19 @@ const MESSAGES: Record<number, string> = {
   503: 'Receipt reading isn’t available right now.',
 };
 
+// Pro granted from /admin for this device: when it ends ('9999' for no end) or null for none. Undefined
+// when the API can't be reached, so the cached grant stays.
+export async function fetchProGrant(deviceId: string): Promise<string | null | undefined> {
+  try {
+    const res = await fetch(`${API_URL}/v1/pro`, { headers: headers(deviceId) });
+    if (!res.ok) return undefined;
+    const { pro, until } = (await res.json()) as { pro: boolean; until: string | null };
+    return pro ? (until ?? '9999') : null;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function readReceipt(base64: string, currency: string | undefined, deviceId: string): Promise<Receipt> {
   const abort = new AbortController();
   const timer = setTimeout(() => abort.abort(), 60_000);

@@ -32,7 +32,7 @@
   .label { font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--dim); }
   .caption { font-size: 14px; line-height: 19px; color: var(--dim); }
   form { display: flex; gap: 8px; flex: 0 1 460px; }
-  input { min-height: 48px; min-width: 0; flex: 1; padding: 0 16px; border: 0; border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; }
+  input, select { min-height: 48px; min-width: 0; flex: 1; padding: 0 16px; border: 0; border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; }
   button { min-height: 48px; padding: 0 20px; border: 0; border-radius: 8px; background: var(--accent); color: var(--bg); font: inherit; font-weight: 600; cursor: pointer; }
   /* Full-width cards on top, then a masonry of the rest: each card keeps its own height and the next
      one slots in under it, so no half-empty cards or holes. Order runs down each column. */
@@ -65,7 +65,9 @@
   .heat { text-align: center; border-radius: 4px; }
   td.heat { padding: 8px 4px; }
   .muted { color: var(--dim); }
-  .card input { background: var(--sunken); }
+  .card input, .card select { background: var(--sunken); }
+  .grant { flex-wrap: wrap; margin-top: 12px; }
+  .grant select { flex: 0 0 auto; }
   td.rank, th.rank { text-align: right; padding-right: 12px; font-variant-numeric: tabular-nums; }
 </style>
 </head>

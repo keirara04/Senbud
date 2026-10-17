@@ -66,6 +66,9 @@ const MIGRATIONS = [
   `CREATE TABLE carryovers (period_start TEXT PRIMARY KEY, cents INTEGER NOT NULL);`,
   // 14: a category limit's own period (Pro): 'week' (from Monday) or 'month' (from the 1st). NULL follows the budget.
   `ALTER TABLE category_limits ADD COLUMN period TEXT;`,
+  // 15: Pro granted from the API's /admin by Support ID, cached so it works offline: when it ends (ISO),
+  // '9999' for no end, NULL for none. `pro` stays RevenueCat's alone. Not in backups: a grant is per device.
+  `ALTER TABLE app ADD COLUMN pro_until TEXT;`,
 ];
 
 export async function migrate(db: SQLiteDatabase) {
@@ -212,16 +215,18 @@ export async function importAll(db: SQLiteDatabase, data: unknown) {
 }
 
 export type Theme = 'system' | 'light' | 'dark';
-export type AppState = { deviceId: string; aiConsentAt: string | null; pro: boolean; hourlyRateCents: number | null; aiEnabled: boolean; theme: Theme; periodHandled: IsoDate | null; reminders: ReminderKind[]; analytics: boolean };
+export type AppState = { deviceId: string; aiConsentAt: string | null; pro: boolean; hourlyRateCents: number | null; aiEnabled: boolean; theme: Theme; periodHandled: IsoDate | null; reminders: ReminderKind[]; analytics: boolean; proGranted: boolean };
 
 export async function loadApp(db: SQLiteDatabase): Promise<AppState> {
-  const r = await db.getFirstAsync<{ device_id: string; ai_consent_at: string | null; pro: number; hourly_rate_cents: number | null; ai_enabled: number; theme: Theme; period_handled: string | null; reminders: string; analytics: number }>('SELECT * FROM app');
+  const r = await db.getFirstAsync<{ device_id: string; ai_consent_at: string | null; pro: number; hourly_rate_cents: number | null; ai_enabled: number; theme: Theme; period_handled: string | null; reminders: string; analytics: number; pro_until: string | null }>('SELECT * FROM app');
   if (!r) throw new Error('app row missing; migrations did not run');
-  return { deviceId: r.device_id, aiConsentAt: r.ai_consent_at, pro: r.pro === 1, hourlyRateCents: r.hourly_rate_cents, aiEnabled: r.ai_enabled === 1, theme: r.theme, periodHandled: r.period_handled, reminders: r.reminders ? (r.reminders.split(',') as ReminderKind[]) : [], analytics: r.analytics === 1 };
+  const proGranted = r.pro_until !== null && r.pro_until > new Date().toISOString();
+  return { deviceId: r.device_id, aiConsentAt: r.ai_consent_at, pro: r.pro === 1 || proGranted, proGranted, hourlyRateCents: r.hourly_rate_cents, aiEnabled: r.ai_enabled === 1, theme: r.theme, periodHandled: r.period_handled, reminders: r.reminders ? (r.reminders.split(',') as ReminderKind[]) : [], analytics: r.analytics === 1 };
 }
 
 export const giveAiConsent = (db: SQLiteDatabase) => db.runAsync('UPDATE app SET ai_consent_at = ?', new Date().toISOString());
 export const setPro = (db: SQLiteDatabase, pro: boolean) => db.runAsync('UPDATE app SET pro = ?', pro ? 1 : 0);
+export const setProGrant = (db: SQLiteDatabase, until: string | null) => db.runAsync('UPDATE app SET pro_until = ?', until);
 export const setHourlyRate = (db: SQLiteDatabase, cents: number | null) => db.runAsync('UPDATE app SET hourly_rate_cents = ?', cents);
 // Turning AI off also withdraws consent, so turning it back on shows the "Bud uses AI" sheet again.
 export const setAiEnabled = (db: SQLiteDatabase, on: boolean) =>

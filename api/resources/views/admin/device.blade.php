@@ -1,6 +1,36 @@
 @extends('admin.layout')
 @section('title', 'Device')
 @section('body')
+@php($active = $grant && (! $grant->until || \Illuminate\Support\Carbon::parse($grant->until)->isFuture()))
+<div class="stack">
+<section class="card">
+  <h2>Pro</h2>
+  <p class="caption" style="margin: 0">
+    @if ($active)
+      <strong class="good">Granted</strong> {{ $grant->until ? 'until '.\Illuminate\Support\Carbon::parse($grant->until)->format('j M Y') : 'with no end date' }}{{ $grant->note ? '. '.$grant->note : '' }}.
+    @elseif ($grant)
+      The grant ended {{ \Illuminate\Support\Carbon::parse($grant->until)->format('j M Y') }}.
+    @else
+      No grant. Bought Pro shows in RevenueCat, not here.
+    @endif
+    The app picks a change up the next time it opens.
+  </p>
+  <form method="post" action="{{ route('admin.device.pro', ['id' => $id]) }}" class="grant">
+    <select name="months" aria-label="How long">
+      <option value="1">1 month</option>
+      <option value="12">1 year</option>
+      <option value="0">No end date</option>
+    </select>
+    <input name="note" maxlength="120" placeholder="Note, like Beta tester" aria-label="Note">
+    <button type="submit">{{ $active ? 'Grant again' : 'Grant Pro' }}</button>
+  </form>
+  @if ($active)
+    <form method="post" action="{{ route('admin.device.pro.revoke', ['id' => $id]) }}" onsubmit="return confirm('Take Pro away from this device?')" style="margin-top: 8px">
+      <button type="submit" class="danger">Revoke Pro</button>
+    </form>
+  @endif
+</section>
+
 <section class="card">
   <div class="label">Support ID</div>
   <h2><code>{{ $id }}</code></h2>
@@ -26,4 +56,5 @@
     </form>
   @endif
 </section>
+</div>
 @endsection
