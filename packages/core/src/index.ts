@@ -1,5 +1,6 @@
 // Senbud's shared money logic, used by web and mobile. Pure functions: no AI, no network, no platform APIs.
 export * from "./budget";
+export * from "./csv";
 export * from "./dates";
 export * from "./examples";
 export * from "./iou";
@@ -10,6 +11,7 @@ export * from "./subscriptions";
 export type * from "./types";
 
 export type Category = "Food" | "Transport" | "Treat" | "Groceries" | "Subscription" | "Other";
+export const CATEGORY_NAMES: Category[] = ["Food", "Transport", "Treat", "Groceries", "Subscription", "Other"];
 
 export type Item = { label: string; amount: number; category: Category };
 
@@ -17,11 +19,13 @@ export type Item = { label: string; amount: number; category: Category };
 const RULES: [RegExp, Category][] = (
   [
     // The local examples in mobile/src/currencies.ts must land in the right category here too.
-    ["bubble ?tea|boba|coffee|kopi|kopi susu|kape|ca phe|cha yen|milk ?tea|karak|chai|americano|flat white|latte|starbucks|cake|ice ?cream|dessert|burger|big ?mac|fries|snack", "Treat"],
+    // Delivery first, so "GRAB*FOOD" on a bank statement is food, not a ride.
+    ["grab\\W?food|food ?panda|deliveroo|uber ?eats|doordash|shopee ?food|swiggy|zomato", "Food"],
+    ["bubble ?tea|boba|coffee|tealive|chatime|gong ?cha|tiger sugar|koi|zus|tim hortons|dunkin|kopi|kopi susu|kape|ca phe|cha yen|milk ?tea|karak|chai|americano|flat white|latte|starbucks|cake|ice ?cream|dessert|burger|big ?mac|fries|snack", "Treat"],
     ["netflix|spotify|youtube|icloud|disney|prime|gym|chatgpt|subscription", "Subscription"],
     ["grab|gojek|dart|didi|careem|uber|lyft|taxi|bus|train|tram|tube|mtr|mrt|lrt|metro|auto|rickshaw|petrol|gas|parking|fare", "Transport"],
     ["grocer(?:y|ies)?|market|tesco|walmart|aldi|lotus|mydin|trader joe|costco", "Groceries"],
-    ["lunch|dinner|breakfast|brunch|food|nasi|mee|pizza|sushi|ramen|mamak|meal|chipotle|kimbap|gimbap|kimchi|bibimbap|pho|banh mi|onigiri|noodle|biryani|thali|shawarma|poutine|pie|sandwich|hot ?dog|chicken rice|silog|pad kra pao|baozi|sausage roll", "Food"],
+    ["lunch|dinner|breakfast|brunch|food|kopitiam|hawker|restaurant|cafe|mcdonald'?s?|mcd|kfc|subway|nasi|mee|pizza|sushi|ramen|mamak|meal|chipotle|kimbap|gimbap|kimchi|bibimbap|pho|banh mi|onigiri|noodle|biryani|thali|shawarma|poutine|pie|sandwich|hot ?dog|chicken rice|silog|pad kra pao|baozi|sausage roll", "Food"],
   ] as const
 ).map(([words, cat]) => [new RegExp(`\\b(?:${words})(?:e?s)?\\b`), cat]);
 
@@ -124,7 +128,11 @@ export type Intent =
   | { kind: "bills" }
   | { kind: "daysLeft" }
   | { kind: "compare" }
+  | { kind: "budget"; amount?: number; period?: "week" | "month" | "until"; category?: Category }
   | { kind: "ask" };
+
+// "I only want to spend 100 this week", "set my budget to 1000 a month", "200 on food this month".
+const BUDGET = /\b(?:want|wanna|going|trying|planning|plan) to spend\b|\bspend (?:only|at most|max(?:imum)?|no more than|under|less than)\b|\b(?:set|change|make|put|update|move|lower|raise) (?:my |the )?(?:overall |weekly |monthly )?budget\b|\bbudget (?:is|to|of|at|for|=)|\bnew budget\b|\blimit (?:myself )?to\b/i;
 
 const article = (s: string) => s.replace(/^(a|an|the|my)\s+/i, "").replace(/^\p{L}/u, (c) => c.toUpperCase());
 // Lines that start like a question or a request go to Bud, never to quick add ("who won the cup in
@@ -144,6 +152,17 @@ export function readIntent(text: string, currency?: string): Intent {
     const people = after.split(/,|\band\b|&/i).map((p) => p.replace(/[^\p{L}\s'-]/gu, "").trim()).filter(Boolean);
     const [item] = parseSpending(before.replace(/\bsplit\b/gi, " "), currency);
     return { kind: "split", amount: item?.amount, label: item ? article(item.label) : "", people: people.map(article) };
+  }
+  // "what's my budget for the week?" is a question, not a new budget: questions need an amount.
+  const budget = BUDGET.test(line);
+  const [item] = budget ? parseSpending(line, currency) : [];
+  if (budget && (item || !isQuestion(line))) {
+    const period = /\b(?:until|till|til) pay ?day\b|\bpay period\b/i.test(line) ? "until" : /\bweek(?:ly)?\b|\/ ?wk\b/i.test(line) ? "week" : /\bmonth(?:ly)?\b/i.test(line) ? "month" : undefined;
+    // "on food" or "for treats" makes it a category limit; "on bubble tea" is a place, not a budget, so Bud asks.
+    const on = line.match(/\b(?:on|for) (?:my |the )?([\p{L}]+(?: [\p{L}]+)?)/iu)?.[1].toLowerCase();
+    const category = on ? CATEGORY_NAMES.find((c) => [c.toLowerCase(), `${c.toLowerCase()}s`].includes(on.split(" ")[0])) : undefined;
+    if (on && !category && !/^(?:a|the|this|next|each|every|per) |^(?:week|month|now|today|pay)/.test(on)) return { kind: "ask" };
+    return { kind: "budget", amount: item?.amount, period, category };
   }
   // Questions Bud answers from the phone's own numbers. Before "month", so "how much on food" isn't a
   // month summary; "how much is left" stays one.

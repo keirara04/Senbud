@@ -334,6 +334,7 @@ Today's Setup asks five things on one page: period, budget, rent, due day and cu
 - **Detected subscription (Pro):** a card that asks first: "Netflix charged RM 17 on 3 Sep and 3 Oct. Is it a subscription?" with "Not really" / "Yes, track it".
 - **Wrapped year-end (Pro):** the same story over a year: spent, top category, kept or over ("New year, fresh start"), top place, "Your lightest month" (the finished month that spent least, "Do that again."), treats this year, hours of work, best streak. Budgets' Wrapped list starts with "2026 so far" ("Pro" for free users).
 - **Wrapped AI captions:** with AI on and agreed to, one AI line joins each page under the stat (numbers only; the rule-written lines stay as the fallback and are replaced only where a page already had one).
+- **Import spending (CSV):** a row under "Export spending (CSV)". Pick a file, then a confirm: "Add 3 expenses? 13 Oct 2026 to 16 Oct 2026, amounts in SGD. 1 skipped (money in, or not readable). Categories are a best guess." Same file again: "Nothing new to add. 3 already here." No columns found: "Couldn't read that file" with what Senbud looks for.
 - **Category limit sheet:** category, "Resets" `Segmented` With budget / Weekly / Monthly (Weekly and Monthly are Pro and open the paywall for free users), then "Limit each week" (or "Limit for this period"). A row with its own period says "SGD 6.50 of SGD 20 this week".
 - **Budget settings rows:** Period, Until payday (`ProLock`, free users only), Past recaps.
 - **Until payday (Pro, built 17 Oct 2026):** the Budget sheet (`edit-budget`) has a `Segmented` Week / Month / Until payday (for free users, choosing Until payday opens the paywall; a lapsed Pro user keeps an until budget they already have). Until payday asks "How much do you have until payday?" and "Payday on the" with the rent `DayStrip`; payday is the next such day after today. The period reads "until 27 Oct" (Settings, Budgets: "UNTIL 27 OCT · PAYDAY") and "pay period" in sentences ("this pay period"). Once payday passes, the period repeats at the same length and Home shows "Payday was 27 Oct. When's the next one?" with `secondary` "Set next payday". Re-saving keeps the current period's start, so spending since the last payday still counts. Onboarding keeps Week / Month only (it comes before any purchase).
@@ -392,7 +393,7 @@ Today's Setup asks five things on one page: period, budget, rent, due day and cu
      - The receipt summary ("Restoran Ali Maju · RM 31.30 · 5 items from your photo").
      - "Who was there?" as 48 pt name chips plus "+ Add".
      - "Who paid?" as `Segmented`.
-     - "How to split it?" as two radio cards: By item (Pro) or Evenly ("About RM 10.43 each"). Evenly skips step 2.
+     - "How to split it?" as two radio cards: By item or Evenly ("About RM 10.43 each"). Evenly skips step 2.
   2. **Who had what.**
      - `PersonTabs` across the top, one per person, with running totals.
      - Pick a person, then tap their items on the `ReceiptCard`. Each item is a full-width 52 pt `ClaimRow` with the owners' initials and a checkbox for the selected person.
@@ -611,10 +612,10 @@ These are additions to `ui.tsx` for the screens above. Each takes colours from `
 
 1. **Friends hero in highlighter both ways?** Should the Friends hero use highlighter in both directions (4.5), instead of good/bad colour?
 2. **Treats Marker:** should the Treats Marker be dropped? (Dark `primary` and `accent` are settled: both periwinkle, 16 and 17 Oct 2026.)
-3. **Category limits free or Pro?** Spec 4.2 says they "exist already"; spec 8 makes "multiple budgets" Pro.
+3. **Category limits free or Pro?** Decided 18 Oct 2026: free. Only a limit with its own week or month is Pro.
 4. **Nudges inside their cards?** Should rent and pace nudges live inside their own cards on Home (4.2)?
 5. **Share image link:** does the share image get a URL or handle? The domain isn't settled (spec 11).
-6. **Are by-item splits and full Wrapped still Pro?** Spec 8 says yes, and the concepts lock them. The paywall the user chose lists only receipts, the unlimited assistant and subscription reminders.
+6. **Are by-item splits and full Wrapped still Pro?** Decided 18 Oct 2026: full Wrapped stays Pro and the paywall lists it ("Your full Wrapped"); by-item splits are free.
 
 ## 5. Voice
 

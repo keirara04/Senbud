@@ -23,12 +23,12 @@ Ask each one when its item comes up, not before.
 | Decision | Blocks |
 |---|---|
 | What "multiple budgets" means | Decided 17 Oct 2026: per-category periods |
-| Category limits free or Pro (design 4.11 question 3) | Nothing built changes; only the paywall copy |
-| Are by-item splits and full Wrapped still Pro (design 4.11 question 6) | 4.4 Year-end Wrapped scope |
+| Category limits free or Pro (design 4.11 question 3) | Decided 18 Oct 2026: free. A limit with its own week or month stays Pro |
+| Are by-item splits and full Wrapped still Pro (design 4.11 question 6) | Decided 18 Oct 2026: full Wrapped stays Pro (now on the paywall); by-item splits are free. By item still needs a receipt photo, which is Pro, to list the items |
 | AI through your server or users' own keys (spec 11) | Decided 17 Oct 2026: your server |
-| Is the name "Senbud" free (spec 11) | Store listings, domain |
+| Is the name "Senbud" free (spec 11) | Decided 18 Oct 2026: store name "Senbud - Budget Tracker" ("Senbud" alone is taken in the store). A web search found no other app called Senbud; a trademark search is still to do |
 
-## 3. Phase 1: Reminders (built 17 October 2026, except the pace warning)
+## 3. Phase 1: Reminders (built 17 October 2026, pace warning 18 October)
 
 **Why first:** the paywall sells "subscription reminders", and rent due, renewals and the pace warning only show inside the app today. A reminder app that can't remind is the biggest gap.
 
@@ -43,7 +43,7 @@ Ask each one when its item comes up, not before.
 - **Built:** `packages/core/src/reminders.ts` (`reminderSchedule`, tested), `mobile/src/reminders.ts` (`allowReminders`, `syncReminders`: cancel all, then schedule up to 48 for the next two months, under iOS's limit of 64), migration 10 (`app.reminders`, not in backups since permission belongs to the phone), the Settings group, and the `expo-notifications` plugin with remote notifications off. `syncReminders` runs on every `useMoney` reload, after each switch and after Erase.
 - **Still to do:**
   - **Check on a phone.** It needs a new development build (`npx expo run:ios` / `run:android` or `eas build --profile development`), because `expo-notifications` is native. Turn a switch on, set rent due tomorrow, and see the 7 pm notice.
-  - **Pace warning.** It can't be scheduled ahead (tomorrow's spending isn't known). Smallest honest version: when a sync finds `aheadOfPace` true today and none was sent today, schedule one for this evening and store the date. Size S.
+  - **Pace warning (built 18 October 2026).** A "Spending ahead of pace" switch. `reminderSchedule` takes this period's spending and budget and, when spending runs ahead of pace, schedules one notice for 6 pm today ("SGD 70 of SGD 100 gone and it's only Wednesday", or "SGD 8 left. Cook tonight?"). Quiet when on pace (even close to the limit at the end of a period) or already over. No stored date: spending only changes in the app, every change reschedules, and a past 6 pm is skipped, so it's at most one a day and right as of the last add. Tested in core; not checked on a phone.
 
 ## 4. Phase 2 onwards
 
@@ -95,13 +95,22 @@ All four are in. Bud's adds are now saved with `source: 'bud'` (older ones stay 
 - **Year-end edition (Pro):** the same story pager over a year: total, top category and place, treats, best month, hours of work. **Size:** M. **Files:** `packages/core/src/recap.ts`, `wrapped.tsx`, `share.tsx`.
 - **AI captions:** captions are rule-written today. Send only the numbers (never labels) through `/agent/ask`, and add them to the data forms (`docs/senbud-store-data-forms.md`) and "What gets sent". **Depends on:** the proxy decision. **Size:** M.
 
-### 4.5 CSV import
+### 4.5 CSV import (built 17 October 2026)
+
+- Settings, Your data: "Import spending (CSV)". Core's `fromCsv` (`packages/core/src/csv.ts`, tested) reads Senbud's own export and bank statements: columns by header name (date; description, details, merchant...; amount, or debit / money out), commas or semicolons, quotes, a BOM, "RM 1,234.50", "(8.40)", "12,50". Only money out comes in: with a signed amount column, positives are income and skipped; with debit and credit columns, only debits. Day or month first is settled by the file when any day is over 12, otherwise by the locale (month first only for en-US).
+- Rows already there (same date, amount and label) are skipped, so importing a statement twice adds nothing. A confirm shows the count, date range, currency and what was skipped first. Imports save as `source: 'csv'`; categories come from the core rules, which now know delivery apps ("GRAB*FOOD" is Food), bubble tea chains, kopitiams and fast food.
+- Checked in the browser with a bank-style file: 3 added, the salary skipped, a second import "Nothing new to add". Not checked: the native file picker.
+- Later: bank presets, and a currency column that differs from the profile (amounts are taken as the profile's currency today).
+
 
 - **What:** import a spending CSV. Reuse the backup file picker (`backup.ts`) and the `importAll` transaction shape; labels go through core's category rules. Bank presets (per-bank column maps) come after. **Size:** M. **Free.**
 
-### 4.6 Budget by chat
+### 4.6 Budget by chat (built 17 October 2026)
 
-- **What:** Bud understands "I only want to spend 100 this week" (spec 4.2): a new `readIntent` kind in core, and a Bud slip that shows the change with a confirm button before saving. **Size:** M. **Free.**
+- Core's `readIntent` has a `budget` kind: "I only want to spend 100 this week", "set my budget to 1,200 a month", "budget is 600 until payday", "change my budget to 300" (keeps the period). "200 on food this month" or "no more than 30 on treats" is a category limit. "20 on bubble tea" names a place, not a category, so it goes to Bud as a question and never becomes an expense. Tested.
+- Bud prints a "New budget?" slip with Now and New, and what that leaves for the rest of the period, then Keep it or Set it. Nothing saves before Set it; Undo puts it back. Home sends these lines to Bud too.
+- Free for a week or a month. Until payday is Pro and needs a payday, so Bud opens the Budget sheet when the budget isn't until payday already. A category limit with its own week or month is Pro; free limits reset with the budget, and the slip says so.
+- Checked in the browser: week, month with Undo, a treat limit, a place, and with Pro until payday and a weekly Transport limit on an until budget.
 
 ### 4.7 Later or parked
 

@@ -24,6 +24,7 @@ const BENEFITS: [IconName, string, string][] = [
   [{ ios: 'camera.fill', android: 'photo_camera' }, 'Snap receipts', 'Take a photo and it’s added and sorted.'],
   [{ ios: 'bubble.left.fill', android: 'chat' }, 'Unlimited AI assistant', 'Ask “can I afford it?” as often as you like.'],
   [{ ios: 'bell.fill', android: 'notifications' }, 'Subscription reminders', 'See what renews before you’re charged.'],
+  [{ ios: 'sparkles', android: 'auto_awesome' }, 'Your full Wrapped', 'Your year as a story, plus top place, treats and best streak.'],
 ];
 
 const PERIOD: Partial<Record<PACKAGE_TYPE, { name: string; per: string }>> = {
@@ -168,12 +169,12 @@ export default function ProScreen() {
         <T variant="title" tone="onPanel" accessibilityRole="header">
           Let Bud do the typing.
         </T>
-        <View accessible accessibilityLabel={`Senbud Pro includes snap receipts, an unlimited assistant and renewal alerts${perDay ? `. Yearly is about ${perDay} a day` : ''}.`}>
+        <View accessible accessibilityLabel={`Senbud Pro includes snap receipts, an unlimited assistant, renewal alerts and your full Wrapped${perDay ? `. Yearly is about ${perDay} a day` : ''}.`}>
           <PrintingBud face="yay" budSize={72} width={260}>
             <T variant="caption" style={{ color: palette.inkDim, fontFamily: MONO }}>
               SENBUD PRO · RECEIPT
             </T>
-            {['Snap receipts', 'Unlimited Bud', 'Renewal alerts'].map((l) => (
+            {['Snap receipts', 'Unlimited Bud', 'Renewal alerts', 'Full Wrapped'].map((l) => (
               <View key={l} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <T style={ink}>{l}</T>
                 <T style={ink}>included</T>

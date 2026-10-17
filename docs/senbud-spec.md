@@ -230,9 +230,9 @@ New stores on top of the existing transactions and category budgets:
 | Free | Pro |
 |---|---|
 | Manual entry + quick text | Photo/screenshot AI capture |
-| 1 overall budget + reminders | Multiple budgets, until-payday, carry-over |
-| Rent countdown, safe to spend, Can I afford it, hours of work | Receipt splitting by item |
-| Manual splits + IOUs | Subscription detection + renewal nudges |
+| 1 overall budget, category limits + reminders | Until-payday, carry-over |
+| Rent countdown, safe to spend, Can I afford it, hours of work | Category limits with their own week or month |
+| Splits (evenly or by item) + IOUs | Subscription detection + renewal nudges |
 | Treat jar | Full Wrapped + year-end edition |
 | Basic monthly Wrapped | Encrypted sync between phones, with optional Sign in with Apple or Google (later) |
 
