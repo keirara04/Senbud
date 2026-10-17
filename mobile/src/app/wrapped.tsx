@@ -8,6 +8,7 @@ import { Platform, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ReceiptCard } from '@/art';
+import { mealExample, useCurrency } from '@/currencies';
 import { today } from '@/db';
 import { useWrapped } from '@/money';
 import { BarChart, Button, MONO, StoryPager, T, useTheme } from '@/ui';
@@ -30,6 +31,7 @@ export default function Wrapped() {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const { month } = useLocalSearchParams<{ month: string }>();
+  const currency = useCurrency();
   // On web the URL can be opened bare; fall back to this month.
   const r = useWrapped(month ?? today().slice(0, 7));
   if (!r) return <View style={{ flex: 1, backgroundColor: t.panel }} />;
@@ -46,7 +48,7 @@ export default function Wrapped() {
           <T variant="title" tone="onPanel">
             Nothing logged in {r.month}.
           </T>
-          <T tone="onPanelDim">Type “lunch 12” on Home and next month’s Wrapped fills itself in.</T>
+          <T tone="onPanelDim">Type “{mealExample(currency)}” on Home and next month’s Wrapped fills itself in.</T>
         </>
       ),
     });

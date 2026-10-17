@@ -48,7 +48,7 @@ There are three layers. Screens use only the top two, through `useTheme()` and t
 | `text` | `#1a1c2e` | `#eef0ff` | Body text |
 | `textDim` | `#565b75` | `#a8b0d8` | Secondary text, labels |
 | `line` | ink 12% | white 10% | Borders, dividers |
-| `accent` / `accentPressed` / `onAccent` | cobalt / cobaltDeep / `#f4f6ff` | periwinkle `#c9d2ff` / `#b3bff5` / ink | Links, selected states. Dark is periwinkle, so the hero number and the `highlight` button stay the only yellow (17 Oct 2026). The web's `globals.css` still uses highlighter. |
+| `accent` / `accentPressed` / `onAccent` | cobalt / cobaltDeep / `#f4f6ff` | periwinkle `#c9d2ff` / `#b3bff5` / ink | Links, selected states. Dark is periwinkle, so the hero number and the `highlight` button stay the only yellow (17 Oct 2026). The web's `globals.css` matches, with `--tab-active` for the current tab. |
 | `tabActive` | cobalt | highlighter `#eeff5a` | The current tab's icon and label. Yellow in dark on purpose: the clearest "you are here" cue, even while a screen is still drawing (17 Oct 2026). The one yellow allowed outside the key number. |
 | `placeholder` | `#878ca3` | `#666e9e` | Input placeholder, dimmer than `textDim` so it never reads as a filled-in value |
 | `primary` / `primaryPressed` / `onPrimary` | cobalt / cobaltDeep / `#f4f6ff` | periwinkle `#c9d2ff` / `#b3bff5` / ink | Primary button fill. Its own token so in dark mode the one `highlight` button stays the only yellow (decided 16 Oct 2026). |
@@ -274,6 +274,7 @@ Today's Setup asks five things on one page: period, budget, rent, due day and cu
 ### 4.1 Navigation (all screens)
 
 - **Tab bar with five slots:** Home, Budgets, **Bud**, Friends, Treats (decided 16 Oct 2026).
+- **Current tab:** `tabActive` colour (cobalt in light, highlighter in dark), a soft pill in that colour behind the icon, and the filled SF Symbol on iOS. More than colour alone, so it reads without colour vision and while a slow screen is still drawing (17 Oct 2026).
   - The four sides use SF Symbols (`house`, `chart.bar`, `person.2`, `gift`) and Material icons on Android. Tint is `accent`.
   - Bud (`BudTab`) is raised in the middle and opens the assistant sheet over the current screen; it doesn't switch tabs.
   - It's built with Expo Router's JS `Tabs` and a custom `tabBarButton` for the centre, because native tabs can't raise a button. That means we own Dynamic Type and safe-area handling for the bar.

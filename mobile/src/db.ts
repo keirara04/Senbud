@@ -115,6 +115,17 @@ export async function addTransactions(db: SQLiteDatabase, txns: Transaction[]): 
   return ids;
 }
 
+// Undo after a delete: puts the rows back with their own ids, so anything that pointed at them still does.
+export async function restoreTransactions(db: SQLiteDatabase, txns: Txn[]) {
+  await db.withTransactionAsync(async () => {
+    for (const t of txns)
+      await db.runAsync(
+        'INSERT OR IGNORE INTO transactions (id, date, cents, label, category, source) VALUES (?, ?, ?, ?, ?, ?)',
+        t.id, t.date, t.cents, t.label, t.category, t.source ?? 'manual',
+      );
+  });
+}
+
 export const deleteTransactions = (db: SQLiteDatabase, ids: number[]) =>
   db.runAsync(`DELETE FROM transactions WHERE id IN (${ids.map(() => '?').join(',')})`, ...ids);
 

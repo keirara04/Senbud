@@ -95,11 +95,12 @@ function addMorale(s: State, delta: number) {
   if (s.morale !== before) s.log.push({ kind: "morale", delta: s.morale - before });
 }
 
+// Pays what you can: gold never goes below $0.
 function spend(s: State, m: MonsterId, amount: number) {
-  amount = Math.min(amount, Math.max(0, s.gold)); // Gold never goes below $0.
-  s.gold -= amount;
-  s.spent += amount;
-  s.log.push({ kind: "pay", monster: m, amount });
+  const paid = Math.min(amount, Math.max(0, s.gold));
+  s.gold -= paid;
+  s.spent += paid;
+  s.log.push({ kind: "pay", monster: m, amount: paid });
 }
 
 function finish(s: State, ending: EndingId) {
@@ -267,6 +268,14 @@ export function act(prev: State, a: Action): State {
   if (a.type === "pay") {
     if (e.monster === "rentDragon" && s.gold < e.cost) {
       finish(s, "slainByRent");
+      return s;
+    }
+    // A craving is a want, not a bill: short of its price you walk away, which is a flee (morale -1),
+    // not a free $0 "payment" that would beat fleeing.
+    if (e.monster === "cravingWraith" && s.gold < e.cost) {
+      s.log.push({ kind: "fled", monster: e.monster });
+      addMorale(s, -1);
+      clear(s);
       return s;
     }
     spend(s, e.monster, e.cost);

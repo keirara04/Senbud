@@ -96,6 +96,16 @@ describe("gold", () => {
     expect(after.spent).toBe(3);
     expect(after.log).toContainEqual({ kind: "pay", monster: "textbookTroll", amount: 3 });
   });
+
+  it("treats a craving you can't afford as walking away", () => {
+    const broke = facing(newGame("scholar", 1), "cravingWraith", 6, { floor: 2, gold: 0 });
+    const after = act(broke, { type: "pay" });
+    expect(after.treats).toBe(broke.treats);
+    expect(after.morale).toBe(broke.morale - 1); // walking away costs what fleeing costs
+    expect(after.log).toContainEqual({ kind: "fled", monster: "cravingWraith" });
+    const paid = act(facing(newGame("scholar", 1), "cravingWraith", 6, { floor: 2, gold: 20 }), { type: "pay" });
+    expect(paid.treats).toBe(1);
+  });
 });
 
 describe("classes", () => {

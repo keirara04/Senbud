@@ -1,12 +1,21 @@
 import { router, Tabs } from 'expo-router';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 
 import { useLeftoverCheck } from '@/money';
 import { BudTab, Icon, type IconName, useTheme } from '@/ui';
 
+// The current tab gets more than a colour, so it still reads without colour vision and while a slow
+// screen is drawing: a soft pill in the tab colour behind the icon, and the filled symbol on iOS
+// (Android and web draw Material Symbols from an outline-only font, so the pill is their cue).
 const icon = (name: IconName) =>
-  function TabIcon({ color }: { color: unknown }) {
-    return <Icon name={name} color={typeof color === 'string' ? color : undefined} />;
+  function TabIcon({ color, focused }: { color: unknown; focused: boolean }) {
+    const t = useTheme();
+    const tint = typeof color === 'string' ? color : undefined;
+    return (
+      <View style={{ width: 56, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: focused ? `${t.tabActive}2e` : 'transparent' }}>
+        <Icon name={focused ? { ...name, ios: `${name.ios}.fill` as IconName['ios'] } : name} color={tint} />
+      </View>
+    );
   };
 
 // Five slots (design system 4.1): four tabs plus Bud raised in the middle. Bud opens the assistant

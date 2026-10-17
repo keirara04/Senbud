@@ -25,7 +25,7 @@ export function narrate(e: Event): string | null {
     case "appear":
       return `${MONSTERS[e.monster].name} appears: “${MONSTERS[e.monster].line}”`;
     case "pay":
-      return `You paid ${money(e.amount)} to the ${MONSTERS[e.monster].name}.`;
+      return e.amount ? `You paid ${money(e.amount)} to the ${MONSTERS[e.monster].name}.` : `Your pockets are empty. The ${MONSTERS[e.monster].name} gets nothing.`;
     case "roll":
       return `Rolled ${e.d20} (total ${e.total} vs ${e.dc}): ${e.success ? "resisted!" : "failed."}`;
     case "resisted":

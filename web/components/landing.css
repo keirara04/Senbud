@@ -29,7 +29,7 @@
   .scroll { flex: 1; overflow: hidden; padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 16px; position: relative; }
   .tabs { flex: none; height: 83px; display: grid; grid-template-columns: repeat(5, 1fr); position: relative; padding: 6px 8px 0; border-top: 0.5px solid var(--line); background: var(--surface); }
   .tabs > span { display: grid; justify-items: center; align-content: start; gap: 2px; font: 500 10px/12px var(--font-sans); color: var(--dim); min-height: 48px; }
-  .tabs > span.on { color: var(--accent); }
+  .tabs > span.on { color: var(--tab-active, var(--accent)); }
   .tabs .ic { width: 26px; height: 26px; }
   .tabs .budtab { position: relative; color: var(--text); font-weight: 600; }
   .tabs .budtab .fab { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); }

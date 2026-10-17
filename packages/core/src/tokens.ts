@@ -83,8 +83,7 @@ const dark: Theme = {
   placeholder: palette.placeholderMoon,
   line: "rgba(255, 255, 255, 0.1)",
   // Cobalt on night is too dark to read, so periwinkle (11.1:1 on night2), not highlighter: the hero
-  // number and the `highlight` button stay the only yellow. web/app/globals.css still uses highlighter
-  // here and is out of step until the web follows.
+  // number and the `highlight` button stay the only yellow. web/app/globals.css matches (`--accent-ink`).
   accent: palette.onCobaltDim,
   // The current tab stays highlighter: it is the "you are here" cue, and it has to read at a glance
   // even while the screen is still drawing (user decision, 17 Oct 2026). 15.0:1 on night2.

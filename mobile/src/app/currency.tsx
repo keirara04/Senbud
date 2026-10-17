@@ -5,9 +5,9 @@ import { getLocales } from 'expo-localization';
 import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 
-import { CURRENCIES } from '@/currencies';
+import { CURRENCIES, currencyName } from '@/currencies';
 import { loadProfile, setCurrency } from '@/db';
 import { Card, Field, Icon, Screen, T, useTheme } from '@/ui';
 
@@ -31,8 +31,23 @@ export default function CurrencySheet() {
   const list = CURRENCIES.filter(([code, name]) => !query || code.toLowerCase().includes(query) || name.toLowerCase().includes(query));
 
   async function pick(code: string) {
-    await setCurrency(db, code, device.languageTag);
-    router.back();
+    if (!hasData || code === current) {
+      await setCurrency(db, code, device.languageTag);
+      return router.back();
+    }
+    // Amounts are stored as plain numbers, so a switch relabels them (US$1,000 becomes ₩1,000). Say so
+    // before it happens, and go straight to the budget so the main number makes sense again.
+    const example = (c: string) => money(1000, c, device.languageTag).replace(/[.,]00$/, '');
+    Alert.alert(`Switch to ${currencyName(code)}?`, `Saved amounts keep their numbers, so ${example(current)} becomes ${example(code)}. Set your budget again next.`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Switch',
+        onPress: async () => {
+          await setCurrency(db, code, device.languageTag);
+          router.replace('/edit-budget');
+        },
+      },
+    ]);
   }
 
   return (

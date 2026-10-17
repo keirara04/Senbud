@@ -9,6 +9,7 @@ import { ActivityIndicator, Pressable, View } from 'react-native';
 import Purchases from 'react-native-purchases';
 
 import { type Receipt, readReceipt, WEB, WEB_FREE } from '@/api';
+import { quickAddExample } from '@/currencies';
 import { addTransactions, type AppState, deleteTransactions, loadApp, loadSetup, type Profile, setPro, today } from '@/db';
 import { askAiConsent } from '@/consent';
 import { hasPro, purchasesReady } from '@/purchases';
@@ -136,7 +137,7 @@ export default function ReceiptScreen() {
           <Card>
             <T variant="bodyStrong">Pro is coming soon</T>
             <T variant="caption" tone="textDim">
-              Until then, type what you spent on Home, like “lunch 12, uber 8”.
+              Until then, type what you spent on Home, like “{quickAddExample(profile.currency)}”.
             </T>
           </Card>
         )}

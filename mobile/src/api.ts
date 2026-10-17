@@ -12,6 +12,16 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL ?? (__DEV__ ? 'http://localhost:
 export const WEB = Platform.OS === 'web';
 export const WEB_FREE = { receipts: 3, questions: 10 };
 
+// The owner's own builds skip the AI limits with a secret the API checks (UNLIMITED_KEY). Anything
+// EXPO_PUBLIC_ is bundled into the app, so set it only for personal builds, never a store build.
+const UNLIMITED = process.env.EXPO_PUBLIC_UNLIMITED_KEY;
+const headers = (deviceId: string) => ({
+  'Content-Type': 'application/json',
+  Accept: 'application/json',
+  'X-Device-Id': deviceId,
+  ...(UNLIMITED ? { 'X-Unlimited-Key': UNLIMITED } : {}),
+});
+
 // A 429 with a day-sized Retry-After is the web allowance (or a daily cap), not "too fast".
 const usedUpToday = (res: Response) => Number(res.headers.get('Retry-After') ?? 0) > 3600;
 
@@ -35,7 +45,7 @@ export async function readReceipt(base64: string, currency: string | undefined, 
   try {
     const res = await fetch(`${API_URL}/v1/agent/receipt`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Device-Id': deviceId },
+      headers: headers(deviceId),
       body: JSON.stringify({ image: base64, currency }),
       signal: abort.signal,
     });
@@ -100,7 +110,7 @@ export async function askBud(question: string, about: AskSummary, deviceId: stri
   try {
     res = await fetch(`${API_URL}/v1/agent/ask`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Device-Id': deviceId },
+      headers: headers(deviceId),
       body: JSON.stringify({ question, turns: turns.slice(-4).map((t) => ({ q: t.q.slice(0, 300), a: t.a.slice(0, 300) })), ...about }),
       signal: abort.signal,
     });

@@ -10,6 +10,7 @@
   --on-panel-dim: #c9d2ff;
   --hl: #eeff5a;
   --accent-ink: #1f3fd8;
+  --tab-active: #1f3fd8;
   --coral: #ff6b5b;
   --mint: #4fd1a5;
   --receipt: #ffffff;
@@ -42,7 +43,9 @@
     --ink-dim: #a8b0d8;
     --line: rgb(255 255 255 / 0.1);
     --dot: rgb(255 255 255 / 0.07);
-    --accent-ink: #eeff5a;
+    /* Periwinkle, as in the app (packages/core/src/tokens.ts): highlighter stays for key numbers and the current tab. */
+    --accent-ink: #c9d2ff;
+    --tab-active: #eeff5a;
     --sunken: #1c2560;
     --on-accent: #1a1c2e;
     --good: #4fd1a5;
