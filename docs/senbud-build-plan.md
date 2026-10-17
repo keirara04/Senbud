@@ -192,7 +192,12 @@ New action types in `AskController::schema()` and `actions()`, validated again o
 - Still never sent: friends' names, IOUs, treat labels, the full expense history in one go.
 - Update consent.tsx, "What gets sent" and `docs/senbud-store-data-forms.md` together. Memory lines and tool results are user content, processed ephemerally, not stored. The answers stay "not collected" only while nothing is stored server-side.
 
-**P3.7 Weekly check-in.** Size S to M. Free (decided 18 Oct 2026; reminders are free, and this is the best-evidenced feature).
+**P3.7 Weekly check-in (built 18 October 2026).** Size S to M. Free (decided 18 Oct 2026; reminders are free, and this is the best-evidenced feature).
+- Built as reminder kind `checkin` in `packages/core/src/reminders.ts` (tested), with a "Weekly check-in" switch in Settings, Reminders.
+- Example: "SGD 40 left for the next 14 days", then "Food has SGD 12 left. SGD 60 to go for your Laptop jar."
+- Only dates inside the current period, and quiet when nothing was logged in the 6 days before. Spending only changes in the app, so the numbers are right as of the last add.
+- Limits with their own week or month are left out. The remembered goal (P3.5) isn't used yet: memory lines are free text, so picking "the goal" needs the model.
+- Not checked on a phone (needs a dev build).
 - A new reminder kind, `checkin`: one notice a week at 6 pm. Sunday for week and month budgets; the day before payday for until-payday budgets.
 - Written by rules from the phone's numbers, no AI: what's left, the category closest to its limit, and the jar goal ("SGD 42 left for Food, 3 days to payday. SGD 60 to go on your laptop jar.").
 - Pro with memory adds the remembered goal.

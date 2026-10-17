@@ -1,12 +1,13 @@
-// Local reminders: rent and bills, renewals (Pro), "your budget resets tomorrow" and tonight's pace warning. Core works out the
+// Local reminders: rent and bills, renewals (Pro), "your budget resets tomorrow", tonight's pace warning and
+// the weekly check-in. Core works out the
 // schedule; this file hands it to the phone. No server and no push token, so nothing leaves the device.
-import { money, periodRange, reminderSchedule, type ReminderKind, safeToSpend } from '@senbud/core';
+import { type Category, money, periodRange, reminderSchedule, type ReminderKind, safeToSpend, spentIn } from '@senbud/core';
 import * as Notifications from 'expo-notifications';
 import { AndroidImportance } from 'expo-notifications';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { Platform } from 'react-native';
 
-import { listBills, listSubscriptions, listTransactions, loadApp, loadCarry, loadSetup, today } from '@/db';
+import { listBills, listSubscriptions, listTransactions, loadApp, loadCarry, loadJar, loadLimitPeriods, loadLimits, loadSetup, today } from '@/db';
 
 // Web has no scheduled notifications.
 const SUPPORTED = Platform.OS !== 'web';
@@ -41,7 +42,7 @@ export async function syncReminders(db: SQLiteDatabase) {
   // The same numbers as Home (useMoney): this period's spending against the budget plus carry-over.
   const limit = setup.budget.cents + carry;
   const { spent } = safeToSpend({ limit, period: setup.budget.period, transactions: txns, bills, subscriptions, today: day });
-  const list = reminderSchedule({ kinds, bills, subscriptions, period: setup.budget.period, today: day, fmt: (c) => money(c / 100, currency, locale), pace: { spent, limit } });
+  const list = reminderSchedule({ kinds, bills, subscriptions, period: setup.budget.period, today: day, fmt: (c) => money(c / 100, currency, locale), pace: { spent, limit }, checkin: kinds.includes('checkin') ? await checkinData(db, txns, { start, nextStart: periodRange(setup.budget.period, day).nextStart }) : undefined });
   const now = Date.now();
   for (const r of list) {
     // Local wall-clock time: new Date('YYYY-MM-DD') would be UTC midnight, the evening before in UTC+8.
@@ -54,4 +55,20 @@ export async function syncReminders(db: SQLiteDatabase) {
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date, channelId: 'reminders' },
     });
   }
+}
+
+// What the weekly check-in mentions: when something was last logged, the category with the least left
+// of its limit, and the jar goal. Limits with their own week or month (Pro) are left out.
+// ponytail: own-period limits skipped; add them with categoryRange and history if people ask.
+async function checkinData(db: SQLiteDatabase, txns: Awaited<ReturnType<typeof listTransactions>>, range: { start: string; nextStart: string }) {
+  const [limits, own, jar] = await Promise.all([loadLimits(db), loadLimitPeriods(db), loadJar(db)]);
+  const tightest = (Object.entries(limits) as [Category, number][])
+    .filter(([c]) => !own[c])
+    .map(([category, cents]) => ({ category, left: cents - spentIn(txns.filter((x) => x.category === category), range) }))
+    .sort((a, b) => a.left - b.left)[0];
+  return {
+    lastLogged: txns[0]?.date ?? null,
+    tightest,
+    jar: jar.goalName && jar.goalCents ? { name: jar.goalName, toGo: jar.goalCents - jar.balanceCents } : undefined,
+  };
 }
