@@ -1,17 +1,21 @@
 // Month-end leftover sheet (design system 4.6), opened by useLeftoverCheck when a budget period has
-// ended under budget. The period is already marked handled, so closing the sheet keeps the money.
+// ended under budget. The period is already marked handled, so closing the sheet keeps the money where it is.
+// Pro can add it to the period that just started instead (carry-over).
 import { treatsInJar } from '@senbud/core';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 
-import { addToJar, listTreats, loadJar, today, type TreatRow } from '@/db';
+import { addCarry, addToJar, listTreats, loadJar, today, type TreatRow } from '@/db';
 import { useMoney } from '@/money';
+import { periodWord } from '@/onboarding';
+import { usePro } from '@/purchases';
 import { Button, Screen, T } from '@/ui';
 
 export default function LeftoverSheet() {
   const db = useSQLiteContext();
-  const { money: m } = useMoney();
+  const { money: m, reload } = useMoney();
+  const pro = usePro();
   const { start, cents: c } = useLocalSearchParams<{ start: string; cents: string }>();
   const cents = Number(c);
   const [jar, setJar] = useState<number | null>(null);
@@ -31,7 +35,9 @@ export default function LeftoverSheet() {
   const name =
     period.kind === 'week'
       ? 'Last week'
-      : period.startDay === 1
+      : period.kind === 'until'
+        ? 'Last pay period'
+        : period.startDay === 1
         ? new Date(`${start}T12:00:00Z`).toLocaleDateString(setup.profile.locale, { month: 'long', timeZone: 'UTC' })
         : 'Last month';
   const after = jar + cents;
@@ -39,6 +45,13 @@ export default function LeftoverSheet() {
 
   async function move() {
     await addToJar(db, cents, `${name} leftover`, today());
+    router.back();
+  }
+
+  // Carry-over (Pro): the leftover goes into the period that just started instead.
+  async function keep() {
+    await addCarry(db, [[m!.safe.start, cents]]);
+    reload();
     router.back();
   }
 
@@ -52,14 +65,18 @@ export default function LeftoverSheet() {
         <T variant="bodyStrong" money>
           {fmt(cents)}
         </T>{' '}
-        under budget. Move it to the treat jar?
+        under budget. {pro ? `Move it to the treat jar, or add it to this ${periodWord(period)}?` : 'Move it to the treat jar?'}
       </T>
       <T variant="caption" tone="textDim">
         The jar would have {fmt(after)}
         {buys ? `, about ${buys} × ${cheapest!.name}` : ''}.
       </T>
       <Button title={`Move ${fmt(cents)} to the jar`} onPress={move} />
-      <Button title="Not now" variant="secondary" onPress={() => router.back()} />
+      {pro ? (
+        <Button title={`Add it to this ${periodWord(period)}`} variant="secondary" onPress={keep} />
+      ) : (
+        <Button title="Not now" variant="secondary" onPress={() => router.back()} />
+      )}
     </Screen>
   );
 }

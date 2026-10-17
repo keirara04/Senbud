@@ -59,6 +59,16 @@ const MIGRATIONS = [
   // 11: usage stats waiting to be sent (analytics.ts), and the Settings switch for them. On by default.
   `CREATE TABLE events_queue (id TEXT PRIMARY KEY, name TEXT NOT NULL, props TEXT, at TEXT NOT NULL);
    ALTER TABLE app ADD COLUMN analytics INTEGER NOT NULL DEFAULT 1;`,
+  // 12: until-payday budgets (Pro). `start` stays the week/month number; these hold the dates.
+  `ALTER TABLE budget ADD COLUMN start_date TEXT;
+   ALTER TABLE budget ADD COLUMN payday TEXT;`,
+  // 13: carry-over (Pro): money added to (+) or taken from (-) the budget period starting on that day.
+  `CREATE TABLE carryovers (period_start TEXT PRIMARY KEY, cents INTEGER NOT NULL);`,
+  // 14: a category limit's own period (Pro): 'week' (from Monday) or 'month' (from the 1st). NULL follows the budget.
+  `ALTER TABLE category_limits ADD COLUMN period TEXT;`,
+  // 15: Pro granted from the API's /admin by Support ID, cached so it works offline: when it ends (ISO),
+  // '9999' for no end, NULL for none. `pro` stays RevenueCat's alone. Not in backups: a grant is per device.
+  `ALTER TABLE app ADD COLUMN pro_until TEXT;`,
 ];
 
 export async function migrate(db: SQLiteDatabase) {
@@ -72,16 +82,21 @@ export async function migrate(db: SQLiteDatabase) {
 }
 
 export type Txn = Transaction & { id: number };
-export type Budget = { cents: number; period: Extract<BudgetPeriod, { kind: 'week' | 'month' }> };
+export type Budget = { cents: number; period: BudgetPeriod };
 export type Profile = { currency: string; locale: string };
 export type Setup = { budget: Budget; rent: Bill | null; profile: Profile };
 
 export async function loadSetup(db: SQLiteDatabase): Promise<Setup | null> {
-  const b = await db.getFirstAsync<{ cents: number; kind: 'week' | 'month'; start: number }>('SELECT * FROM budget');
+  const b = await db.getFirstAsync<{ cents: number; kind: BudgetPeriod['kind']; start: number; start_date: string | null; payday: string | null }>('SELECT * FROM budget');
   const p = await db.getFirstAsync<Profile>('SELECT currency, locale FROM profile');
   if (!b || !p) return null;
   const rent = await db.getFirstAsync<{ name: string; cents: number; due_day: number; added_on: string | null }>("SELECT * FROM bills WHERE name = 'Rent' LIMIT 1");
-  const period = b.kind === 'week' ? { kind: 'week' as const, startWeekday: b.start } : { kind: 'month' as const, startDay: b.start };
+  const period: BudgetPeriod =
+    b.kind === 'until' && b.start_date && b.payday
+      ? { kind: 'until', start: b.start_date, payday: b.payday }
+      : b.kind === 'week'
+        ? { kind: 'week', startWeekday: b.start }
+        : { kind: 'month', startDay: b.start || 1 };
   return {
     budget: { cents: b.cents, period },
     rent: rent && { name: rent.name, cents: rent.cents, dueDay: rent.due_day, addedOn: rent.added_on ?? undefined },
@@ -91,9 +106,13 @@ export async function loadSetup(db: SQLiteDatabase): Promise<Setup | null> {
 
 // Setup owns the Rent bill only; other bills are managed on Budgets. Rent keeps the day it was first added.
 export async function saveSetup(db: SQLiteDatabase, { budget, rent, profile }: Setup) {
-  const start = budget.period.kind === 'week' ? budget.period.startWeekday : budget.period.startDay;
+  const p = budget.period;
+  const start = p.kind === 'week' ? p.startWeekday : p.kind === 'month' ? p.startDay : 0;
   await db.withTransactionAsync(async () => {
-    await db.runAsync('INSERT OR REPLACE INTO budget (id, cents, kind, start) VALUES (1, ?, ?, ?)', budget.cents, budget.period.kind, start);
+    await db.runAsync(
+      'INSERT OR REPLACE INTO budget (id, cents, kind, start, start_date, payday) VALUES (1, ?, ?, ?, ?, ?)',
+      budget.cents, p.kind, start, p.kind === 'until' ? p.start : null, p.kind === 'until' ? p.payday : null,
+    );
     await db.runAsync('INSERT OR REPLACE INTO profile (id, currency, locale) VALUES (1, ?, ?)', profile.currency, profile.locale);
     await db.runAsync("DELETE FROM bills WHERE name = 'Rent'");
     if (rent) await db.runAsync('INSERT INTO bills (name, cents, due_day, added_on) VALUES (?, ?, ?, ?)', 'Rent', rent.cents, rent.dueDay, rent.addedOn ?? today());
@@ -146,14 +165,14 @@ export async function listTransactions(db: SQLiteDatabase, since?: IsoDate): Pro
 
 // "Erase all data": every row gone, schema kept. A fresh device id too, so nothing links the old data to the new.
 export const eraseAll = (db: SQLiteDatabase) =>
-  db.withTransactionAsync(() => db.execAsync(`DELETE FROM transactions; DELETE FROM budget; DELETE FROM bills; DELETE FROM profile; DELETE FROM app; ${NEW_APP_ROW}
+  db.withTransactionAsync(() => db.execAsync(`DELETE FROM transactions; DELETE FROM carryovers; DELETE FROM budget; DELETE FROM bills; DELETE FROM profile; DELETE FROM app; ${NEW_APP_ROW}
     DELETE FROM category_limits; DELETE FROM treats; DELETE FROM treat_jar_history; DELETE FROM ious; DELETE FROM subscriptions; DELETE FROM rules; DELETE FROM nudge_dismissals; DELETE FROM events_queue;
     UPDATE treat_jar SET balance_cents = 0, goal_name = NULL, goal_cents = NULL; UPDATE app SET theme = 'dark';`));
 
 // "Back up everything": every user table as rows, plus the app settings. Not nudge_dismissals: they
 // only last a day. Not device_id (a new phone
 // gets its own) and not pro (the store owns that; Restore purchases brings it back).
-const BACKUP_TABLES = ['transactions', 'budget', 'bills', 'profile', 'category_limits', 'treats', 'treat_jar', 'treat_jar_history', 'ious', 'subscriptions', 'rules'];
+const BACKUP_TABLES = ['transactions', 'budget', 'bills', 'profile', 'category_limits', 'treats', 'treat_jar', 'treat_jar_history', 'ious', 'subscriptions', 'rules', 'carryovers'];
 const BACKUP_SETTINGS = ['hourly_rate_cents', 'ai_enabled', 'theme', 'ai_consent_at', 'analytics'];
 type Row = Record<string, string | number | null>;
 export type Backup = { app: 'senbud'; schema: number; tables: Record<string, Row[]>; settings: Row };
@@ -196,16 +215,18 @@ export async function importAll(db: SQLiteDatabase, data: unknown) {
 }
 
 export type Theme = 'system' | 'light' | 'dark';
-export type AppState = { deviceId: string; aiConsentAt: string | null; pro: boolean; hourlyRateCents: number | null; aiEnabled: boolean; theme: Theme; periodHandled: IsoDate | null; reminders: ReminderKind[]; analytics: boolean };
+export type AppState = { deviceId: string; aiConsentAt: string | null; pro: boolean; hourlyRateCents: number | null; aiEnabled: boolean; theme: Theme; periodHandled: IsoDate | null; reminders: ReminderKind[]; analytics: boolean; proGranted: boolean };
 
 export async function loadApp(db: SQLiteDatabase): Promise<AppState> {
-  const r = await db.getFirstAsync<{ device_id: string; ai_consent_at: string | null; pro: number; hourly_rate_cents: number | null; ai_enabled: number; theme: Theme; period_handled: string | null; reminders: string; analytics: number }>('SELECT * FROM app');
+  const r = await db.getFirstAsync<{ device_id: string; ai_consent_at: string | null; pro: number; hourly_rate_cents: number | null; ai_enabled: number; theme: Theme; period_handled: string | null; reminders: string; analytics: number; pro_until: string | null }>('SELECT * FROM app');
   if (!r) throw new Error('app row missing; migrations did not run');
-  return { deviceId: r.device_id, aiConsentAt: r.ai_consent_at, pro: r.pro === 1, hourlyRateCents: r.hourly_rate_cents, aiEnabled: r.ai_enabled === 1, theme: r.theme, periodHandled: r.period_handled, reminders: r.reminders ? (r.reminders.split(',') as ReminderKind[]) : [], analytics: r.analytics === 1 };
+  const proGranted = r.pro_until !== null && r.pro_until > new Date().toISOString();
+  return { deviceId: r.device_id, aiConsentAt: r.ai_consent_at, pro: r.pro === 1 || proGranted, proGranted, hourlyRateCents: r.hourly_rate_cents, aiEnabled: r.ai_enabled === 1, theme: r.theme, periodHandled: r.period_handled, reminders: r.reminders ? (r.reminders.split(',') as ReminderKind[]) : [], analytics: r.analytics === 1 };
 }
 
 export const giveAiConsent = (db: SQLiteDatabase) => db.runAsync('UPDATE app SET ai_consent_at = ?', new Date().toISOString());
 export const setPro = (db: SQLiteDatabase, pro: boolean) => db.runAsync('UPDATE app SET pro = ?', pro ? 1 : 0);
+export const setProGrant = (db: SQLiteDatabase, until: string | null) => db.runAsync('UPDATE app SET pro_until = ?', until);
 export const setHourlyRate = (db: SQLiteDatabase, cents: number | null) => db.runAsync('UPDATE app SET hourly_rate_cents = ?', cents);
 // Turning AI off also withdraws consent, so turning it back on shows the "Bud uses AI" sheet again.
 export const setAiEnabled = (db: SQLiteDatabase, on: boolean) =>
@@ -230,8 +251,19 @@ export async function loadLimits(db: SQLiteDatabase): Promise<Partial<Record<Cat
   const rows = await db.getAllAsync<{ category: Category; cents: number }>('SELECT * FROM category_limits');
   return Object.fromEntries(rows.map((r) => [r.category, r.cents]));
 }
-export async function setLimit(db: SQLiteDatabase, category: Category, cents: number | null) {
-  await (cents ? db.runAsync('INSERT OR REPLACE INTO category_limits (category, cents) VALUES (?, ?)', category, cents) : db.runAsync('DELETE FROM category_limits WHERE category = ?', category));
+export type LimitPeriod = 'week' | 'month' | null;
+const limitPeriod = (p: LimitPeriod): BudgetPeriod | undefined => (p === 'week' ? { kind: 'week', startWeekday: 1 } : p === 'month' ? { kind: 'month', startDay: 1 } : undefined);
+/** Categories whose limit has its own period, as core periods. */
+export async function loadLimitPeriods(db: SQLiteDatabase): Promise<Partial<Record<Category, BudgetPeriod>>> {
+  const rows = await db.getAllAsync<{ category: Category; period: LimitPeriod }>('SELECT category, period FROM category_limits WHERE period IS NOT NULL');
+  return Object.fromEntries(rows.map((r) => [r.category, limitPeriod(r.period)]));
+}
+export const loadLimitPeriod = async (db: SQLiteDatabase, category: Category) =>
+  (await db.getFirstAsync<{ period: LimitPeriod }>('SELECT period FROM category_limits WHERE category = ?', category))?.period ?? null;
+export async function setLimit(db: SQLiteDatabase, category: Category, cents: number | null, period: LimitPeriod = null) {
+  await (cents
+    ? db.runAsync('INSERT OR REPLACE INTO category_limits (category, cents, period) VALUES (?, ?, ?)', category, cents, period)
+    : db.runAsync('DELETE FROM category_limits WHERE category = ?', category));
   track(db, 'limit_set', { category, on: !!cents });
 }
 
@@ -242,7 +274,6 @@ export async function listBills(db: SQLiteDatabase): Promise<BillRow[]> {
 }
 export const addBill = (db: SQLiteDatabase, b: Bill) =>
   db.runAsync('INSERT INTO bills (name, cents, due_day, added_on) VALUES (?, ?, ?, ?)', b.name, b.cents, b.dueDay, b.addedOn ?? today());
-export const deleteBill = (db: SQLiteDatabase, id: number) => db.runAsync('DELETE FROM bills WHERE id = ?', id);
 
 // Treats and the jar.
 export type TreatRow = Treat & { id: number };
@@ -254,7 +285,18 @@ export async function addTreat(db: SQLiteDatabase, t: Treat) {
   await db.runAsync('INSERT INTO treats (name, last_cents, last_date, min_days) VALUES (?, ?, ?, ?)', t.name, t.lastCents, t.lastDate ?? null, t.minDaysBetween);
   track(db, 'treat_added', { learned: !!t.lastDate });
 }
-export const deleteTreat = (db: SQLiteDatabase, id: number) => db.runAsync('DELETE FROM treats WHERE id = ?', id);
+
+// Delete with Undo for bills and treats: the whole row comes back, id and every column included.
+type Undoable = 'bills' | 'treats';
+export async function deleteRow(db: SQLiteDatabase, table: Undoable, id: number) {
+  const row = await db.getFirstAsync<Row>(`SELECT * FROM ${table} WHERE id = ?`, id);
+  await db.runAsync(`DELETE FROM ${table} WHERE id = ?`, id);
+  return row;
+}
+export async function restoreRow(db: SQLiteDatabase, table: Undoable, row: Row) {
+  const keys = Object.keys(row);
+  await db.runAsync(`INSERT OR IGNORE INTO ${table} (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`, ...keys.map((k) => row[k]));
+}
 
 export type Jar = { balanceCents: number; goalName: string | null; goalCents: number | null };
 export async function loadJar(db: SQLiteDatabase): Promise<Jar> {
@@ -297,6 +339,18 @@ export async function listSubscriptions(db: SQLiteDatabase): Promise<Subscriptio
 }
 export const saveSubscription = (db: SQLiteDatabase, s: Subscription) =>
   db.runAsync('INSERT OR REPLACE INTO subscriptions (merchant, cents, interval, next_date, confirmed) VALUES (?, ?, ?, ?, ?)', s.merchant, s.cents, s.interval, s.nextDate, s.confirmed ? 1 : 0);
+
+// Carry-over: what's been moved into or out of a budget period, keyed by the period's start. A budget
+// changed to another period kind starts fresh, since its periods start on other days.
+// ponytail: moving an until payday shifts the next period's start, so a borrow from it no longer applies;
+// re-key carry-overs in saveSetup if that matters.
+export const loadCarry = async (db: SQLiteDatabase, start: IsoDate) =>
+  (await db.getFirstAsync<{ cents: number }>('SELECT cents FROM carryovers WHERE period_start = ?', start))?.cents ?? 0;
+export const addCarry = (db: SQLiteDatabase, moves: [start: IsoDate, cents: number][]) =>
+  db.withTransactionAsync(async () => {
+    for (const [start, cents] of moves)
+      await db.runAsync('INSERT INTO carryovers (period_start, cents) VALUES (?, ?) ON CONFLICT (period_start) DO UPDATE SET cents = cents + excluded.cents', start, cents);
+  });
 
 // Today on the device's own calendar. toISOString() would give yesterday every evening in UTC+8.
 export function today(): IsoDate {

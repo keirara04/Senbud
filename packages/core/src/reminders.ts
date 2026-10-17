@@ -46,7 +46,7 @@ export function reminderSchedule(opts: {
     }
   }
 
-  if (kinds.includes("reset") && period.kind !== "until") {
+  if (kinds.includes("reset")) {
     for (let next = periodRange(period, today).nextStart; next < end; next = periodRange(period, next).nextStart)
       out.push({ key: `reset:${next}`, date: addDays(next, -1), hour: EVENING, title: "Your budget resets tomorrow", body: "See what's left before it starts again." });
   }

@@ -4,8 +4,8 @@ import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 
-import { addTransactions, listTransactions, loadSetup, type Profile, today } from '@/db';
-import { AmountPad, Button, CategoryPicker, digitsOf, Field, Row, Screen, T } from '@/ui';
+import { addTransactions, listTransactions, loadSetup, type Profile, today, type Txn } from '@/db';
+import { AmountPad, Button, CategoryPicker, digitsOf, Field, Row, Screen, T, TextButton } from '@/ui';
 
 export default function AddByHand() {
   const db = useSQLiteContext();
@@ -13,11 +13,16 @@ export default function AddByHand() {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<Category>('Food');
   const [label, setLabel] = useState('');
+  const [last, setLast] = useState<Txn | null>(null);
 
   useEffect(() => {
     loadSetup(db).then((s) => s && setProfile(s.profile));
-    // Last time's category, pre-selected (spec 4.1).
-    listTransactions(db).then((txns) => txns[0] && setCategory(txns[0].category));
+    // Last time's category, pre-selected, and a one-tap repeat of the last expense (spec 4.1).
+    listTransactions(db).then(([x]) => {
+      if (!x) return;
+      setCategory(x.category);
+      setLast(x);
+    });
   }, [db]);
 
   const digits = digitsOf(profile.currency, profile.locale);
@@ -30,11 +35,18 @@ export default function AddByHand() {
     router.back();
   }
 
+  async function repeat(x: Txn) {
+    await addTransactions(db, [{ date: today(), cents: x.cents, label: x.label, category: x.category, source: 'manual' }]);
+    router.back();
+  }
+
   return (
     <Screen>
       <T variant="hero" money accessibilityRole="header" accessibilityLabel={`Amount ${money(value, profile.currency, profile.locale)}`} style={{ textAlign: 'center' }}>
         {money(value, profile.currency, profile.locale)}
       </T>
+
+      {last && !amount && <TextButton title={`Repeat: ${last.label} ${money(last.cents / 100, profile.currency, profile.locale)}`} onPress={() => repeat(last)} />}
 
       <AmountPad value={amount} onChange={setAmount} digits={digits} />
 

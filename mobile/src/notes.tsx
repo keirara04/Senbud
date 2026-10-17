@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useState } from 'react';
 
-import { dismissedToday, dismissNudge, listIous, listTransactions, listTreats, loadLimits } from '@/db';
+import { dismissedToday, dismissNudge, listIous, listTransactions, listTreats, loadLimitPeriods, loadLimits } from '@/db';
 import type { Money } from '@/money';
 import { Card, Row, T, TextButton } from '@/ui';
 
@@ -19,7 +19,7 @@ export function useBudNotes(m: Money | null | undefined) {
     if (!m) return;
     const { day, setup, txns, safe, subscriptions, bills, onTrack } = m;
     // ponytail: 120 days catches weekly and monthly subscriptions, not yearly ones; widen if that matters.
-    Promise.all([listIous(db), listTreats(db), loadLimits(db), listTransactions(db, addDays(day, -120)), dismissedToday(db, day)]).then(([ious, treats, limits, history, hidden]) => {
+    Promise.all([listIous(db), listTreats(db), loadLimits(db), listTransactions(db, addDays(day, -120)), dismissedToday(db, day), loadLimitPeriods(db)]).then(([ious, treats, limits, history, hidden, limitPeriods]) => {
       const known = new Set(subscriptions.map((s) => s.merchant.toLowerCase()));
       const notes = nudges({
         today: day,
@@ -30,7 +30,9 @@ export function useBudNotes(m: Money | null | undefined) {
         onTrack,
         bills,
         limits,
-        txns,
+        limitPeriods,
+        // History, not this period's txns: a weekly limit's week can start before the budget's month.
+        txns: history,
         range: safe,
         spotted: detectSubscriptions(history).filter((s) => !known.has(s.merchant.toLowerCase())),
         streak: underBudgetStreak(txns, setup.budget.cents, setup.budget.period, day, bills),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { closedPeriod, favourites, monthRange, periodLeftover, wrapped } from "./index";
+import { closedPeriod, favourites, monthRange, periodLeftover, wrapped, yearRange } from "./index";
 import type { Bill, Transaction } from "./types";
 
 const month = { kind: "month", startDay: 1 } as const;
@@ -25,8 +25,10 @@ describe("closedPeriod", () => {
   it("ignores a handled start from a later period (the budget was changed)", () => {
     expect(closedPeriod(month, "2026-10-16", "2026-10-12")).toBeNull();
   });
-  it("has nothing to close for an until-payday budget", () => {
-    expect(closedPeriod({ kind: "until", start: "2026-10-01", payday: "2026-10-25" }, "2026-10-26", "2026-09-01")).toBeNull();
+  it("closes an until-payday period once payday passes", () => {
+    const until = { kind: "until" as const, start: "2026-10-01", payday: "2026-10-25" };
+    expect(closedPeriod(until, "2026-10-26", "2026-10-01")).toEqual({ start: "2026-10-01", nextStart: "2026-10-25" });
+    expect(closedPeriod(until, "2026-10-20", "2026-10-01")).toBeNull();
   });
 });
 
@@ -60,6 +62,17 @@ describe("wrapped", () => {
     const w = wrapped(base);
     expect(w).toMatchObject({ spent: 9650, budget: 30000, saved: 20350, treats: 2, days: 30 });
     expect(w.used).toBeCloseTo(0.3217, 3);
+  });
+  it("covers a year: twelve monthly budgets and the lightest finished month", () => {
+    const year = wrapped({ ...base, month: yearRange("2026"), txns: [...txns, tx("2026-08-03", 500, "Kopi", "Treat")] });
+    expect(year.budget).toBe(30000 * 12);
+    // October is still running on the 16th, so September (9,650) and August (500) compete: August wins.
+    expect(year.bestMonth).toEqual({ month: "2026-08", cents: 500 });
+    expect(wrapped(base).bestMonth).toBeNull();
+  });
+  it("scales an until-payday limit to the month, like a weekly one", () => {
+    // 15,000 for 15 days is 30,000 over September's 30.
+    expect(wrapped({ ...base, limit: 15000, period: { kind: "until", start: "2026-09-01", payday: "2026-09-16" } }).budget).toBe(30000);
   });
   it("sorts categories by spend with shares that add to 1", () => {
     const w = wrapped(base);

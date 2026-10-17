@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Controllers\ProController;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
@@ -44,7 +45,8 @@ class AppServiceProvider extends ServiceProvider
         $who = self::who(...);
         // The web app has no Pro yet, so its browsers get a small free allowance a day. Browsers can't
         // forge Origin; other clients can, but then they only get the app's caps above, as today.
-        $web = fn (Request $request) => $request->header('Origin') === config('app.app_origin');
+        // A device with Pro granted from /admin gets the app's caps instead.
+        $web = fn (Request $request) => $request->header('Origin') === config('app.app_origin') && ! ProController::grant($request->header('X-Device-Id'));
         $unlimited = self::unlimited(...);
         // The web caps go first: the first limit hit sets Retry-After, and the app reads a day-sized one
         // as "that's today's free allowance".
@@ -57,6 +59,10 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('ask', fn (Request $request) => $unlimited($request) ? Limit::none() : [
             ...($web($request) ? [Limit::perDay(self::WEB_FREE_QUESTIONS)->by('web:'.$who($request)), Limit::perDay(60)->by('web-ip:'.$request->ip())] : []),
             Limit::perMinute(10)->by($who($request)), Limit::perDay(100)->by($who($request)), Limit::perDay(300)->by('ip:'.$request->ip()),
+        ]);
+        // Wrapped captions: one call per story opened, so a few a day is plenty.
+        RateLimiter::for('caption', fn (Request $request) => $unlimited($request) ? Limit::none() : [
+            Limit::perMinute(3)->by($who($request)), Limit::perDay(20)->by($who($request)), Limit::perDay(100)->by('ip:'.$request->ip()),
         ]);
     }
 

@@ -1,5 +1,5 @@
-// The Senbud API (api/, Laravel). Only receipt reading, Bud's questions and usage stats (analytics.ts)
-// talk to it; everything you add stays on the phone.
+// The Senbud API (api/, Laravel). Only receipt reading, Bud's questions, Wrapped captions and usage stats
+// (analytics.ts) talk to it; everything you add stays on the phone.
 import type { Category } from '@senbud/core';
 import { Platform } from 'react-native';
 
@@ -39,6 +39,19 @@ const MESSAGES: Record<number, string> = {
   503: 'Receipt reading isn’t available right now.',
 };
 
+// Pro granted from /admin for this device: when it ends ('9999' for no end) or null for none. Undefined
+// when the API can't be reached, so the cached grant stays.
+export async function fetchProGrant(deviceId: string): Promise<string | null | undefined> {
+  try {
+    const res = await fetch(`${API_URL}/v1/pro`, { headers: headers(deviceId) });
+    if (!res.ok) return undefined;
+    const { pro, until } = (await res.json()) as { pro: boolean; until: string | null };
+    return pro ? (until ?? '9999') : null;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function readReceipt(base64: string, currency: string | undefined, deviceId: string): Promise<Receipt> {
   const abort = new AbortController();
   const timer = setTimeout(() => abort.abort(), 60_000);
@@ -68,7 +81,7 @@ export async function readReceipt(base64: string, currency: string | undefined, 
 export type AskSummary = {
   currency: string;
   summary: {
-    period: 'week' | 'month';
+    period: 'week' | 'month' | 'until';
     days_left: number;
     budget: number;
     spent: number;
@@ -126,4 +139,22 @@ export async function askBud(question: string, about: AskSummary, deviceId: stri
   if (!res.ok) throw new Error(ASK_MESSAGES[res.status] ?? OFFLINE);
   if (typeof body.answer !== 'string' || !body.answer) throw new Error(OFFLINE);
   return { answer: body.answer, actions: Array.isArray(body.actions) ? (body.actions as BudAction[]) : [], offTopic: body.off_topic === true };
+}
+
+// Wrapped captions (design system 4.7): one line per story page, written by AI from numbers only. Any
+// failure is null and the story keeps its own rule-written lines, so nothing here ever shows an error.
+export type CaptionPage = 'spent' | 'top' | 'kept' | 'treats' | 'streak';
+export type CaptionNumbers = { currency: string; span: 'month' | 'year'; used: number; top_category: Category | null; top_share: number; kept: number; over: number; treats: number; streak: number };
+export async function wrappedCaptions(numbers: CaptionNumbers, deviceId: string): Promise<Record<CaptionPage, string> | null> {
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), 15_000);
+  try {
+    const res = await fetch(`${API_URL}/v1/agent/caption`, { method: 'POST', headers: headers(deviceId), body: JSON.stringify(numbers), signal: abort.signal });
+    const body = res.ok ? ((await res.json()) as { captions?: Record<CaptionPage, string> }) : null;
+    return body?.captions ?? null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
 }

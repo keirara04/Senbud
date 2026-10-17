@@ -4,8 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\WaitlistSignup;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -109,5 +112,46 @@ class AdminTest extends TestCase
             $this->get($url)->assertUnauthorized();
         }
         $this->post('/admin/waitlist/1/delete')->assertUnauthorized();
+        $this->post('/admin/devices/'.self::A.'/pro', ['months' => '12'])->assertUnauthorized();
+        $this->post('/admin/devices/'.self::A.'/pro/revoke')->assertUnauthorized();
+        $this->assertSame(0, DB::table('pro_grants')->count());
+    }
+
+    public function test_pro_can_be_granted_and_revoked_by_support_id(): void
+    {
+        $pro = fn () => $this->getJson('/v1/pro', ['X-Device-Id' => strtoupper(self::A)])->assertOk()->json();
+        $this->assertSame(['pro' => false, 'until' => null], $pro());
+
+        $this->admin()->post('/admin/devices/'.self::A.'/pro', ['months' => '12', 'note' => 'Beta tester'])->assertRedirect('/admin/devices/'.self::A);
+        $this->assertSame(['pro' => true, 'until' => '2027-10-14T12:00:00+00:00'], $pro());
+        $this->admin()->get('/admin/devices/'.self::A)->assertSee('until 14 Oct 2027')->assertSee('Beta tester');
+        $this->admin()->get('/admin')->assertSee('Beta tester');
+
+        // Granting again replaces the grant; no end date means until stays null.
+        $this->admin()->post('/admin/devices/'.self::A.'/pro', ['months' => '0'])->assertRedirect();
+        $this->assertSame(['pro' => true, 'until' => null], $pro());
+        $this->assertSame(1, DB::table('pro_grants')->count());
+
+        $this->admin()->post('/admin/devices/'.self::A.'/pro/revoke')->assertRedirect();
+        $this->assertSame(['pro' => false, 'until' => null], $pro());
+
+        $this->admin()->post('/admin/devices/'.self::A.'/pro', ['months' => '6'])->assertStatus(422);
+    }
+
+    public function test_a_grant_ends_and_lifts_the_web_allowance_while_it_lasts(): void
+    {
+        DB::table('pro_grants')->insert(['device_id' => self::A, 'until' => now()->addDay(), 'created_at' => now()]);
+        $limits = function (string $device) {
+            $request = Request::create('/v1/agent/receipt', 'POST', server: ['HTTP_ORIGIN' => config('app.app_origin'), 'HTTP_X_DEVICE_ID' => $device]);
+
+            return count(Arr::wrap(RateLimiter::limiter('receipt')($request)));
+        };
+
+        $this->assertSame(3, $limits(self::A)); // the app's caps only
+        $this->assertSame(5, $limits(self::B)); // plus the two web allowance caps
+
+        Carbon::setTestNow(now()->addDays(2));
+        $this->assertSame(5, $limits(self::A));
+        $this->getJson('/v1/pro', ['X-Device-Id' => self::A])->assertJson(['pro' => false]);
     }
 }

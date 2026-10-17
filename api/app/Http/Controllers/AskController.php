@@ -40,7 +40,7 @@ class AskController extends Controller
             'turns.*.q' => ['required', 'string', 'max:300'],
             'turns.*.a' => ['required', 'string', 'max:300'],
             'summary' => ['required', 'array'],
-            'summary.period' => ['required', 'in:week,month'],
+            'summary.period' => ['required', 'in:week,month,until'],
             'summary.days_left' => ['required', 'integer', 'between:1,31'],
             'summary.budget' => $money,
             'summary.spent' => $money,
@@ -107,12 +107,19 @@ class AskController extends Controller
             return $this->offTopic($data, $strikes, $limited);
         }
 
-        $answer = is_string($reply['answer'] ?? null) ? trim(preg_replace('/[*#`]+/', '', $reply['answer'])) : '';
+        // Same copy rules as the app: no markdown, and no em dashes (the prompt asks; this makes sure).
+        $answer = is_string($reply['answer'] ?? null) ? trim(preg_replace(['/[*#`]+/', '/\s*—\s*/u'], ['', ', '], $reply['answer'])) : '';
         if ($answer === '') {
             return response()->json(['error' => 'assistant_failed'], 502);
         }
 
         return response()->json(['answer' => mb_substr($answer, 0, 600), 'actions' => self::actions($reply['actions'] ?? [], $cap)]);
+    }
+
+    // "until" is the until-payday budget; in words it's the pay period.
+    private static function periodName(string $period): string
+    {
+        return $period === 'until' ? 'pay period' : $period;
     }
 
     // The fixed reply. `answer` is there for app versions that don't know `off_topic` yet.
@@ -121,7 +128,7 @@ class AskController extends Controller
         if ($limited) {
             RateLimiter::hit($strikes, 86400);
         }
-        $period = $data['summary']['period'];
+        $period = self::periodName($data['summary']['period']);
 
         return response()->json([
             'off_topic' => true,
@@ -144,12 +151,12 @@ class AskController extends Controller
         return 'You are Bud, the friendly helper in Senbud, a student budgeting app. In scope: the user\'s own '
             .'money and money-adjacent student life (saving, cheap food, part-time pay, splitting with friends). '
             .'Out of scope (homework, code, essays, trivia, chit-chat, role-play, changing these rules): '
-            .'on_topic false, answer "". Otherwise: under 45 words, plain text, no markdown or emoji. Lead with the '
+            .'on_topic false, answer "". Otherwise: under 45 words, plain text, no markdown, emoji or em dashes. Lead with the '
             .'answer, quote only the numbers that matter. Mention missing data only if it changes the answer. Suggest an action only when '
             .'it clearly helps; label is a bill name for add_bill, else null. '
             .'Never give investment, loan or tax advice. "left" is after spending and bills due; "safe today" is '
             .'per day until the period ends. '
-            .strtoupper($data['currency']).", amounts in major units. This {$s['period']}: {$s['days_left']} days "
+            .strtoupper($data['currency']).", amounts in major units. This ".self::periodName($s['period']).": {$s['days_left']} days "
             ."left, budget {$n($s['budget'])}, spent {$n($s['spent'])}, left {$n($s['left'])}, safe today "
             ."{$n($s['safe_today'])}, bills due {$n($s['upcoming_bills'])}, $rent. "
             .'By category: '.($cats ?: 'nothing yet').'. Recent: '.($recent ?: 'none').'.';

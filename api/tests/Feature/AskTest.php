@@ -89,6 +89,23 @@ class AskTest extends TestCase
         });
     }
 
+    public function test_an_until_payday_budget_is_a_pay_period(): void
+    {
+        self::fakeReply('Fine.');
+        $body = self::body();
+        $body['summary']['period'] = 'until';
+
+        $this->send($body)->assertOk();
+        Http::assertSent(fn (Request $r) => str_contains($r['messages'][0]['content'], 'This pay period: 12 days left'));
+    }
+
+    public function test_em_dashes_become_commas(): void
+    {
+        self::fakeReply('You’re covered — rent is set aside.');
+
+        $this->send(self::body())->assertOk()->assertJsonPath('answer', 'You’re covered, rent is set aside.');
+    }
+
     public function test_earlier_turns_go_as_user_and_assistant_messages(): void
     {
         self::fakeReply('Last week was lighter.');

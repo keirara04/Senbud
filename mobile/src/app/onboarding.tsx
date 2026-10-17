@@ -11,7 +11,7 @@ import Animated, { FadeInLeft, FadeInRight, useReducedMotion } from 'react-nativ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { loadProfile, type Profile, saveSetup, track } from '@/db';
-import { budgetOf, BudgetStep, type Kind, ReadyStep, RentStep, toCents } from '@/onboarding';
+import { budgetOf, BudgetStep, ReadyStep, RentStep, toCents } from '@/onboarding';
 import { StepHeader, useTheme } from '@/ui';
 
 type Step = 'budget' | 'rent' | 'ready';
@@ -25,7 +25,7 @@ export default function Onboarding() {
   const [step, setStep] = useState<Step>('budget');
   const [forward, setForward] = useState(true);
   const [profile, setProfile] = useState<Profile>({ currency: device.currencyCode ?? 'USD', locale: device.languageTag });
-  const [kind, setKind] = useState<Kind>('month');
+  const [kind, setKind] = useState<'week' | 'month'>('month');
   const [amount, setAmount] = useState('');
   const [hasRent, setHasRent] = useState<boolean | null>(null);
   const [rent, setRent] = useState('');

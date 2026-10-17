@@ -7,6 +7,7 @@ import {
   leftover,
   periodRange,
   safeToSpend,
+  untilPeriod,
   treatNudge,
   treatsInJar,
 } from "./budget";
@@ -37,6 +38,18 @@ describe("periodRange", () => {
       start: "2026-10-10",
       nextStart: "2026-10-25",
     });
+  });
+});
+
+describe("untilPeriod", () => {
+  const month: BudgetPeriod = { kind: "month", startDay: 1 };
+  it("starts a new until budget today, ending on the next payday", () => {
+    expect(untilPeriod(month, 27, "2026-10-17")).toEqual({ kind: "until", start: "2026-10-17", payday: "2026-10-27" });
+    expect(untilPeriod(month, 17, "2026-10-17")).toEqual({ kind: "until", start: "2026-10-17", payday: "2026-11-17" });
+  });
+  it("keeps the current period's start when re-saved after payday, so its spending still counts", () => {
+    const old: BudgetPeriod = { kind: "until", start: "2026-10-17", payday: "2026-10-27" };
+    expect(untilPeriod(old, 25, "2026-10-30")).toEqual({ kind: "until", start: "2026-10-27", payday: "2026-11-25" });
   });
 });
 
@@ -95,9 +108,16 @@ describe("safeToSpend", () => {
     const until: BudgetPeriod = { kind: "until", start: "2026-10-10", payday: "2026-12-05" };
     expect(safeToSpend({ ...base, period: until, bills: [{ ...rent, dueDay: 15 }], today: "2026-10-12" }).upcoming).toBe(130_000);
   });
-  it("treats a stale period (payday passed) as one day left", () => {
+  // Audit bug: after payday, daysLeft was 1 and the whole budget became today's number.
+  it("rolls an until-payday budget on at the same length once payday passes", () => {
     const until: BudgetPeriod = { kind: "until", start: "2026-10-01", payday: "2026-10-10" };
-    expect(safeToSpend({ ...base, period: until, bills: [] }).daysLeft).toBe(1);
+    const r = safeToSpend({ ...base, limit: 9_000, period: until, bills: [], transactions: [], today: "2026-10-16" });
+    expect(r).toMatchObject({ start: "2026-10-10", nextStart: "2026-10-19", daysLeft: 3, perDay: 3_000 });
+  });
+  // Audit bug: before the start date, daysLeft counted days that weren't in the period.
+  it("puts a day before an until budget's start in the period before it", () => {
+    const until: BudgetPeriod = { kind: "until", start: "2026-10-20", payday: "2026-10-30" };
+    expect(safeToSpend({ ...base, period: until, bills: [], today: "2026-10-16" })).toMatchObject({ start: "2026-10-10", daysLeft: 4 });
   });
   it("counts confirmed subscriptions renewing this period as bills", () => {
     const sub = { merchant: "Spotify", cents: 1_199, interval: "month" as const, nextDate: "2026-10-20", confirmed: true };
@@ -133,6 +153,9 @@ describe("budget status", () => {
     expect(aheadOfPace(7_000, 10_000, week, "2026-10-14")).toBe(true); // $70 gone by Wednesday
     expect(aheadOfPace(4_000, 10_000, week, "2026-10-14")).toBe(false);
     expect(aheadOfPace(10_000, 10_000, week, "2026-10-18")).toBe(false);
+    // Audit bug: true before an until budget's start. That day now belongs to the period before.
+    const until: BudgetPeriod = { kind: "until", start: "2026-10-20", payday: "2026-10-30" };
+    expect(aheadOfPace(0, 10_000, periodRange(until, "2026-10-16"), "2026-10-16")).toBe(false);
   });
   it("sums each category within the period", () => {
     const range = { start: "2026-10-01", nextStart: "2026-11-01" };

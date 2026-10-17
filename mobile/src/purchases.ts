@@ -7,7 +7,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform } from 'react-native';
 import Purchases, { type CustomerInfo, LOG_LEVEL } from 'react-native-purchases';
 
-import { loadApp, setPro } from '@/db';
+import { fetchProGrant } from '@/api';
+import { loadApp, setPro, setProGrant } from '@/db';
 
 // The entitlement identifier as set in the RevenueCat dashboard.
 export const ENTITLEMENT = 'senbud_pro';
@@ -52,10 +53,17 @@ export async function syncPro(db: SQLiteDatabase) {
   await Purchases.getCustomerInfo().then((info) => cachePro(db, info), () => {});
 }
 
-/** Keeps the local Pro cache in step with RevenueCat. Mount once, inside SQLiteProvider. */
+/** Pro granted from the API's /admin by Support ID. Works on every platform, web included. */
+export async function syncGrant(db: SQLiteDatabase) {
+  const until = await fetchProGrant((await loadApp(db)).deviceId);
+  if (until !== undefined) await setProGrant(db, until).catch(() => {});
+}
+
+/** Keeps the local Pro cache in step with RevenueCat and any grant. Mount once, inside SQLiteProvider. */
 export function ProSync() {
   const db = useSQLiteContext();
   useEffect(() => {
+    syncGrant(db).catch(() => {});
     if (!purchasesReady()) return;
     const sync = (info: CustomerInfo) => cachePro(db, info);
     syncPro(db);

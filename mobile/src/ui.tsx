@@ -2,7 +2,7 @@
 // Spec: docs/senbud-app-design-system.md.
 import type { Category } from '@senbud/core';
 import { categoryColors, motion, palette, radius, space, type Theme, themes, touch, type } from '@senbud/core/tokens';
-import { type ReactNode, useRef, useState, useSyncExternalStore } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   Appearance,
   Platform,
@@ -82,10 +82,13 @@ export function T({
 }
 
 // A whole screen: notebook background, standard gutter, scrolls by default.
-export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
+// `overlay` floats at the bottom over the content (an UndoBar), so it shows however far the page scrolls.
+// Screens that pass it (null when idle) keep the wrapper mounted, so the page doesn't remount and lose its scroll.
+export function Screen({ children, scroll = true, overlay }: { children: ReactNode; scroll?: boolean; overlay?: ReactNode }) {
   const t = useTheme();
-  if (!scroll) return <View style={[s.page, { flex: 1, backgroundColor: t.bg }]}>{children}</View>;
-  return (
+  const page = !scroll ? (
+    <View style={[s.page, { flex: 1, backgroundColor: t.bg }]}>{children}</View>
+  ) : (
     <ScrollView
       style={{ backgroundColor: t.bg }}
       contentContainerStyle={s.page}
@@ -94,6 +97,13 @@ export function Screen({ children, scroll = true }: { children: ReactNode; scrol
     >
       {children}
     </ScrollView>
+  );
+  if (overlay === undefined) return page;
+  return (
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      {page}
+      <View style={{ position: 'absolute', left: space.md, right: space.md, bottom: space.md }}>{overlay}</View>
+    </View>
   );
 }
 
@@ -309,8 +319,9 @@ export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
 
 // Budget pace: fill colour carries the status, the label next to it says it in words (never colour alone).
 // tone="panel" sits on cobalt: a white 22% track, and coralLight for over (plain coral is 2.7:1 there).
-export function Progress({ value, status, tone }: { value: number; status: 'ok' | 'close' | 'over'; tone?: 'panel' }) {
+export function Progress({ value: raw, status, tone }: { value: number; status: 'ok' | 'close' | 'over'; tone?: 'panel' }) {
   const t = useTheme();
+  const value = Number.isFinite(raw) ? raw : 1; // spent ÷ a budget of 0 (all of it borrowed): full
   const onPanel = tone === 'panel';
   const fill = { ok: t.goodFill, close: t.warnFill, over: onPanel ? palette.coralLight : t.badFill }[status];
   return (
@@ -745,6 +756,24 @@ export function Marker({ children, align = 'flex-start' }: { children: ReactNode
 }
 
 // Snackbar for reversible actions. Slides in; the OS reduce-motion setting turns it into a plain appear.
+/** What was just removed, for `motion.undoMs`. `offer` after deleting; `take` in the Undo handler. */
+export function useUndo<T>() {
+  const [item, setItem] = useState<T | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const offer = useCallback((x: T) => {
+    clearTimeout(timer.current);
+    setItem(x);
+    timer.current = setTimeout(() => setItem(null), motion.undoMs);
+  }, []);
+  const take = useCallback(() => {
+    clearTimeout(timer.current);
+    setItem(null);
+    return item;
+  }, [item]);
+  return { item, offer, take };
+}
+
 export function UndoBar({ message, onUndo }: { message: string; onUndo: () => void }) {
   const t = useTheme();
   return (

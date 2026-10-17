@@ -5,12 +5,13 @@ import { space } from '@senbud/core/tokens';
 import { router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { TreatJar } from '@/art';
-import { addToJar, addTreat, deleteTreat, type Jar, jarHistory, listTransactions, listTreats, loadJar, setJarGoal, today, type TreatRow } from '@/db';
+import { treatExample } from '@/currencies';
+import { addToJar, addTreat, deleteRow, type Jar, jarHistory, listTransactions, listTreats, loadJar, restoreRow, setJarGoal, today, type TreatRow } from '@/db';
 import { useMoney } from '@/money';
-import { Button, Card, Icon, Row, Screen, T, TextButton, useTheme } from '@/ui';
+import { Button, Card, Icon, Row, Screen, T, TextButton, UndoBar, useTheme, useUndo } from '@/ui';
 
 type History = Awaited<ReturnType<typeof jarHistory>>;
 
@@ -23,6 +24,7 @@ export default function Treats() {
   const [history, setHistory] = useState<History>([]);
   const [learned, setLearned] = useState<{ name: string; times: number; cents: number; date: string } | null>(null);
   const [skipLearned, setSkipLearned] = useState(false);
+  const removed = useUndo<{ treat: TreatRow; row: Awaited<ReturnType<typeof deleteRow>> }>();
 
   const load = useCallback(async () => {
     const [j, ts, h, txns] = await Promise.all([loadJar(db), listTreats(db), jarHistory(db), listTransactions(db)]);
@@ -77,7 +79,20 @@ export default function Treats() {
   }
 
   return (
-    <Screen>
+    <Screen
+      overlay={
+        removed.item && (
+          <UndoBar
+            message={`Removed ${removed.item.treat.name}`}
+            onUndo={async () => {
+              const r = removed.take();
+              if (r?.row) await restoreRow(db, 'treats', r.row);
+              load();
+            }}
+          />
+        )
+      }
+    >
       <Card tone="panel">
         <T variant="label" tone="onPanelDim">
           Treat jar
@@ -158,19 +173,10 @@ export default function Treats() {
                   {fmt(tr.lastCents)}
                 </T>
                 <Pressable
-                  onPress={() =>
-                    Alert.alert(`Remove ${tr.name}?`, 'It can’t be undone.', [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Remove',
-                        style: 'destructive',
-                        onPress: async () => {
-                          await deleteTreat(db, tr.id);
-                          load();
-                        },
-                      },
-                    ])
-                  }
+                  onPress={async () => {
+                    removed.offer({ treat: tr, row: await deleteRow(db, 'treats', tr.id) });
+                    load();
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel={`Remove ${tr.name}`}
                   hitSlop={14}
@@ -183,7 +189,7 @@ export default function Treats() {
           })}
           {!treats.length && (
             <T tone="textDim" style={{ paddingVertical: space.sm }}>
-              Add one, like “bubble tea”. Senbud remembers what you paid.
+              Add one, like “{treatExample(m.setup.profile.currency)}”. Senbud remembers what you paid.
             </T>
           )}
           <TextButton title="Add a treat" onPress={() => router.push('/treat')} />

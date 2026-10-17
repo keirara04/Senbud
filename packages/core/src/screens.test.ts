@@ -68,6 +68,15 @@ describe("nudges", () => {
     // Day 16 of 31 with 40% used is on pace.
     expect(nudges({ ...base, bills: [{ ...rent, dueDay: 25 }], limits: { Food: 30000 }, txns: [food(12000)] })).toEqual([]);
   });
+  it("checks a category on its own period when it has one", async () => {
+    const { nudges } = await import("./index");
+    // Food weekly (from Monday 12 Oct): the 10 Oct lunch is last week, so 50 of 100 by Friday is on pace.
+    const weekly = { Food: { kind: "week" as const, startWeekday: 1 } };
+    const txns = [food(20000), { ...food(5000), date: "2026-10-12" }];
+    expect(nudges({ ...base, limits: { Food: 10000 }, limitPeriods: weekly, txns })).toEqual([]);
+    // On the month, the same spending is over.
+    expect(nudges({ ...base, limits: { Food: 10000 }, txns })[0]).toMatchObject({ kind: "category", status: "over" });
+  });
   it("adds a spotted subscription and a streak of 3 or more, and no treat once anything is said", async () => {
     const { nudges } = await import("./index");
     const tealive: Treat = { name: "Tealive", lastCents: 900, lastDate: "2026-10-01", minDaysBetween: 7 };
@@ -124,6 +133,8 @@ describe("compareToLast", () => {
     const t = (date: string, cents: number) => ({ date, cents, label: "x", category: "Food" as const });
     const txns = [t("2026-09-03", 1000), t("2026-09-20", 4000), t("2026-10-02", 2500), t("2026-10-05", 500)];
     expect(compareToLast(txns, { kind: "month", startDay: 1 }, "2026-10-05")).toEqual({ now: 3000, thenByNow: 1000, thenTotal: 5000, day: 5, lastStart: "2026-09-01" });
+    // Audit bug: an until budget compared the period with itself. Now the 10 days before it.
+    expect(compareToLast(txns, { kind: "until", start: "2026-10-01", payday: "2026-10-11" }, "2026-10-05").lastStart).toBe("2026-09-21");
   });
 });
 

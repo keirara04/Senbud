@@ -7,14 +7,26 @@ import type { Bill, BudgetPeriod, Subscription, Transaction, Treat } from "./typ
 // [start, nextStart): the period that contains `today`.
 export type Range = { start: IsoDate; nextStart: IsoDate };
 
+// "until" repeats at its own length once payday passes (the app asks for the next payday meanwhile), and
+// a date before `start` falls in an earlier one. So `today` is always inside its range.
 export function periodRange(period: BudgetPeriod, today: IsoDate): Range {
-  if (period.kind === "until") return { start: period.start, nextStart: period.payday };
+  if (period.kind === "until") {
+    const len = Math.max(1, daysBetween(period.start, period.payday));
+    const start = addDays(period.start, Math.floor(daysBetween(period.start, today) / len) * len);
+    return { start, nextStart: addDays(start, len) };
+  }
   if (period.kind === "week") {
     const start = addDays(today, -((weekday(today) - period.startWeekday + 7) % 7));
     return { start, nextStart: addDays(start, 7) };
   }
   const start = prevDueDate(period.startDay, today);
   return { start, nextStart: nextDueDate(period.startDay, addDays(start, 1)) };
+}
+
+// An until-payday period ending on the next `paydayDay` of the month after today. Re-saving one keeps the
+// current period's start, so what was spent since the last payday still counts; a new one starts today.
+export function untilPeriod(old: BudgetPeriod, paydayDay: number, today: IsoDate): BudgetPeriod {
+  return { kind: "until", start: old.kind === "until" ? periodRange(old, today).start : today, payday: nextDueDate(paydayDay, addDays(today, 1)) };
 }
 
 export const inRange = (date: IsoDate, { start, nextStart }: Range) => date >= start && date < nextStart;
@@ -95,6 +107,10 @@ export function aheadOfPace(spent: number, limit: number, range: Range, today: I
   const elapsed = Math.min(total, daysBetween(range.start, today) + 1);
   return spent * total > limit * elapsed;
 }
+
+// A category limit can run on its own period (Pro: "Food weekly" inside a monthly budget); without one
+// it follows the overall budget's.
+export const categoryRange = (period: BudgetPeriod | undefined, overall: Range, today: IsoDate) => (period ? periodRange(period, today) : overall);
 
 export function categoryBudgets(txns: Transaction[], limits: Partial<Record<Category, number>>, range: Range) {
   return (Object.entries(limits) as [Category, number][]).map(([category, limit]) => {

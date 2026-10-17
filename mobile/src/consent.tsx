@@ -16,6 +16,10 @@ export function AiUses() {
         <T>Your question, your last few questions and answers in that chat, and a short summary: this period’s totals, your budget and rent, and your last 20 expenses. Never your full history. It goes the same way, to an AI model (currently Anthropic’s Claude Haiku, run by Google).</T>
       </Card>
       <Card>
+        <T variant="bodyStrong">When you open Wrapped</T>
+        <T>Numbers only, so Bud can write a line for each page: the share of your budget used, your top category and its share, what you kept or went over, your treat count and best streak. No expense names or places. Same way, same model.</T>
+      </Card>
+      <Card>
         <T variant="bodyStrong">Nothing is kept</T>
         <T>Senbud doesn’t store or log any of it, and only providers that keep no data are used.</T>
       </Card>

@@ -6,6 +6,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 
 import { useMoney } from '@/money';
+import { periodWord } from '@/onboarding';
 import { TextInput, View } from 'react-native';
 
 import { addTransactions, type AppState, loadApp } from '@/db';
@@ -28,7 +29,7 @@ export default function Afford() {
   if (!m || !app) return null;
   const { setup, safe, fmt, day } = m;
   const { locale } = setup.profile;
-  const unit = setup.budget.period.kind;
+  const unit = periodWord(setup.budget.period);
   const periodDays = daysBetween(safe.start, safe.nextStart);
   const cents = Math.round(Number(price.replace(',', '.')) * 100);
   const typed = cents > 0;

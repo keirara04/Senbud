@@ -8,9 +8,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ReceiptCard } from '@/art';
 import { mealExample, quickAddExample } from '@/currencies';
-import { addTransactions, deleteTransactions, listTransactions, type Txn } from '@/db';
+import { addCarry, addTransactions, deleteTransactions, listTransactions, type Txn } from '@/db';
 import { useMoney } from '@/money';
+import { periodWord } from '@/onboarding';
 import { NoteCard, useBudNotes } from '@/notes';
+import { usePro } from '@/purchases';
 import { Button, Card, Icon, MONO, noWebOutline, Progress, ReceiptLine, Row, T, TextButton, UndoBar, useTheme } from '@/ui';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -20,6 +22,7 @@ export default function Home() {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const { money: m, reload } = useMoney();
+  const pro = usePro();
   const [text, setText] = useState('');
   const [focused, setFocused] = useState(false);
   const [hint, setHint] = useState('');
@@ -38,10 +41,12 @@ export default function Home() {
   if (m === undefined) return null;
   if (m === null) return <Redirect href="/welcome" />;
 
-  const { setup, txns, safe, status, fmt, day } = m;
+  const { setup, txns, safe, status, fmt, day, limit, borrowable } = m;
   const { locale } = setup.profile;
-  const limit = setup.budget.cents;
-  const unit = setup.budget.period.kind;
+  const { period } = setup.budget;
+  const unit = periodWord(period);
+  // Until payday rolls on at the same length after payday; until a new date is set, ask for one.
+  const paydayPassed = period.kind === 'until' && period.payday <= day;
   const rent = setup.rent && { ...setup.rent, ...billCountdown(setup.rent, day) };
   // This period's rent already fell due (or came before Setup): the next one is next period's money.
   const rentNext = rent && rent.due >= safe.nextStart;
@@ -61,6 +66,17 @@ export default function Home() {
         : aheadOfPace(safe.spent, limit, safe, day)
           ? `${fmt(safe.spent)} of ${fmt(limit)} gone and it’s only ${WEEKDAYS[now.getDay()]}.`
           : 'On track.';
+
+  // Carry-over (Pro, spec 4.2): cover what's over from next period's budget, up to what it has.
+  const over = Math.min(safe.spent - limit, borrowable);
+  async function borrow() {
+    if (!pro) return router.push('/pro');
+    await addCarry(db, [
+      [safe.start, over],
+      [safe.nextStart, -over],
+    ]);
+    reload();
+  }
 
   async function submit() {
     const line = text.trim();
@@ -140,6 +156,15 @@ export default function Home() {
           </T>
         </Card>
 
+        {paydayPassed && (
+          <Card>
+            <T>
+              Payday was {new Date(`${period.payday}T12:00:00Z`).toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' })}. When’s the next one?
+            </T>
+            <Button title="Set next payday" variant="secondary" onPress={() => router.push('/edit-budget')} />
+          </Card>
+        )}
+
         {rent && rentNext && (
           <Card>
             <T>
@@ -181,6 +206,7 @@ export default function Home() {
             </T>
             <TextButton title="See activity" onPress={() => router.push('/activity')} />
           </Row>
+          {status === 'over' && over > 0 && <TextButton title={`Borrow ${fmt(over)} from next ${unit}`} onPress={borrow} />}
         </Card>
 
         {note && <NoteCard note={note} fmt={fmt} unit={unit} onDismiss={() => dismiss(['home', nudgeKey(note)])} />}

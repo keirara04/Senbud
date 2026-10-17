@@ -172,7 +172,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 | **Welcome** (first launch) | Bud and one line: "Your money buddy" | Wordmark, Bud holding a sample receipt, headline, one line, three promise pills, `primary` "Get started", "I've used Senbud before" (sheet) | Built v2 (`welcome.tsx`, `welcome-back.tsx` sheet) |
 | **Onboarding** (first run) | One question per step: the budget amount, then rent | Two steps (budget, rent) and a "You're set" receipt Bud prints; currency from the phone. Settings opens the same steps as the Budget and Rent sheets. | Built v2 (`onboarding.tsx`, steps in `src/onboarding.tsx`, sheets `edit-budget` / `edit-rent`); the five-field Setup page is gone |
 | **Home** | `panel` with `hero` safe-to-spend in highlighter | Rent card, pace card, today's nudge, today's receipt, "Again" chips, pinned `CaptureBar` (see 4.2) | Built; v2 concept |
-| **Activity** | none; it's a list | Cards with label, `CategoryChip`, date, amount, delete. Later: filter chips, including "added by assistant". | Built |
+| **Activity** | none; it's a list | A search field over labels, category filter chips (only categories with spending), then cards with label, `CategoryChip`, date, amount, delete with Undo. An "Added by Bud" chip appears when Bud has added something (`source: 'bud'`); rows say "Added by Bud" only while it's on. | Built |
 | **Budgets** | `panel` with what's left in highlighter and `Progress tone="panel"` | `StampLedger` by category; rent and bills list with due days; detected subscriptions | Built |
 | **Can I afford it?** | `panel`: verdict in words, key number in highlighter | Price `Field`, optional "What is it?", treat price picks, hours of work under a hairline | Built |
 | **Friends** | Net balance `hero` in highlighter, direction in words | Per-friend rows; friend sheet with "Send on WhatsApp", "Other apps", "Copy" and "Mark paid"; 3-step split flow with `PersonTabs` and `ClaimRow` | Built; WhatsApp path untested (not installed on simulators) |
@@ -189,6 +189,7 @@ Each screen gets one job, one hero element, and a plain sentence explaining it.
 **Errors:**
 - Shown inline, under the field, saying how to fix it.
 - Destructive confirmations use the native alert. The red button names the action ("Erase") and the body says what's lost.
+- Single-item deletes (an expense, a treat, a bill) don't ask: they happen straight away with an `UndoBar` ("Removed Phone, US$30 · Undo") floating at the bottom of the screen for `motion.undoMs`. The alert is for what can't come back, like Erase.
 
 ### 4.0 Bud, the assistant's face
 
@@ -274,7 +275,7 @@ Today's Setup asks five things on one page: period, budget, rent, due day and cu
 ### 4.1 Navigation (all screens)
 
 - **Tab bar with five slots:** Home, Budgets, **Bud**, Friends, Treats (decided 16 Oct 2026).
-- **Current tab:** `tabActive` colour (cobalt in light, highlighter in dark), a soft pill in that colour behind the icon, and the filled SF Symbol on iOS. More than colour alone, so it reads without colour vision and while a slow screen is still drawing (17 Oct 2026).
+- **Current tab:** `tabActive` colour (cobalt in light, highlighter in dark) on the icon and label, and the filled SF Symbol on iOS. No pill behind the icon (removed 17 Oct 2026 at the user's request; the colour is the cue).
   - The four sides use SF Symbols (`house`, `chart.bar`, `person.2`, `gift`) and Material icons on Android. Tint is `accent`.
   - Bud (`BudTab`) is raised in the middle and opens the assistant sheet over the current screen; it doesn't switch tabs.
   - It's built with Expo Router's JS `Tabs` and a custom `tabBarButton` for the centre, because native tabs can't raise a button. That means we own Dynamic Type and safe-area handling for the bar.
@@ -300,7 +301,7 @@ Today's Setup asks five things on one page: period, budget, rent, due day and cu
   9. `CaptureBar`, pinned above the tab bar. `UndoBar` floats just above it.
 - **Nudges (spec 5):**
   - Rent (priority 1) and pace (priority 2) nudges go *inside* the rent and pace cards, so the same sentence isn't shown twice.
-  - Example: "Rent RM 450 in 4 days — RM 338 short." plus a caption and a `secondary` "Plan for rent".
+  - Example: "Rent RM 450 in 4 days. RM 338 short." plus a caption and a `secondary` "Plan for rent".
   - `NudgeCard` therefore only carries priorities 3–5: renewals, IOUs older than 7 days, treats.
 - **When rent isn't covered**, the hero shows RM 0 with "Rent comes first. This goes back up once it's covered." The panel stays cobalt.
 - **Capture bar:**
@@ -331,7 +332,11 @@ Today's Setup asks five things on one page: period, budget, rent, due day and cu
   - A `List` with due day and countdown, then `+ Add a bill`.
   - The caption under it says how much is set aside: "RM 492.90 is set aside and never counts as spendable."
 - **Detected subscription (Pro):** a card that asks first: "Netflix charged RM 17 on 3 Sep and 3 Oct. Is it a subscription?" with "Not really" / "Yes, track it".
-- **Budget settings rows:** Period, Until payday (`ProLock`), Past recaps.
+- **Wrapped year-end (Pro):** the same story over a year: spent, top category, kept or over ("New year, fresh start"), top place, "Your lightest month" (the finished month that spent least, "Do that again."), treats this year, hours of work, best streak. Budgets' Wrapped list starts with "2026 so far" ("Pro" for free users).
+- **Wrapped AI captions:** with AI on and agreed to, one AI line joins each page under the stat (numbers only; the rule-written lines stay as the fallback and are replaced only where a page already had one).
+- **Category limit sheet:** category, "Resets" `Segmented` With budget / Weekly / Monthly (Weekly and Monthly are Pro and open the paywall for free users), then "Limit each week" (or "Limit for this period"). A row with its own period says "SGD 6.50 of SGD 20 this week".
+- **Budget settings rows:** Period, Until payday (`ProLock`, free users only), Past recaps.
+- **Until payday (Pro, built 17 Oct 2026):** the Budget sheet (`edit-budget`) has a `Segmented` Week / Month / Until payday (for free users, choosing Until payday opens the paywall; a lapsed Pro user keeps an until budget they already have). Until payday asks "How much do you have until payday?" and "Payday on the" with the rent `DayStrip`; payday is the next such day after today. The period reads "until 27 Oct" (Settings, Budgets: "UNTIL 27 OCT · PAYDAY") and "pay period" in sentences ("this pay period"). Once payday passes, the period repeats at the same length and Home shows "Payday was 27 Oct. When's the next one?" with `secondary` "Set next payday". Re-saving keeps the current period's start, so spending since the last payday still counts. Onboarding keeps Week / Month only (it comes before any purchase).
 - **Over:** the category gets a coral stamp past its ten and "12 over" in `bad` ink. The panel never turns red.
 - **Empty:** "Give a category its own limit, like Food at RM 400 a month." with `secondary` "Add a category limit".
 
@@ -423,7 +428,10 @@ Today's Setup asks five things on one page: period, budget, rent, due day and cu
   - `primary` "Move RM 38 to the jar" and `secondary` "Keep it in October's budget".
   - In dark mode `primary` and `highlight` look the same (section 7). On this screen that's acceptable, because the sheet covers the panel.
   - **Built:** on launch and whenever the app comes back to the front, the tabs layout checks whether a budget period (week or month) ended since the last look (`app.period_handled`, migration 5; `closedPeriod` in core). Leftover = limit − spending − bills that fell due in that period (`periodLeftover`), so rent money is never offered as treat money. Only the latest period is offered after time away. A new install, an update, or a changed budget records the current period without asking.
-  - The secondary button is "Not now", not "Keep it in October's budget": carry-over is Pro (spec 8) and not built, so the money doesn't move anywhere. Closing the sheet counts as "Not now"; it never asks twice.
+  - The secondary button is "Not now" for free users: the money doesn't move anywhere. Closing the sheet counts as "Not now"; it never asks twice.
+  - **Carry-over (Pro, built 17 Oct 2026):** Pro users get "Add it to this month" (or week, or pay period) instead, and the body asks "Move it to the treat jar, or add it to this month?". It adds the leftover to the period that just started.
+  - **Borrowing:** when Home's pace line says "SGD 12 over, no stress.", a `TextButton` "Borrow SGD 12 from next week" sits under it (spec 4.2). Pro moves the amount from next period's budget into this one; free users get the paywall. Budgets' hero caption then says "Includes SGD 12 carried over." (or, in the next period, "SGD 12 went to last week.").
+  - Stored per period start in `carryovers` (migration 13) and added to the limit in `useMoney`, so Home, Budgets, Bud and the leftover offer all use the same figure.
   - The title is the month name only when the budget starts on the 1st ("September's done"); otherwise "Last month's done" or "Last week's done".
 - **Learned treat:** "You've had Tealive 4 times this month. Make it a treat?" with two `secondary` buttons. This asks before adding, as spec 4.8 says.
 - **Empty:** the jar hero at RM 0 with "Leftover budget lands here at the end of each month.", the learned-treat card, then "Or add one yourself, like 'bubble tea'. Senbud remembers what you paid."
