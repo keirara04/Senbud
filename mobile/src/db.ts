@@ -69,7 +69,17 @@ const MIGRATIONS = [
   // 15: Pro granted from the API's /admin by Support ID, cached so it works offline: when it ends (ISO),
   // '9999' for no end, NULL for none. `pro` stays RevenueCat's alone. Not in backups: a grant is per device.
   `ALTER TABLE app ADD COLUMN pro_until TEXT;`,
+  // 16: Bud remembers (Pro, build plan P3.5). Lines the person kept from Bud's "remember this?" slip, at
+  // most 20, in backups. And Bud chats on this phone for 30 days, never sent beyond the last 4 turns and
+  // not in backups.
+  `CREATE TABLE bud_memory (id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT NOT NULL, created_at TEXT NOT NULL);
+   CREATE TABLE bud_chats (id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, q TEXT NOT NULL, a TEXT NOT NULL);`,
 ];
+
+// What a question can send changed on this day (memory lines, and data Bud asks the phone for; consent
+// P3.6). A consent from before it doesn't cover that, so the "Bud uses AI" sheet asks once more. Read in
+// loadApp, so a backup restoring an older consent is asked again too.
+const AI_CONSENT_SINCE = '2026-10-18T00:00:00.000Z';
 
 export async function migrate(db: SQLiteDatabase) {
   const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
@@ -166,13 +176,13 @@ export async function listTransactions(db: SQLiteDatabase, since?: IsoDate): Pro
 // "Erase all data": every row gone, schema kept. A fresh device id too, so nothing links the old data to the new.
 export const eraseAll = (db: SQLiteDatabase) =>
   db.withTransactionAsync(() => db.execAsync(`DELETE FROM transactions; DELETE FROM carryovers; DELETE FROM budget; DELETE FROM bills; DELETE FROM profile; DELETE FROM app; ${NEW_APP_ROW}
-    DELETE FROM category_limits; DELETE FROM treats; DELETE FROM treat_jar_history; DELETE FROM ious; DELETE FROM subscriptions; DELETE FROM rules; DELETE FROM nudge_dismissals; DELETE FROM events_queue;
+    DELETE FROM category_limits; DELETE FROM treats; DELETE FROM treat_jar_history; DELETE FROM ious; DELETE FROM subscriptions; DELETE FROM rules; DELETE FROM nudge_dismissals; DELETE FROM events_queue; DELETE FROM bud_memory; DELETE FROM bud_chats;
     UPDATE treat_jar SET balance_cents = 0, goal_name = NULL, goal_cents = NULL; UPDATE app SET theme = 'dark';`));
 
 // "Back up everything": every user table as rows, plus the app settings. Not nudge_dismissals: they
 // only last a day. Not device_id (a new phone
 // gets its own) and not pro (the store owns that; Restore purchases brings it back).
-const BACKUP_TABLES = ['transactions', 'budget', 'bills', 'profile', 'category_limits', 'treats', 'treat_jar', 'treat_jar_history', 'ious', 'subscriptions', 'rules', 'carryovers'];
+const BACKUP_TABLES = ['transactions', 'budget', 'bills', 'profile', 'category_limits', 'treats', 'treat_jar', 'treat_jar_history', 'ious', 'subscriptions', 'rules', 'carryovers', 'bud_memory'];
 const BACKUP_SETTINGS = ['hourly_rate_cents', 'ai_enabled', 'theme', 'ai_consent_at', 'analytics'];
 type Row = Record<string, string | number | null>;
 export type Backup = { app: 'senbud'; schema: number; tables: Record<string, Row[]>; settings: Row };
@@ -221,7 +231,7 @@ export async function loadApp(db: SQLiteDatabase): Promise<AppState> {
   const r = await db.getFirstAsync<{ device_id: string; ai_consent_at: string | null; pro: number; hourly_rate_cents: number | null; ai_enabled: number; theme: Theme; period_handled: string | null; reminders: string; analytics: number; pro_until: string | null }>('SELECT * FROM app');
   if (!r) throw new Error('app row missing; migrations did not run');
   const proGranted = r.pro_until !== null && r.pro_until > new Date().toISOString();
-  return { deviceId: r.device_id, aiConsentAt: r.ai_consent_at, pro: r.pro === 1 || proGranted, proGranted, hourlyRateCents: r.hourly_rate_cents, aiEnabled: r.ai_enabled === 1, theme: r.theme, periodHandled: r.period_handled, reminders: r.reminders ? (r.reminders.split(',') as ReminderKind[]) : [], analytics: r.analytics === 1 };
+  return { deviceId: r.device_id, aiConsentAt: r.ai_consent_at && r.ai_consent_at >= AI_CONSENT_SINCE ? r.ai_consent_at : null, pro: r.pro === 1 || proGranted, proGranted, hourlyRateCents: r.hourly_rate_cents, aiEnabled: r.ai_enabled === 1, theme: r.theme, periodHandled: r.period_handled, reminders: r.reminders ? (r.reminders.split(',') as ReminderKind[]) : [], analytics: r.analytics === 1 };
 }
 
 export const giveAiConsent = (db: SQLiteDatabase) => db.runAsync('UPDATE app SET ai_consent_at = ?', new Date().toISOString());
@@ -363,3 +373,31 @@ export const dismissNudge = (db: SQLiteDatabase, key: string, day: IsoDate) =>
   db.runAsync('INSERT OR REPLACE INTO nudge_dismissals (key, date) VALUES (?, ?)', key, day);
 export const dismissedToday = async (db: SQLiteDatabase, day: IsoDate) =>
   new Set((await db.getAllAsync<{ key: string }>('SELECT key FROM nudge_dismissals WHERE date = ?', day)).map((r) => r.key));
+
+// Bud remembers (Pro). Each line was kept by the person from Bud's slip; newest first.
+export type Memory = { id: number; text: string; createdAt: string };
+export const MEMORY_MAX = 20;
+export const loadMemory = (db: SQLiteDatabase) =>
+  db.getAllAsync<Memory>('SELECT id, text, created_at AS createdAt FROM bud_memory ORDER BY id DESC');
+/** Keeps a line, dropping the oldest past 20. Returns false for one it already has. */
+export async function addMemory(db: SQLiteDatabase, text: string) {
+  const line = text.trim().slice(0, 120);
+  if (!line || (await db.getFirstAsync('SELECT 1 FROM bud_memory WHERE lower(text) = lower(?)', line))) return false;
+  await db.withTransactionAsync(async () => {
+    await db.runAsync('INSERT INTO bud_memory (text, created_at) VALUES (?, ?)', line, new Date().toISOString());
+    await db.runAsync('DELETE FROM bud_memory WHERE id NOT IN (SELECT id FROM bud_memory ORDER BY id DESC LIMIT ?)', MEMORY_MAX);
+  });
+  return true;
+}
+export const forgetMemory = (db: SQLiteDatabase, id?: number) =>
+  id === undefined ? db.runAsync('DELETE FROM bud_memory') : db.runAsync('DELETE FROM bud_memory WHERE id = ?', id);
+
+// Bud chats kept on the phone (Pro): a question and Bud's answer, 30 days, at most 200.
+export type Chat = { id: number; at: string; q: string; a: string };
+export async function loadChats(db: SQLiteDatabase): Promise<Chat[]> {
+  const since = new Date(Date.now() - 30 * 86400000).toISOString();
+  await db.runAsync('DELETE FROM bud_chats WHERE at < ? OR id NOT IN (SELECT id FROM bud_chats ORDER BY id DESC LIMIT 200)', since);
+  return (await db.getAllAsync<Chat>('SELECT * FROM bud_chats ORDER BY id DESC LIMIT 200')).reverse();
+}
+export const saveChat = (db: SQLiteDatabase, q: string, a: string) => db.runAsync('INSERT INTO bud_chats (at, q, a) VALUES (?, ?, ?)', new Date().toISOString(), q, a);
+export const clearChats = (db: SQLiteDatabase) => db.runAsync('DELETE FROM bud_chats');

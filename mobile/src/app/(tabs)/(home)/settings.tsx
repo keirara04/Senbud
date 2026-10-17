@@ -123,6 +123,7 @@ export default function Settings() {
       <ListGroup title="AI" footer={`Typing “${drinkExample(profile.currency)}” always works, AI or not. Everything is stored on this phone.`}>
         <AiSwitch value={app.aiEnabled} onChange={toggleAi} />
         <ListRow label="What gets sent" onPress={() => router.push('/sent')} />
+        <ListRow label="What Bud remembers" value={app.pro ? undefined : 'Pro'} onPress={() => router.push('/memory')} />
       </ListGroup>
 
       <ListGroup title="Usage stats" footer="Which screens and features get used, sent with your Support ID. Never amounts, shops or anything you type.">

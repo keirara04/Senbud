@@ -118,11 +118,12 @@ export type BudAction =
   | { type: 'open_budgets' }
   | { type: 'open_friends' };
 
-export type BudReply = { answer: string; actions: BudAction[]; offTopic: boolean };
+// `remember`: a line Bud would like to keep (Pro asks the person first).
+export type BudReply = { answer: string; actions: BudAction[]; offTopic: boolean; remember?: string };
 
 export const COOLDOWN = 'Let’s stick to your money today. Quick adds, “can I afford…” and “how’s my month?” still work.';
 
-export async function askBud(question: string, about: AskSummary, deviceId: string, turns: Turn[] = []): Promise<BudReply> {
+export async function askBud(question: string, about: AskSummary, deviceId: string, turns: Turn[] = [], memory: string[] = []): Promise<BudReply> {
   const abort = new AbortController();
   const timer = setTimeout(() => abort.abort(), 25_000);
   let res: Response;
@@ -130,7 +131,7 @@ export async function askBud(question: string, about: AskSummary, deviceId: stri
     res = await fetch(`${API_URL}/v1/agent/ask`, {
       method: 'POST',
       headers: headers(deviceId),
-      body: JSON.stringify({ question, turns: turns.slice(-4).map((t) => ({ q: t.q.slice(0, 300), a: t.a.slice(0, 300) })), ...about }),
+      body: JSON.stringify({ question, turns: turns.slice(-4).map((t) => ({ q: t.q.slice(0, 300), a: t.a.slice(0, 300) })), ...(memory.length ? { memory: memory.slice(0, 5).map((l) => l.slice(0, 120)) } : {}), ...about }),
       signal: abort.signal,
     });
   } catch {
@@ -138,13 +139,13 @@ export async function askBud(question: string, about: AskSummary, deviceId: stri
   } finally {
     clearTimeout(timer);
   }
-  const body = (await res.json().catch(() => ({}))) as { answer?: unknown; actions?: unknown; off_topic?: unknown; error?: unknown };
+  const body = (await res.json().catch(() => ({}))) as { answer?: unknown; actions?: unknown; off_topic?: unknown; error?: unknown; remember?: unknown };
   if (res.status === 429 && body.error === 'off_topic_cooldown') throw new Error(COOLDOWN);
   if (res.status === 429 && usedUpToday(res))
     throw new Error(WEB ? `That’s today’s ${WEB_FREE.questions} free questions on the web. Ask again tomorrow; quick adds still work.` : 'That’s a lot of questions for one day. Ask again tomorrow; quick adds still work.');
   if (!res.ok) throw new Error(ASK_MESSAGES[res.status] ?? OFFLINE);
   if (typeof body.answer !== 'string' || !body.answer) throw new Error(OFFLINE);
-  return { answer: body.answer, actions: Array.isArray(body.actions) ? (body.actions as BudAction[]) : [], offTopic: body.off_topic === true };
+  return { answer: body.answer, actions: Array.isArray(body.actions) ? (body.actions as BudAction[]) : [], offTopic: body.off_topic === true, remember: typeof body.remember === 'string' && body.remember ? body.remember.slice(0, 120) : undefined };
 }
 
 // Wrapped captions (design system 4.7): one line per story page, written by AI from numbers only. Any

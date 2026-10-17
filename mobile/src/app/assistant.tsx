@@ -1,7 +1,7 @@
 // Bud, the assistant (design system 4.9). Rules in core (readIntent) answer on the phone; only a question
 // in your own words goes to the API, with the summary "What gets sent" promises. Bud prints every answer
 // as a receipt slip.
-import { addDays, afford, billCountdown, type BudgetPeriod, type Category, categoryNamed, compareToLast, daysBetween, hoursOfWork, nudgeKey, periodRange, readIntent, spentIn, type Transaction } from '@senbud/core';
+import { addDays, afford, billCountdown, type BudgetPeriod, type Category, categoryNamed, compareToLast, daysBetween, hoursOfWork, nudgeKey, periodRange, pickMemories, readIntent, spentIn, type Transaction } from '@senbud/core';
 import { palette, radius, space, touch } from '@senbud/core/tokens';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -13,7 +13,7 @@ import { Bud, type BudFace, ReceiptCard } from '@/art';
 import { askBud, type AskSummary, type BudAction, COOLDOWN, type Turn, WEB } from '@/api';
 import { askAiConsent } from '@/consent';
 import { drinkExample, quickAddExample, typed } from '@/currencies';
-import { type AppState, addToJar, addTransactions, type Budget, deleteTransactions, listTransactions, loadApp, loadLimitPeriod, loadLimits, loadSetup, saveSetup, setLimit, setReminders } from '@/db';
+import { type AppState, addMemory, addToJar, addTransactions, type Budget, type Chat, deleteTransactions, listTransactions, loadApp, loadChats, loadLimitPeriod, loadLimits, loadMemory, loadSetup, saveChat, saveSetup, setLimit, setReminders } from '@/db';
 import { useMoney } from '@/money';
 import { budgetOf, periodWord, perPeriod } from '@/onboarding';
 import { usePro } from '@/purchases';
@@ -53,14 +53,22 @@ export default function Assistant() {
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   const askedQ = useRef(false);
-  // Earlier questions and answers in this chat, sent along so follow-ups work. Never saved.
+  // Earlier questions and answers, sent along so follow-ups work (the last 4). Pro keeps chats on the
+  // phone for 30 days, so they pick up where they left off; free chats end when Bud closes.
   const turns = useRef<Turn[]>([]);
+  const [earlier, setEarlier] = useState<Chat[]>([]);
   const viewH = useRef(0);
   const { notes, dismiss } = useBudNotes(m);
   const pro = usePro();
 
   useEffect(() => {
-    loadApp(db).then(setApp);
+    loadApp(db).then(async (a) => {
+      setApp(a);
+      if (!a.pro) return;
+      const chats = await loadChats(db);
+      setEarlier(chats);
+      turns.current = chats.slice(-4).map(({ q, a: answer }) => ({ q, a: answer }));
+    });
   }, [db]);
 
   // A question typed into Home's capture bar arrives as ?q=.
@@ -467,6 +475,35 @@ export default function Assistant() {
     return null;
   }
 
+  // Bud would like to remember something the person said. Nothing is kept without "Keep".
+  function rememberSlip(line: string) {
+    const id = newId();
+    add({
+      id,
+      slip: {
+        face: 'thinking',
+        title: 'Remember this?',
+        note: `“${line}”`,
+        actions: (
+          <View style={{ flexDirection: 'row', gap: space.sm }}>
+            <View style={{ flex: 1 }}>
+              <Button title="No" variant="secondary" onPress={() => replace(id, { face: 'happy', title: 'Not saved', note: 'Okay, I won’t keep that.' })} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button
+                title="Keep"
+                onPress={async () => {
+                  await addMemory(db, line);
+                  replace(id, { face: 'yay', title: 'Remembered', note: `“${line}” See or delete it in Settings, What Bud remembers.` });
+                }}
+              />
+            </View>
+          </View>
+        ),
+      },
+    });
+  }
+
   // A question in your own words. Same gates as receipts, read fresh so a purchase or a Settings change
   // made since the sheet opened counts.
   async function ask(line: string, id: number) {
@@ -497,7 +534,9 @@ export default function Assistant() {
       });
     replace(id, { face: 'thinking', title: 'Bud', printing: true });
     try {
-      const r = await askBud(line, summary(), a.deviceId, turns.current);
+      // Bud remembers (Pro): up to 5 kept lines, the ones closest to this question.
+      const memory = a.pro ? pickMemories((await loadMemory(db)).map((x) => x.text), line) : [];
+      const r = await askBud(line, summary(), a.deviceId, turns.current, memory);
       if (r.offTopic)
         return replace(id, {
           face: 'thinking',
@@ -513,6 +552,9 @@ export default function Assistant() {
       turns.current = [...turns.current, { q: line, a: r.answer }].slice(-4);
       const buttons = r.actions.map((a, i) => actionButton(a, i, id)).filter((b) => b !== null);
       replace(id, { face: 'happy', title: 'Bud', note: r.answer, ai: true, actions: buttons.length ? <View style={{ gap: space.xs }}>{buttons}</View> : undefined });
+      if (!a.pro) return;
+      saveChat(db, line, r.answer).catch(() => {});
+      if (r.remember && !memory.some((x) => x.toLowerCase() === r.remember!.toLowerCase())) rememberSlip(r.remember);
     } catch (e) {
       const note = e instanceof Error ? e.message : String(e);
       // No "Try again" when questions are paused for the day: it can't work until tomorrow.
@@ -532,6 +574,21 @@ export default function Assistant() {
         // Only once the slips outgrow the view: scrolling short content "to the end" tucks it under the header.
         onContentSizeChange={(_, h) => h > viewH.current && scroll.current?.scrollToEnd({ animated: true })}
       >
+        {earlier.length > 0 && (
+          <View style={{ gap: space.md, opacity: 0.85 }}>
+            <T variant="label" tone="textDim">
+              Earlier
+            </T>
+            {earlier.map((c) => (
+              <View key={`c${c.id}`} style={{ gap: space.md }}>
+                <View style={{ alignSelf: 'flex-end', maxWidth: '80%', backgroundColor: t.primary, borderRadius: radius.md, borderBottomRightRadius: 4, paddingHorizontal: space.md, paddingVertical: space.sm }}>
+                  <T style={{ color: t.onPrimary }}>{c.q}</T>
+                </View>
+                <SlipView slip={{ face: 'happy', title: 'Bud', note: c.a, ai: true }} />
+              </View>
+            ))}
+          </View>
+        )}
         {!msgs.length ? (
           <View style={{ alignItems: 'center', gap: space.sm, paddingTop: space.md }}>
             <Bud size={96} />

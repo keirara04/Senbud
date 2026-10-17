@@ -200,6 +200,9 @@ describe("readIntent", () => {
     expect(readIntent("business lunch 25").kind).toBe("add");
     expect(readIntent("spent on lunch 12").kind).toBe("add");
     expect(readIntent("Can you log the 12 I just spent on lunch?").kind).toBe("ask");
+    expect(readIntent("I get paid on the 25th every month")).toEqual({ kind: "ask" });
+    expect(readIntent("gaji masuk 25hb")).toEqual({ kind: "ask" });
+    expect(readIntent("dinner on the 3rd 45")).toEqual({ kind: "add", items: [{ label: "Dinner on the 3rd", amount: 45, category: "Food" }] });
   });
   it("reads a budget said in words (spec 4.2)", async () => {
     const { readIntent } = await import("./index");

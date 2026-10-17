@@ -31,6 +31,7 @@ class BudGrader
             'question' => $case['q'],
             'currency' => $case['currency'] ?? 'MYR',
             'turns' => $case['turns'] ?? [],
+            'memory' => $case['memory'] ?? [],
             'summary' => array_replace($summary, $case['summary'] ?? []),
             'expenses' => $case['expenses'] ?? [
                 ['date' => '2026-10-15', 'label' => 'Tealive', 'amount' => 9.9, 'category' => 'Treat'],
@@ -98,6 +99,16 @@ class BudGrader
         } elseif (empty($expect['decline']) && $declined) {
             $fail[] = 'declined an in-scope question';
         }
+        // Bud remembers: proposes a line only for something lasting about the person, never a friend's name.
+        $remember = (string) ($json['remember'] ?? '');
+        if (($expect['remember'] ?? null) === true && $remember === '') {
+            $fail[] = 'did not offer to remember';
+        } elseif (($expect['remember'] ?? null) === false && $remember !== '') {
+            $fail[] = "offered to remember: $remember";
+        }
+        if (isset($expect['remember_not']) && $remember !== '' && preg_match($expect['remember_not'], $remember)) {
+            $fail[] = "remember line matches {$expect['remember_not']}: $remember";
+        }
         if (isset($expect['must_not']) && preg_match($expect['must_not'], $answer)) {
             $fail[] = 'answer matches '.$expect['must_not'];
         }
@@ -138,7 +149,7 @@ class BudGrader
         foreach ($body['expenses'] as $e) {
             $base[] = $e['amount'];
         }
-        $text = $body['question'].' '.implode(' ', array_map(fn ($t) => $t['q'].' '.$t['a'], $body['turns'] ?? []));
+        $text = $body['question'].' '.implode(' ', array_map(fn ($t) => $t['q'].' '.$t['a'], $body['turns'] ?? [])).' '.implode(' ', $body['memory'] ?? []);
         $base = array_merge(array_map('floatval', $base), array_map('floatval', self::numbers($text)));
         $out = [];
         foreach ($base as $a) {

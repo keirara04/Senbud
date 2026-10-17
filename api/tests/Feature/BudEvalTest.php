@@ -24,7 +24,7 @@ class BudEvalTest extends TestCase
         $this->assertSame(count($cases), count(array_unique(array_column($cases, 'id'))));
         foreach ($cases as $case) {
             $this->assertIsString($case['q'], $case['id']);
-            $this->assertSame([], array_diff(array_keys($case['expect']), ['on_topic', 'actions', 'wants_action', 'must', 'must_not', 'lang', 'decline']), $case['id']);
+            $this->assertSame([], array_diff(array_keys($case['expect']), ['on_topic', 'actions', 'wants_action', 'must', 'must_not', 'lang', 'decline', 'remember', 'remember_not']), $case['id']);
             foreach (['must', 'must_not'] as $k) {
                 if (isset($case['expect'][$k])) {
                     $this->assertNotFalse(@preg_match($case['expect'][$k], ''), "{$case['id']} $k");
