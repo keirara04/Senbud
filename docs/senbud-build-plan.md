@@ -24,9 +24,9 @@ Ask each one when its item comes up, not before.
 |---|---|
 | What "multiple budgets" means | Decided 17 Oct 2026: per-category periods |
 | Category limits free or Pro (design 4.11 question 3) | Decided 18 Oct 2026: free. A limit with its own week or month stays Pro |
-| Are by-item splits and full Wrapped still Pro (design 4.11 question 6) | Decided 18 Oct 2026: full Wrapped stays Pro. By-item splits not answered yet (Pro today) |
+| Are by-item splits and full Wrapped still Pro (design 4.11 question 6) | Decided 18 Oct 2026: full Wrapped stays Pro (now on the paywall); by-item splits are free. By item still needs a receipt photo, which is Pro, to list the items |
 | AI through your server or users' own keys (spec 11) | Decided 17 Oct 2026: your server |
-| Is the name "Senbud" free (spec 11) | Decided 18 Oct 2026: store name "Senbud - Budget Tracker". A web search found no other app called Senbud; a trademark search is still to do |
+| Is the name "Senbud" free (spec 11) | Decided 18 Oct 2026: store name "Senbud - Budget Tracker" ("Senbud" alone is taken in the store). A web search found no other app called Senbud; a trademark search is still to do |
 
 ## 3. Phase 1: Reminders (built 17 October 2026, pace warning 18 October)
 

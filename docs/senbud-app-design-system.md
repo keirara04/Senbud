@@ -393,7 +393,7 @@ Today's Setup asks five things on one page: period, budget, rent, due day and cu
      - The receipt summary ("Restoran Ali Maju · RM 31.30 · 5 items from your photo").
      - "Who was there?" as 48 pt name chips plus "+ Add".
      - "Who paid?" as `Segmented`.
-     - "How to split it?" as two radio cards: By item (Pro) or Evenly ("About RM 10.43 each"). Evenly skips step 2.
+     - "How to split it?" as two radio cards: By item or Evenly ("About RM 10.43 each"). Evenly skips step 2.
   2. **Who had what.**
      - `PersonTabs` across the top, one per person, with running totals.
      - Pick a person, then tap their items on the `ReceiptCard`. Each item is a full-width 52 pt `ClaimRow` with the owners' initials and a checkbox for the selected person.
@@ -615,7 +615,7 @@ These are additions to `ui.tsx` for the screens above. Each takes colours from `
 3. **Category limits free or Pro?** Decided 18 Oct 2026: free. Only a limit with its own week or month is Pro.
 4. **Nudges inside their cards?** Should rent and pace nudges live inside their own cards on Home (4.2)?
 5. **Share image link:** does the share image get a URL or handle? The domain isn't settled (spec 11).
-6. **Are by-item splits and full Wrapped still Pro?** Full Wrapped: yes, decided 18 Oct 2026. By-item splits: still open (Pro today). The paywall lists only receipts, the unlimited assistant and subscription reminders.
+6. **Are by-item splits and full Wrapped still Pro?** Decided 18 Oct 2026: full Wrapped stays Pro and the paywall lists it ("Your full Wrapped"); by-item splits are free.
 
 ## 5. Voice
 

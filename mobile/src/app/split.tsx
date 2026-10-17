@@ -1,4 +1,4 @@
-// Split a bill in three steps (design system 4.5): 1 who and how, 2 who had what (by item, Pro),
+// Split a bill in three steps (design system 4.5): 1 who and how, 2 who had what (by item),
 // 3 check and save. Your share becomes an expense; everyone else's becomes an IOU. Evenly skips step 2.
 import { type Category, iousFromSplit, money, splitBill, splitByItems } from '@senbud/core';
 import { palette, radius, space, touch } from '@senbud/core/tokens';
@@ -10,8 +10,7 @@ import { Pressable, TextInput, View } from 'react-native';
 import { ReceiptCard } from '@/art';
 import { dinnerExample, typed } from '@/currencies';
 import { addIous, addTransactions, listIous, loadSetup, type Profile, today } from '@/db';
-import { usePro } from '@/purchases';
-import { Button, Card, Field, Icon, ProLock, Row, Screen, T, TextButton, useTheme } from '@/ui';
+import { Button, Card, Field, Icon, Row, Screen, T, TextButton, useTheme } from '@/ui';
 
 const ME = 'You';
 type Item = { label: string; cents: number; category: Category };
@@ -20,7 +19,6 @@ const toCents = (s: string) => Math.round(Number(s.trim().replace(',', '.')) * 1
 export default function Split() {
   const db = useSQLiteContext();
   const t = useTheme();
-  const pro = usePro();
   // From a receipt: items + merchant. From Bud: amount, merchant and people ("a,b").
   const params = useLocalSearchParams<{ items?: string; merchant?: string; amount?: string; people?: string }>();
   const items: Item[] = useMemo(() => (params.items ? JSON.parse(params.items) : []), [params.items]);
@@ -152,8 +150,7 @@ export default function Split() {
             title="By item"
             sub={hasItems ? 'Each person pays for what they had.' : 'Needs a receipt photo. Snap one to split by item.'}
             on={byItem}
-            disabled={!hasItems || !pro}
-            lock={!pro}
+            disabled={!hasItems}
             onPress={() => setMode('items')}
           />
           <ModeCard
@@ -296,19 +293,18 @@ function Chip({ label, on, onPress, removable, radio }: { label: string; on: boo
   );
 }
 
-function ModeCard({ title, sub, on, onPress, disabled, lock }: { title: string; sub: string; on: boolean; onPress: () => void; disabled?: boolean; lock?: boolean }) {
+function ModeCard({ title, sub, on, onPress, disabled }: { title: string; sub: string; on: boolean; onPress: () => void; disabled?: boolean }) {
   const t = useTheme();
   return (
     <Pressable
-      onPress={lock ? () => router.push('/pro') : onPress}
-      disabled={disabled && !lock}
+      onPress={onPress}
+      disabled={disabled}
       accessibilityRole="radio"
-      accessibilityState={{ selected: on, disabled: disabled && !lock }}
-      style={{ borderRadius: radius.md, borderWidth: 2, borderColor: on ? t.accent : t.line, backgroundColor: t.surface, padding: space.md, gap: space.xxs, opacity: disabled && !lock ? 0.5 : 1 }}
+      accessibilityState={{ selected: on, disabled }}
+      style={{ borderRadius: radius.md, borderWidth: 2, borderColor: on ? t.accent : t.line, backgroundColor: t.surface, padding: space.md, gap: space.xxs, opacity: disabled ? 0.5 : 1 }}
     >
       <Row style={{ justifyContent: 'flex-start' }}>
         <T variant="bodyStrong">{title}</T>
-        {lock && <ProLock onPress={() => router.push('/pro')} />}
       </Row>
       <T variant="caption" tone="textDim">
         {sub}
