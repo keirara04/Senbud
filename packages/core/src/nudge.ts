@@ -4,7 +4,7 @@
 // an IOU older than 7 days, an under-budget streak, then a treat when all is well. Month-end leftover has
 // its own sheet and overall pace has Home's progress card, so neither is a note.
 import { addDays, daysBetween, type IsoDate } from "./dates";
-import { aheadOfPace, billCountdown, billsOwed, budgetStatus, periodRange, type Range, spentIn, type Status, treatNudge } from "./budget";
+import { aheadOfPace, billCountdown, billsOwed, budgetStatus, categoryRange, periodRange, type Range, spentIn, type Status, treatNudge } from "./budget";
 import { staleIous } from "./iou";
 import { nextRenewal } from "./subscriptions";
 import type { Category } from "./index";
@@ -42,6 +42,8 @@ export type NudgeInput = {
   onTrack: boolean;
   bills?: Bill[];
   limits?: Partial<Record<Category, number>>;
+  /** Categories whose limit runs on its own period; `txns` must reach back to their starts. */
+  limitPeriods?: Partial<Record<Category, BudgetPeriod>>;
   txns?: Transaction[];
   range?: Range;
   spotted?: Subscription[];
@@ -49,7 +51,7 @@ export type NudgeInput = {
 };
 
 export function nudges(opts: NudgeInput): Nudge[] {
-  const { today, subscriptions, ious, treats, safe, onTrack, bills = [], limits = {}, txns = [], range, spotted = [], streak = 0 } = opts;
+  const { today, subscriptions, ious, treats, safe, onTrack, bills = [], limits = {}, limitPeriods = {}, txns = [], range, spotted = [], streak = 0 } = opts;
   const out: Nudge[] = [];
   for (const bill of bills) {
     const { days } = billCountdown(bill, today);
@@ -57,12 +59,13 @@ export function nudges(opts: NudgeInput): Nudge[] {
   }
   if (range) {
     for (const [category, limit] of Object.entries(limits) as [Category, number][]) {
+      const r = categoryRange(limitPeriods[category], range, today);
       const spent = spentIn(
         txns.filter((t) => t.category === category),
-        range,
+        r,
       );
       const status = budgetStatus(spent, limit);
-      if (limit > 0 && (status !== "ok" || aheadOfPace(spent, limit, range, today))) out.push({ kind: "category", category, spent, limit, status });
+      if (limit > 0 && (status !== "ok" || aheadOfPace(spent, limit, r, today))) out.push({ kind: "category", category, spent, limit, status });
     }
   }
   const renewal = subscriptions.find((s) => s.confirmed && nextRenewal(s, today) === addDays(today, 1));

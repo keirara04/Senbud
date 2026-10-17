@@ -7,7 +7,7 @@ export type Transaction = {
   cents: number;
   label: string;
   category: Category;
-  source?: "manual" | "text" | "photo" | "csv";
+  source?: "manual" | "text" | "photo" | "csv" | "bud";
   splitId?: string;
 };
 

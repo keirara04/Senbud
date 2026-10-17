@@ -152,8 +152,8 @@ export function readIntent(text: string, currency?: string): Intent {
   if (/\b(biggest|largest|most expensive)\b.*\b(spend|spends|expense|expenses|purchase|purchases|buy|buys)\b/i.test(line)) return { kind: "biggest" };
   if (/\bwhen(['’]?s| is| are| do)\b.*\b(rent|bills?)\b|\bnext (bill|rent)\b|\b(rent|bills?) due\b|\bwhat bills\b/i.test(line)) return { kind: "bills" };
   if (/\bhow many days\b|\bdays left\b/i.test(line)) return { kind: "daysLeft" };
-  if (/\b(last|previous) (week|month)\b|\bcompared?\b/i.test(line) && isQuestion(line)) return { kind: "compare" };
-  if (/\bhow(['’]?s| is| am)\b.*\b(month|week|doing|budget)\b|\bwhere did\b.*\bgo\b|\bhow much (is )?left\b/i.test(line)) return { kind: "month" };
+  if (/\b(last|previous) (week|month|pay period)\b|\bcompared?\b/i.test(line) && isQuestion(line)) return { kind: "compare" };
+  if (/\bhow(['’]?s| is| am)\b.*\b(month|week|period|doing|budget)\b|\bwhere did\b.*\bgo\b|\bhow much (is )?left\b/i.test(line)) return { kind: "month" };
   if (isQuestion(line)) return { kind: "ask" };
   const items = parseSpending(line, currency);
   return items.length ? { kind: "add", items } : { kind: "ask" };
