@@ -23,7 +23,8 @@ import { Button, CATEGORIES, Icon, Marker, noWebOutline, ReceiptLine, T, TextBut
 const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
 
 type Line = [label: string, value: string];
-type Slip = { face: BudFace; title: string; lines?: Line[]; total?: Line; note?: string; actions?: ReactNode; printing?: boolean };
+// `ai` marks an answer the model wrote, so the slip says to check its numbers.
+type Slip = { face: BudFace; title: string; lines?: Line[]; total?: Line; note?: string; ai?: boolean; actions?: ReactNode; printing?: boolean };
 type Msg = { id: number; me: string } | { id: number; slip: Slip };
 
 // A starter chip: title, hint, and either a question Bud answers straight away (send) or text it puts in
@@ -432,7 +433,7 @@ export default function Assistant() {
         });
       turns.current = [...turns.current, { q: line, a: r.answer }].slice(-4);
       const buttons = r.actions.map(actionButton).filter((b) => b !== null);
-      replace(id, { face: 'happy', title: 'Bud', note: r.answer, actions: buttons.length ? <View style={{ gap: space.xs }}>{buttons}</View> : undefined });
+      replace(id, { face: 'happy', title: 'Bud', note: r.answer, ai: true, actions: buttons.length ? <View style={{ gap: space.xs }}>{buttons}</View> : undefined });
     } catch (e) {
       const note = e instanceof Error ? e.message : String(e);
       // No "Try again" when questions are paused for the day: it can't work until tomorrow.
@@ -559,6 +560,11 @@ function SlipView({ slip }: { slip: Slip }) {
             </View>
           )}
           {slip.note && <T style={{ color: palette.inkDim }}>{slip.note}</T>}
+          {slip.ai && (
+            <T variant="caption" style={dim}>
+              AI answer. Check the numbers.
+            </T>
+          )}
         </ReceiptCard>
         {slip.actions}
       </View>
